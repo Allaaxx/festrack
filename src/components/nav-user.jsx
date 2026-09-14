@@ -19,6 +19,9 @@ import {
 
 export function NavUser({ user, signout }) {
   const { isMobile } = useSidebar();
+  const firstName = user?.firstName ?? '';
+  const lastName = user?.lastName ?? '';
+  const email = user?.email ?? '';
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -34,13 +37,13 @@ export function NavUser({ user, signout }) {
             <Avatar>
               <AvatarImage />
               <AvatarFallback>
-                {user.firstName[0]}
-                {user.lastName[0]}
+                {firstName[0]}
+                {lastName[0]}
               </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-medium">{user.firstName}</span>
-              <span className="truncate text-xs">{user.email}</span>
+              <span className="truncate font-medium">{firstName}</span>
+              <span className="truncate text-xs">{email}</span>
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4" />
           </DropdownMenuTrigger>
@@ -56,15 +59,15 @@ export function NavUser({ user, signout }) {
                   <Avatar>
                     <AvatarImage />
                     <AvatarFallback>
-                      {user.firstName[0]}
-                      {user.lastName[0]}
+                      {firstName[0]}
+                      {lastName[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">
-                      {user.firstName} {user.lastName}
+                      {firstName} {lastName}
                     </span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    <span className="truncate text-xs">{email}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>
