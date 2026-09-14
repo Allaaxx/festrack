@@ -4,7 +4,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react';
-import * as React from 'react';
+import { useEffect, useRef } from 'react';
 import { DayPicker, getDefaultClassNames } from 'react-day-picker';
 
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -181,8 +181,8 @@ function Calendar({
 function CalendarDayButton({ className, day, modifiers, locale, ...props }) {
   const defaultClassNames = getDefaultClassNames();
 
-  const ref = React.useRef(null);
-  React.useEffect(() => {
+  const ref = useRef(null);
+  useEffect(() => {
     if (modifiers.focused) ref.current?.focus();
   }, [modifiers.focused]);
 
