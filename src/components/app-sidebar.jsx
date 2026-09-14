@@ -1,10 +1,4 @@
-import {
-  BookOpenIcon,
-  BotIcon,
-  Settings2Icon,
-  Store,
-  TerminalSquareIcon,
-} from 'lucide-react';
+import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -25,94 +19,20 @@ const data = {
     {
       name: 'Loja padrão',
       logo: Store,
-      plan: 'Enterprise',
+      plan: 'Empresa',
     },
   ],
   navMain: [
     {
-      title: 'Playground',
+      title: 'Financeiro',
       url: '#',
-      icon: <TerminalSquareIcon />,
+      icon: <ChartSplineIcon />,
       isActive: true,
-      items: [
-        {
-          title: 'History',
-          url: '#',
-        },
-        {
-          title: 'Starred',
-          url: '#',
-        },
-        {
-          title: 'Settings',
-          url: '#',
-        },
-      ],
     },
     {
-      title: 'Models',
+      title: 'Eventos',
       url: '#',
-      icon: <BotIcon />,
-      items: [
-        {
-          title: 'Genesis',
-          url: '#',
-        },
-        {
-          title: 'Explorer',
-          url: '#',
-        },
-        {
-          title: 'Quantum',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Documentation',
-      url: '#',
-      icon: <BookOpenIcon />,
-      items: [
-        {
-          title: 'Introduction',
-          url: '#',
-        },
-        {
-          title: 'Get Started',
-          url: '#',
-        },
-        {
-          title: 'Tutorials',
-          url: '#',
-        },
-        {
-          title: 'Changelog',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Settings',
-      url: '#',
-      icon: <Settings2Icon />,
-      items: [
-        {
-          title: 'General',
-          url: '#',
-        },
-        {
-          title: 'Team',
-          url: '#',
-        },
-        {
-          title: 'Billing',
-          url: '#',
-        },
-        {
-          title: 'Limits',
-          url: '#',
-        },
-      ],
+      icon: <CalendarCogIcon />,
     },
   ],
 };
