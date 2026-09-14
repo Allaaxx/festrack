@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronRightIcon } from 'lucide-react';
+import { Link } from 'react-router';
 
 import {
   Collapsible,
@@ -32,7 +33,7 @@ export function NavMain({ items }) {
           >
             <SidebarMenuButton
               tooltip={item.title}
-              render={<a href={item.url} />}
+              render={<Link to={item.url} />}
             >
               {item.icon}
               <span>{item.title}</span>
