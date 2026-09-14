@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router';
+import { Link, Navigate } from 'react-router';
 
 import AddTransactionButton from '@/components/add-transaction-button';
 import Balance from '@/components/balance';
@@ -6,6 +6,7 @@ import DateSelection from '@/components/date-selection';
 import Header from '@/components/header';
 import TransactionsTable from '@/components/transactions-table';
 import { TransactionsTypeChart } from '@/components/transactions-type-chart';
+import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/contexts/auth';
 
 const HomePage = () => {
@@ -19,7 +20,12 @@ const HomePage = () => {
       <Header />
       <div className="space-y-4 p-4 py-2 sm:space-y-6 sm:p-8 sm:py-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row">
-          <h2 className="text-2xl font-bold">Dashboard</h2>
+          <Button variant="link">
+            <Link to="/dashboard">
+              <h2 className="text-2xl font-bold">Dashboard</h2>
+            </Link>
+          </Button>
+
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <DateSelection />
             <AddTransactionButton />
