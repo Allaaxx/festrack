@@ -1,68 +1,52 @@
-import { ChevronDownIcon, LogOutIcon } from 'lucide-react';
+import { PanelLeftIcon } from 'lucide-react';
 
 import { LogoIcon } from '@/assets/images';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { SearchForm } from '@/components/search-form';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useAuthContext } from '@/contexts/auth';
-const Header = () => {
-  const { user, signout } = useAuthContext();
-  return (
-    <Card>
-      <CardContent className="flex items-center justify-between px-8 py-1">
-        <div>
-          <LogoIcon className="text-primary h-10 w-10" />
-        </div>
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" className="space-x-1 py-5">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage />
-                    <AvatarFallback>
-                      {user.firstName[0]}
-                      {user.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="hidden sm:block sm:text-sm">
-                    {user.firstName} {user.lastName}
-                  </p>
-                  <ChevronDownIcon />
-                </Button>
-              }
-            ></DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Meu Perfil</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Button
-                    variant="ghost"
-                    size="small"
-                    className="w-full justify-start"
-                    onClick={signout}
-                  >
-                    <LogOutIcon />
-                    Sair
-                  </Button>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useSidebar } from '@/components/ui/sidebar';
 
-export default Header;
+export function Header() {
+  const { toggleSidebar } = useSidebar();
+
+  return (
+    <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
+      <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
+        <LogoIcon className="h-6 w-6" />
+        <Separator
+          orientation="vertical"
+          className="mr-2 data-vertical:h-5 data-vertical:self-auto"
+        />
+        <Button
+          className="h-8 w-8"
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+        >
+          <PanelLeftIcon />
+        </Button>
+
+        <Breadcrumb className="hidden sm:block">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="#">Build Your Application</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <SearchForm className="w-full sm:ml-auto sm:w-auto" />
+      </div>
+    </header>
+  );
+}
