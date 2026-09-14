@@ -24,16 +24,12 @@ import {
   SidebarMenu,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useAuthContext } from '@/contexts/auth';
 
 import { NavProjects } from './nav-projects';
 import { TeamSwitcher } from './team-switcher';
 
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
   teams: [
     {
       name: 'Acme Inc',
@@ -169,6 +165,7 @@ const data = {
   ],
 };
 export function AppSidebar({ ...props }) {
+  const { user, signout } = useAuthContext();
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -188,7 +185,7 @@ export function AppSidebar({ ...props }) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} signout={signout} />
       </SidebarFooter>
     </Sidebar>
   );

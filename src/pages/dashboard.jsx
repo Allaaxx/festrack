@@ -1,12 +1,20 @@
+import { Navigate } from 'react-router';
+
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useAuthContext } from '@/contexts/auth';
 
 export const iframeHeight = '800px';
 
 export const description = 'A sidebar with a header and a search form.';
 
 export default function Dashboard() {
+  const { user, isInitializing } = useAuthContext();
+  if (isInitializing) return null;
+  if (!user) {
+    return <Navigate to="/signin" />;
+  }
   return (
     <div className="[--header-height:calc(--spacing(14))]">
       <SidebarProvider defaultOpen={false} className="flex flex-col">
