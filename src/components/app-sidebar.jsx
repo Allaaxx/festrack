@@ -25,13 +25,13 @@ const data = {
   navMain: [
     {
       title: 'Financeiro',
-      url: '#',
+      url: '/',
       icon: <ChartSplineIcon />,
       isActive: true,
     },
     {
       title: 'Eventos',
-      url: '#',
+      url: '/event',
       icon: <CalendarCogIcon />,
     },
   ],
