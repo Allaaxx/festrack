@@ -1,5 +1,6 @@
 import { PanelLeftIcon } from 'lucide-react';
 
+import { LogoIcon } from '@/assets/images';
 import { SearchForm } from '@/components/search-form';
 import {
   Breadcrumb,
@@ -19,6 +20,11 @@ export function SiteHeader() {
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
       <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
+        <LogoIcon className="h-6 w-6" />
+        <Separator
+          orientation="vertical"
+          className="mr-2 data-vertical:h-5 data-vertical:self-auto"
+        />
         <Button
           className="h-8 w-8"
           variant="ghost"
@@ -27,10 +33,7 @@ export function SiteHeader() {
         >
           <PanelLeftIcon />
         </Button>
-        <Separator
-          orientation="vertical"
-          className="mr-2 data-vertical:h-4 data-vertical:self-auto"
-        />
+
         <Breadcrumb className="hidden sm:block">
           <BreadcrumbList>
             <BreadcrumbItem>
