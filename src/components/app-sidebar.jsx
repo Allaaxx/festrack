@@ -1,20 +1,12 @@
 import {
-  AudioWaveform,
   BookOpenIcon,
   BotIcon,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  LifeBuoyIcon,
-  Map,
-  PieChart,
-  SendIcon,
   Settings2Icon,
+  Store,
   TerminalSquareIcon,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
-import { NavSecondary } from '@/components/nav-secondary';
 import { NavUser } from '@/components/nav-user';
 import {
   Sidebar,
@@ -26,25 +18,14 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
 
-import { NavProjects } from './nav-projects';
-import { TeamSwitcher } from './team-switcher';
+import { ShopSwitcher } from './shop-switcher';
 
 const data = {
-  teams: [
+  shops: [
     {
-      name: 'Acme Inc',
-      logo: GalleryVerticalEnd,
+      name: 'Loja padrão',
+      logo: Store,
       plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
-    },
-    {
-      name: 'Evil Corp.',
-      logo: Command,
-      plan: 'Free',
     },
   ],
   navMain: [
@@ -134,35 +115,6 @@ const data = {
       ],
     },
   ],
-  navSecondary: [
-    {
-      title: 'Support',
-      url: '#',
-      icon: <LifeBuoyIcon />,
-    },
-    {
-      title: 'Feedback',
-      url: '#',
-      icon: <SendIcon />,
-    },
-  ],
-  projects: [
-    {
-      name: 'Design Engineering',
-      url: '#',
-      icon: <Frame />,
-    },
-    {
-      name: 'Sales & Marketing',
-      url: '#',
-      icon: <PieChart />,
-    },
-    {
-      name: 'Travel',
-      url: '#',
-      icon: <Map />,
-    },
-  ],
 };
 export function AppSidebar({ ...props }) {
   const { user, signout } = useAuthContext();
@@ -175,14 +127,12 @@ export function AppSidebar({ ...props }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <TeamSwitcher teams={data.teams} />
+            <ShopSwitcher shops={data.shops} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} signout={signout} />
