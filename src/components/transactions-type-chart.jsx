@@ -2,7 +2,6 @@
 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2Icon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
 import { Label, Pie, PieChart, Sector } from 'recharts';
@@ -20,6 +19,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const description = 'A donut chart';
 
@@ -69,14 +69,6 @@ const renderSector = (props) => {
     />
   );
 };
-const emptyChartData = [
-  {
-    type: 'EMPTY',
-    label: 'Sem transações',
-    quantity: 1,
-    fill: 'hsl(var(--muted))',
-  },
-];
 
 const calculateChartData = (transactions = []) => {
   const groupedTransactions = {
@@ -114,9 +106,26 @@ const calculateChartData = (transactions = []) => {
     fill: transactionTypeConfig[type].fill,
   }));
 
-  return {
-    data,
-  };
+  return { data };
+};
+
+const formatPeriodLabel = (from, to) => {
+  if (from && to) {
+    const fromLabel = format(new Date(`${from}T00:00:00`), 'MMMM yyyy', {
+      locale: ptBR,
+    }).replace(/^./, (char) => char.toUpperCase());
+    const toLabel = format(new Date(`${to}T00:00:00`), 'MMMM yyyy', {
+      locale: ptBR,
+    }).replace(/^./, (char) => char.toUpperCase());
+    return `${fromLabel} - ${toLabel}`;
+  }
+  if (from) {
+    return `A partir de ${format(new Date(`${from}T00:00:00`), 'MMMM yyyy', { locale: ptBR }).replace(/^./, (char) => char.toUpperCase())}`;
+  }
+  if (to) {
+    return `Até ${format(new Date(`${to}T00:00:00`), 'MMMM yyyy', { locale: ptBR }).replace(/^./, (char) => char.toUpperCase())}`;
+  }
+  return 'Todos os períodos';
 };
 
 export function TransactionsTypeChart() {
@@ -125,118 +134,45 @@ export function TransactionsTypeChart() {
   const from = searchParams.get('from');
   const to = searchParams.get('to');
 
-  const { data: transactions, isLoading } = useGetTransactions({
-    from,
-    to,
-  });
+  const { data: transactions, isLoading } = useGetTransactions({ from, to });
 
   const { data: chartData } = useMemo(() => {
     return calculateChartData(transactions);
   }, [transactions]);
+
+  if (isLoading) {
+    return (
+      <Card className="flex flex-col">
+        <CardHeader className="items-center pb-0">
+          <CardTitle>Transações</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center pb-6">
+          <Skeleton className="aspect-square h-52 w-52 rounded-full sm:h-60 sm:w-60" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (!transactions?.length) {
     return (
       <Card className="flex flex-col">
         <CardHeader className="items-center pb-0">
           <CardTitle>Transações</CardTitle>
-
-          <CardDescription>
-            Nenhuma transação encontrada neste período
-          </CardDescription>
         </CardHeader>
-
-        <CardContent className="flex-1 pb-0">
-          <ChartContainer
-            config={chartConfig}
-            className="mx-auto aspect-square h-52 w-full max-w-52 sm:h-60 sm:max-w-60"
-          >
-            <PieChart>
-              <Pie
-                data={emptyChartData}
-                dataKey="quantity"
-                nameKey="label"
-                innerRadius={60}
-                outerRadius={80}
-                stroke="none"
-                isAnimationActive={false}
-              >
-                <Label
-                  content={({ viewBox }) => {
-                    if (!viewBox || !('cx' in viewBox) || !('cy' in viewBox)) {
-                      return null;
-                    }
-
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) - 8}
-                          className="fill-foreground text-sm font-semibold"
-                        >
-                          Sem transações
-                        </tspan>
-
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 16}
-                          className="fill-muted-foreground text-xs"
-                        >
-                          0 registros
-                        </tspan>
-                      </text>
-                    );
-                  }}
-                />
-              </Pie>
-            </PieChart>
-          </ChartContainer>
+        <CardContent className="flex flex-1 items-center justify-center pb-6">
+          <p className="text-muted-foreground text-sm">
+            Sem transações no período
+          </p>
         </CardContent>
       </Card>
     );
   }
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Transações</CardTitle>
-        </CardHeader>
-        <CardContent className="flex h-full w-full items-center justify-center">
-          <Loader2Icon className="animate-spin" />
-        </CardContent>
-      </Card>
-    );
-  }
   return (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Transações</CardTitle>
-        <CardDescription>
-          {from && to
-            ? `${format(new Date(`${from}T00:00:00`), 'MMMM yyyy', {
-                locale: ptBR,
-              }).replace(/^./, (char) => char.toUpperCase())} - ${format(
-                new Date(`${to}T00:00:00`),
-                'MMMM yyyy',
-                { locale: ptBR }
-              ).replace(/^./, (char) => char.toUpperCase())}`
-            : from
-              ? `A partir de ${format(
-                  new Date(`${from}T00:00:00`),
-                  'MMMM yyyy',
-                  { locale: ptBR }
-                ).replace(/^./, (char) => char.toUpperCase())}`
-              : to
-                ? `Até ${format(new Date(`${to}T00:00:00`), 'MMMM yyyy', {
-                    locale: ptBR,
-                  }).replace(/^./, (char) => char.toUpperCase())}`
-                : 'Todos os períodos'}
-        </CardDescription>
+        <CardDescription>{formatPeriodLabel(from, to)}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 justify-between pb-0">
         <ChartContainer
