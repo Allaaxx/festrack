@@ -46,6 +46,7 @@ const CreateEventButton = () => {
   return (
     <Dialog open={dialogIsOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger
+        className="w-full"
         render={
           <Button>
             <PlusIcon />

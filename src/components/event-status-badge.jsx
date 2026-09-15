@@ -8,8 +8,8 @@ const badgeVariants = cva(
   {
     variants: {
       status: {
-        scheduled: 'text-primary fill-primary',
-        in_progress: 'text-green-500 fill-green-500',
+        scheduled: 'text-orange-400 fill-orange-400',
+        in_progress: 'text-primary-green fill-primary-green',
         completed: 'text-muted-foreground fill-muted-foreground',
       },
     },
