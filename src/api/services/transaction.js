@@ -18,7 +18,7 @@ const TransactionService = {
       amount: input.amount,
       date: input.date,
       type: input.type,
-      eventId: input.eventId,
+      event_id: input.eventId,
     });
     return response.data;
   },
@@ -49,7 +49,7 @@ const TransactionService = {
       amount: input.amount,
       date: input.date,
       type: input.type,
-      eventId: input.eventId,
+      event_id: input.eventId,
     });
     return response.data;
   },
