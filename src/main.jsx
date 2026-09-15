@@ -23,12 +23,12 @@ const queryClient = new QueryClient();
 
 function DashboardLayout() {
   return (
-    <div className="h-svh overflow-hidden [--header-height:calc(--spacing(14))]">
+    <div className="md:h-svh md:overflow-hidden [--header-height:calc(--spacing(14))]">
       <SidebarProvider defaultOpen={false} className="flex flex-col">
         <Header />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 md:overflow-hidden">
           <AppSidebar />
-          <SidebarInset className="overflow-y-auto">
+          <SidebarInset className="md:overflow-y-auto">
             <main className="flex flex-1 flex-col gap-4 p-4">
               <Outlet />
             </main>
