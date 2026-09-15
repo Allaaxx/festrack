@@ -36,7 +36,6 @@ export const useCreateEventForm = ({ onSuccess, onError }) => {
 };
 
 const getEditEventFormDefaultValues = (event) => ({
-  id: event?.id ?? '',
   name: event?.name ?? '',
   description: event?.description ?? '',
   startDate: parseEventDate(event?.startDate) ?? new Date(),
@@ -53,6 +52,7 @@ export const useEditEventForm = ({ event, onSuccess, onError }) => {
 
   useEffect(() => {
     form.reset(getEditEventFormDefaultValues(event));
+    form.setValue('id', event.id);
   }, [form, event]);
 
   const onSubmit = async (data) => {
