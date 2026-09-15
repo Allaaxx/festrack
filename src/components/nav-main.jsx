@@ -39,7 +39,11 @@ export function NavMain({ items }) {
               defaultOpen={item.isActive}
               render={<SidebarMenuItem />}
             >
-              <SidebarMenuButton tooltip={item.title} render={<Link to={to} />}>
+              <SidebarMenuButton
+                tooltip={item.title}
+                render={<Link to={to} />}
+                isActive={isCurrentRoute}
+              >
                 {item.icon}
                 <span>{item.title}</span>
               </SidebarMenuButton>
@@ -50,19 +54,27 @@ export function NavMain({ items }) {
                     className="aria-expanded:rotate-90"
                   >
                     <ChevronRightIcon />
-                    <span className="sr-only">Toggle</span>
+                    <span className="sr-only">Alternar</span>
                   </SidebarMenuAction>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton
-                            render={<a href={subItem.url} />}
-                          >
-                            <span>{subItem.title}</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                      {item.items?.map((subItem) => {
+                        const isSubCurrent = location.pathname === subItem.url;
+                        const subTo = isSubCurrent
+                          ? { pathname: subItem.url, search: location.search }
+                          : subItem.url;
+
+                        return (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton
+                              render={<Link to={subTo} />}
+                              isActive={isSubCurrent}
+                            >
+                              <span>{subItem.title}</span>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </>

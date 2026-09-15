@@ -27,7 +27,12 @@ const data = {
       title: 'Financeiro',
       url: '/',
       icon: <ChartSplineIcon />,
-      isActive: true,
+      items: [
+        {
+          title: 'Nova transação',
+          url: '#',
+        },
+      ],
     },
     {
       title: 'Eventos',
