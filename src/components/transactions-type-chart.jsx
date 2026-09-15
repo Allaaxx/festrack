@@ -204,7 +204,7 @@ export function TransactionsTypeChart() {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-xl font-bold"
+                          className="fill-foreground text-sm font-bold"
                         >
                           Transações
                         </tspan>
