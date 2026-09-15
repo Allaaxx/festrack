@@ -75,7 +75,7 @@ const EventCombobox = ({
           </Button>
         }
       />
-      <PopoverContent align="start" className="w-[var(--anchor-width)] p-0">
+      <PopoverContent align="start" className="w-(--anchor-width) p-0">
         <Command>
           <CommandInput placeholder="Buscar evento..." />
           <CommandList>
