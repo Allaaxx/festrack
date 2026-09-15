@@ -86,7 +86,7 @@ const EventPage = () => {
               size="sm"
               onClick={() => setActiveStatusFilter(filter.value)}
               className={cn(
-                'rounded-full',
+                'flex items-center justify-center rounded-full',
                 activeStatusFilter === filter.value && 'shadow-none'
               )}
             >
