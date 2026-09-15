@@ -11,6 +11,7 @@ export const createTransactionFormSchema = z.object({
     error: 'A data é obrigatória.',
   }),
   type: z.enum(['EARNING', 'EXPENSE', 'INVESTMENT']),
+  eventId: z.uuid().nullable().optional(),
 });
 
 export const editTransactionFormSchema = createTransactionFormSchema.extend({

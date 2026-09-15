@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { NumericFormat } from 'react-number-format';
 
+import EventCombobox from '@/components/event-combobox';
 import { Button } from '@/components/ui/button';
 import DatePicker from '@/components/ui/date-picker';
 import {
@@ -131,6 +132,25 @@ const AddTransactionButton = () => {
                       aria-invalid={fieldState.invalid}
                       placeholder="Selecione a data da transação"
                       autoComplete="off"
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+              <Controller
+                name="eventId"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="eventId">Evento</FieldLabel>
+                    <EventCombobox
+                      id="eventId"
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={form.formState.isSubmitting}
+                      aria-invalid={fieldState.invalid}
                     />
                     {fieldState.invalid && (
                       <FieldError errors={[fieldState.error]} />

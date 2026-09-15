@@ -20,6 +20,7 @@ export const useCreateTransactionForm = ({ onSuccess, onError }) => {
       amount: 0,
       date: new Date(),
       type: 'EARNING',
+      eventId: null,
     },
     shouldUnregister: true,
   });
@@ -38,10 +39,11 @@ export const useCreateTransactionForm = ({ onSuccess, onError }) => {
 };
 
 const getEditTransactionFormDefaultValues = (transaction) => ({
-  name: transaction.name,
-  amount: parseFloat(transaction.amount),
-  date: new Date(transaction.date),
-  type: transaction.type,
+  name: transaction?.name ?? '',
+  amount: transaction?.amount ? parseFloat(transaction.amount) : 0,
+  date: transaction?.date ? new Date(transaction.date) : new Date(),
+  type: transaction?.type ?? 'EARNING',
+  eventId: transaction?.eventId ?? transaction?.event?.id ?? null,
 });
 
 export const useEditTransactionForm = ({ transaction, onSuccess, onError }) => {
