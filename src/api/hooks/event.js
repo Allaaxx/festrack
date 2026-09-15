@@ -8,9 +8,9 @@ export const getEventsQueryKey = ({ userId }) => ['getEvents', userId];
 export const useGetEvents = () => {
   const { user } = useAuthContext();
   return useQuery({
-    queryKey: getEventsQueryKey({ userId: user.id }),
+    queryKey: getEventsQueryKey({ userId: user?.id }),
     queryFn: () => EventService.getAll(),
-    enabled: Boolean(user.id),
+    enabled: Boolean(user?.id),
   });
 };
 
