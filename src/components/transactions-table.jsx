@@ -1,15 +1,17 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
-import { ArrowUpDown, Loader2Icon } from 'lucide-react';
+import { AlertCircleIcon, ArrowUpDown, ReceiptText } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 
 import { useGetTransactions } from '@/api/hooks/transaction';
+import AddTransactionButton from '@/components/add-transaction-button';
 import DeleteTransactionButton from '@/components/delete-transaction-button';
 import EditTransactionButton from '@/components/edit-transaction-button';
 import TransactionTypeBadge from '@/components/transaction-type-badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/helpers/currency';
 
 const columns = [
@@ -85,7 +87,6 @@ const columns = [
 
     sortFn: (rowA, rowB, columnId) => {
       const dateA = new Date(String(rowA.getValue(columnId) ?? '')).getTime();
-
       const dateB = new Date(String(rowB.getValue(columnId) ?? '')).getTime();
 
       return dateA - dateB;
@@ -151,18 +152,19 @@ const TransactionsTable = () => {
     data: transactions,
     isLoading,
     isError,
-  } = useGetTransactions({
-    from,
-    to,
-  });
+    refetch,
+  } = useGetTransactions({ from, to });
 
   if (isLoading) {
     return (
       <section>
         <h2 className="mb-4 text-2xl font-bold">Transações</h2>
-
-        <div className="flex h-90 items-center justify-center rounded-md border">
-          <Loader2Icon className="animate-spin" />
+        <div className="rounded-md border">
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={index} className="h-10 w-full rounded-md" />
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -172,11 +174,19 @@ const TransactionsTable = () => {
     return (
       <section>
         <h2 className="mb-4 text-2xl font-bold">Transações</h2>
-
-        <div className="text-destructive r flex h-90 items-center justify-center rounded-md border">
-          <p className="text-center">
-            Não foi possível carregar as transações.
-          </p>
+        <div className="flex flex-col items-center justify-center gap-4 rounded-md border py-16 text-center">
+          <AlertCircleIcon className="text-muted-foreground size-10" />
+          <div className="space-y-1">
+            <p className="font-medium">
+              Não foi possível carregar as transações.
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Verifique sua conexão e tente novamente.
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => refetch()}>
+            Tentar novamente
+          </Button>
         </div>
       </section>
     );
@@ -186,11 +196,15 @@ const TransactionsTable = () => {
     return (
       <section>
         <h2 className="mb-4 text-2xl font-bold">Transações</h2>
-
-        <div className="flex h-90 items-center justify-center rounded-md border">
-          <p className="text-center">
-            Nenhuma transação encontrada para este período.
-          </p>
+        <div className="flex flex-col items-center justify-center gap-4 rounded-md border py-16 text-center">
+          <ReceiptText className="text-muted-foreground size-10" />
+          <div className="space-y-1">
+            <p className="font-medium">Nenhuma transação encontrada</p>
+            <p className="text-muted-foreground text-sm">
+              Nenhuma transação registrada no período selecionado.
+            </p>
+          </div>
+          <AddTransactionButton />
         </div>
       </section>
     );
