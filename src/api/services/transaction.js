@@ -10,6 +10,7 @@ const TransactionService = {
    * @param {number} input.amount - Valor da transação.
    * @param {string} input.date - Data da transação (YYYY-MM-DD).
    * @param {string} input.type - Tipo da transação (EARNING/EXPENSE/INVESTMENT).
+   * @param {string | null} [input.eventId] - ID do evento associado à transação.
    */
   create: async (input) => {
     const response = await protectedApi.post('/transactions/me', {
@@ -17,6 +18,7 @@ const TransactionService = {
       amount: input.amount,
       date: input.date,
       type: input.type,
+      eventId: input.eventId,
     });
     return response.data;
   },
@@ -39,6 +41,7 @@ const TransactionService = {
    * @param {number} input.amount - Valor da transação.
    * @param {string} input.date - Data da transação (YYYY-MM-DD).
    * @param {string} input.type - Tipo da transação (EARNING/EXPENSE/INVESTMENT).
+   * @param {string | null} [input.eventId] - ID do evento associado à transação.
    */
   update: async (input) => {
     const response = await protectedApi.patch(`transactions/me/${input.id}`, {
@@ -46,6 +49,7 @@ const TransactionService = {
       amount: input.amount,
       date: input.date,
       type: input.type,
+      eventId: input.eventId,
     });
     return response.data;
   },
