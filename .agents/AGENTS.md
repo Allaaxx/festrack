@@ -34,25 +34,40 @@ and user-facing strings in Portuguese (BR).
 
 ## Directory Structure
 
+Festrack follows a **Feature-First (Vertical Slices)** architecture. Domain-specific code lives within feature modules, while global and generic primitives live at the root.
+
 ```
 src/
-├── api/
-│   ├── hooks/       # TanStack Query hooks (useQuery / useMutation wrappers)
-│   └── services/    # Plain service objects with Axios calls
+├── api/             # Global API services & hooks (e.g., cross-cutting auth)
 ├── components/
-│   ├── ui/          # shadcn/ui base components — adapt only when necessary
-│   └── *.jsx        # Feature / composite components
-├── contexts/        # React contexts (createContext + Provider + custom hook)
+│   ├── layout/      # Application shell, sidebar, header, navigation, DashboardLayout
+│   ├── shared/      # Cross-feature reusable composite components (e.g., PasswordInput)
+│   └── ui/          # shadcn/ui base primitives (Base UI-powered)
 ├── constants/       # App-wide string/value constants
-├── forms/
-│   ├── hooks/       # useForm wrappers that wire schema + mutation
-│   └── schemas/     # Zod schemas for form validation
-├── helpers/         # Pure utility functions (no side effects)
+├── contexts/        # Global React contexts (AuthContext, etc.)
+├── features/        # Feature modules (Vertical Slices)
+│   ├── events/      # Event domain: api, components, forms, helpers, public index.js
+│   └── transactions/# Transaction & Balance domain: api, components, forms, public index.js
+├── forms/           # Global forms (e.g., auth schemas/hooks)
+├── helpers/         # Pure global utility functions (currency, dates, etc.)
 ├── hooks/           # General-purpose custom React hooks
 ├── lib/             # Shared singletons: Axios instance, cn() utility
-├── pages/           # Route-level page components
-└── assets/          # Static assets (images, SVGs via vite-plugin-svgr)
+└── pages/           # Route-level page components (minimal logic, assembling features)
 ```
+
+### Feature Module Structure (`src/features/<feature>/`)
+
+Each feature module is encapsulated:
+```
+src/features/<feature>/
+├── api/             # Domain TanStack Query hooks & Axios services
+├── components/      # Domain UI components (buttons, dialogs, tables, charts, cards)
+├── forms/           # Domain Zod schemas & form hooks
+├── helpers/         # Domain-specific helpers (optional)
+└── index.js         # Public API: only what is exported here can be imported by other features/pages
+```
+
+**Boundary Rule:** Never import deep paths from another feature (e.g. `import ... from '@/features/events/components/event-combobox'`). Always import through the public index: `import { EventCombobox } from '@/features/events'`.
 
 ---
 
@@ -138,8 +153,20 @@ export const FooContextProvider = ({ children }) => { /* ... */ };
 
 ---
 
+### 4. Layout & Route Protection
+
+- Protected authenticated routes are wrapped inside `<DashboardLayout>` (`src/components/layout/dashboard-layout.jsx`).
+- `<DashboardLayout>` automatically guards against unauthenticated access: checks `isInitializing`, redirects to `/signin` if `!user`, and renders the `AppSidebar` and `Header`.
+- Individual page components (`Home`, `EventPage`, etc.) should **NOT** duplicate authentication redirects (`if (!user) return <Navigate to="/signin" />`).
+- Unauthenticated routes (`/signin`, `/signup`) do not use `DashboardLayout`.
+
+---
+
 ## Component Conventions
 
+- **Base UI Primitives (CRITICAL):** This project uses shadcn with `@base-ui/react`, NOT Radix UI.
+  - **NEVER use `asChild`.** It does not exist in Base UI and will cause runtime errors or broken markup.
+  - Use the `render` prop for element composition: e.g. `<SidebarMenuButton render={<Link to={to} />} isActive={isActive}>` or `<DialogTrigger render={<Button>Abrir</Button>} />`.
 - **File naming**: `kebab-case.jsx` for all components.
 - **Export style**: `default export` for page and feature components; named exports for UI primitives.
 - **Icons**: Always use `lucide-react` — it is the configured icon library for shadcn.
