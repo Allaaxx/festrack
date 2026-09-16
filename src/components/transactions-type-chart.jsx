@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router';
-import { Label, Pie, PieChart, Sector } from 'recharts';
+import { Label, Pie, PieChart } from 'recharts';
 
 import { useGetTransactions } from '@/api/hooks/transaction';
 import {
@@ -53,22 +53,8 @@ const chartConfig = {
   },
 };
 
-const renderSector = (props) => {
-  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, payload } =
-    props;
-
-  return (
-    <Sector
-      cx={cx}
-      cy={cy}
-      innerRadius={innerRadius}
-      outerRadius={outerRadius}
-      startAngle={startAngle}
-      endAngle={endAngle}
-      fill={payload.fill}
-    />
-  );
-};
+const isPlural = (transactions) =>
+  transactions.length > 1 ? 'Transações' : 'Transação';
 
 const calculateChartData = (transactions = []) => {
   const groupedTransactions = {
@@ -188,8 +174,11 @@ export function TransactionsTypeChart() {
               data={chartData}
               dataKey="quantity"
               nameKey="label"
-              innerRadius={60}
-              shape={renderSector}
+              startAngle={300}
+              endAngle={660}
+              innerRadius={58}
+              outerRadius={75}
+              paddingAngle={2}
             >
               <Label
                 content={({ viewBox }) => {
@@ -203,17 +192,17 @@ export function TransactionsTypeChart() {
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-sm font-bold"
+                          y={(viewBox.cy || 0) - 12}
+                          className="fill-card-foreground text-lg font-medium"
                         >
-                          Transações
+                          {transactions.length}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          y={(viewBox.cy || 0) + 19}
+                          className="fill-muted-foreground text-sm"
                         >
-                          {transactions.length}
+                          {isPlural(transactions)}
                         </tspan>
                       </text>
                     );

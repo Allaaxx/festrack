@@ -4,7 +4,7 @@ import { formatCurrency } from '@/helpers/currency';
 const BalanceItem = ({ label, icon, amount }) => {
   return (
     <Card>
-      <CardContent className="space-y-2 p-6">
+      <CardContent className="space-y-2 p-4 sm:px-5 sm:py-0">
         <div className="flex items-center gap-2">
           <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-lg">
             {icon}
