@@ -57,22 +57,24 @@ const ShopSwitcher = ({ shops }) => {
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Lojas
-            </DropdownMenuLabel>
-            {shops.map((shop, index) => (
-              <DropdownMenuItem
-                key={shop.name}
-                onClick={() => setActiveShop(shop)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-xs border">
-                  <shop.logo className="size-4 shrink-0" />
-                </div>
-                {shop.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-muted-foreground text-xs">
+                Lojas
+              </DropdownMenuLabel>
+              {shops.map((shop, index) => (
+                <DropdownMenuItem
+                  key={shop.name}
+                  onClick={() => setActiveShop(shop)}
+                  className="gap-2 p-2"
+                >
+                  <div className="flex size-6 items-center justify-center rounded-xs border">
+                    <shop.logo className="size-4 shrink-0" />
+                  </div>
+                  {shop.name}
+                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem className="gap-2 p-2">
