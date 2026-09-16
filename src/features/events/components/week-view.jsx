@@ -218,6 +218,9 @@ export function WeekView({
                   >
                     {dayAllDayEvents.map((event) => {
                       const isFirstDay = isSameDay(day, event.start);
+                      const isLastDay = isSameDay(day, event.end);
+                      const spansRight = !isLastDay && dayIndex < 6;
+                      const spansLeft = !isFirstDay && dayIndex > 0;
                       const isFirstVisibleDay =
                         dayIndex === 0 && isBefore(event.start, weekStart);
                       const shouldShowTitle = isFirstDay || isFirstVisibleDay;
@@ -229,7 +232,9 @@ export function WeekView({
                           event={event}
                           view="month"
                           isFirstDay={isFirstDay}
-                          isLastDay={isSameDay(day, event.end)}
+                          isLastDay={isLastDay}
+                          spansLeft={spansLeft}
+                          spansRight={spansRight}
                         >
                           <div
                             className={cn(
