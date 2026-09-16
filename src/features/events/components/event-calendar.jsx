@@ -212,142 +212,144 @@ const EventCalendar = ({
         : `${capitalize(format(start, 'MMM', { locale: ptBR }))} - ${capitalize(format(end, 'MMM yyyy', { locale: ptBR }))}`;
     }
 
-    return capitalize(
+    const fullDayTitle = capitalize(
       format(currentDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })
+    );
+    const mobileDayTitle = format(currentDate, "d 'de' MMMM", { locale: ptBR });
+
+    return (
+      <>
+        <span className="sm:hidden">{mobileDayTitle}</span>
+        <span className="max-sm:hidden">{fullDayTitle}</span>
+      </>
     );
   }, [currentDate, view]);
 
   return (
-    <section className="p-3">
-      <div className="h-[calc(100dvh-2rem)]">
-        <div
-          className={cn('bg-card flex flex-col rounded-lg border', className)}
-        >
-          <div
-            className="flex flex-col has-data-[slot=month-view]:flex-1"
-            style={{
-              '--event-height': `${EventHeight}px`,
-              '--event-gap': `${EventGap}px`,
-              '--week-cells-height': `${WeekCellsHeight}px`,
-            }}
-          >
-            <div className="flex items-center justify-between gap-1 p-2 sm:p-4">
-              <div className="flex items-center gap-1 max-sm:justify-between sm:gap-4">
-                <div className="flex items-center gap-1">
-                  <Button
-                    onClick={() => onEventCreate(new Date())}
-                    className="max-sm:hidden md:max-lg:h-8"
-                  >
-                    <PlusIcon />
-                    <span>Novo evento</span>
-                  </Button>
-                  <Button
-                    size="icon-sm"
-                    className="sm:hidden"
-                    onClick={() => onEventCreate(new Date())}
-                  >
-                    <PlusIcon />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="max-sm:hidden md:max-lg:h-8"
-                    onClick={goToToday}
-                  >
-                    <CalendarClockIcon />
-                    <span>Hoje</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    className="sm:hidden"
-                    onClick={goToToday}
-                  >
-                    <CalendarClockIcon />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={goToPrevious}
-                  aria-label="Anterior"
-                >
-                  <ChevronLeftIcon />
-                </Button>
-                <h2 className="text-sm font-semibold sm:text-lg md:text-xl">
-                  {viewTitle}
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={goToNext}
-                  aria-label="Próximo"
-                >
-                  <ChevronRightIcon />
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button variant="outline" className="max-sm:h-8!">
-                        <span>
-                          <span className="sm:hidden" aria-hidden="true">
-                            {VIEW_LABELS[view]?.charAt(0)}
-                          </span>
-                          <span className="max-sm:sr-only">
-                            {VIEW_LABELS[view]}
-                          </span>
-                        </span>
-                        <ChevronDownIcon className="-me-1 opacity-60" />
-                      </Button>
-                    }
-                  />
-                  <DropdownMenuContent align="end" className="min-w-32">
-                    <DropdownMenuItem onClick={() => setView('month')}>
-                      Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setView('week')}>
-                      Semana <DropdownMenuShortcut>W</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setView('day')}>
-                      Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            <div className="flex flex-1 flex-col">
-              {view === 'month' && (
-                <MonthView
-                  currentDate={currentDate}
-                  events={events}
-                  onEventSelect={onEventSelect}
-                  onEventCreate={onEventCreate}
-                />
-              )}
-              {view === 'week' && (
-                <WeekView
-                  currentDate={currentDate}
-                  events={events}
-                  onEventSelect={onEventSelect}
-                  onEventCreate={onEventCreate}
-                />
-              )}
-              {view === 'day' && (
-                <DayView
-                  currentDate={currentDate}
-                  events={events}
-                  onEventSelect={onEventSelect}
-                  onEventCreate={onEventCreate}
-                />
-              )}
-            </div>
+    <div
+      className={cn(
+        'bg-card flex flex-1 flex-col overflow-hidden rounded-lg border',
+        'h-[calc(100svh-var(--header-height)-2rem)] min-h-0',
+        className
+      )}
+      style={{
+        '--event-height': `${EventHeight}px`,
+        '--event-gap': `${EventGap}px`,
+        '--week-cells-height': `${WeekCellsHeight}px`,
+      }}
+    >
+      <div className="flex items-center justify-between gap-1 p-2 sm:p-4">
+        <div className="flex items-center gap-1 max-sm:justify-between sm:gap-4">
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={() => onEventCreate(new Date())}
+              className="max-sm:hidden md:max-lg:h-8"
+            >
+              <PlusIcon />
+              <span>Novo evento</span>
+            </Button>
+            <Button
+              size="icon-sm"
+              className="sm:hidden"
+              onClick={() => onEventCreate(new Date())}
+            >
+              <PlusIcon />
+            </Button>
+            <Button
+              variant="outline"
+              className="max-sm:hidden md:max-lg:h-8"
+              onClick={goToToday}
+            >
+              <CalendarClockIcon />
+              <span>Hoje</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              className="sm:hidden"
+              onClick={goToToday}
+            >
+              <CalendarClockIcon />
+            </Button>
           </div>
         </div>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={goToPrevious}
+            aria-label="Anterior"
+          >
+            <ChevronLeftIcon />
+          </Button>
+          <h2 className="truncate text-center text-sm font-semibold sm:text-lg md:text-xl">
+            {viewTitle}
+          </h2>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={goToNext}
+            aria-label="Próximo"
+          >
+            <ChevronRightIcon />
+          </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="outline" className="max-sm:h-8!">
+                  <span>
+                    <span className="sm:hidden" aria-hidden="true">
+                      {VIEW_LABELS[view]?.charAt(0)}
+                    </span>
+                    <span className="max-sm:sr-only">{VIEW_LABELS[view]}</span>
+                  </span>
+                  <ChevronDownIcon className="-me-1 opacity-60" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end" className="min-w-32">
+              <DropdownMenuItem onClick={() => setView('month')}>
+                Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView('week')}>
+                Semana <DropdownMenuShortcut>W</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView('day')}>
+                Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </section>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {view === 'month' && (
+          <MonthView
+            currentDate={currentDate}
+            events={events}
+            onEventSelect={onEventSelect}
+            onEventCreate={onEventCreate}
+          />
+        )}
+        {view === 'week' && (
+          <WeekView
+            currentDate={currentDate}
+            events={events}
+            onEventSelect={onEventSelect}
+            onEventCreate={onEventCreate}
+          />
+        )}
+        {view === 'day' && (
+          <DayView
+            currentDate={currentDate}
+            events={events}
+            onEventSelect={onEventSelect}
+            onEventCreate={onEventCreate}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
