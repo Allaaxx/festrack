@@ -28,46 +28,57 @@ const NavMain = ({ items }) => {
       <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
-          const isActive = location.pathname === item.url;
+          const isCurrentRoute = location.pathname === item.url;
+          const to = isCurrentRoute
+            ? { pathname: item.url, search: location.search }
+            : item.url;
+
           return (
-            <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  tooltip={item.title}
-                  isActive={isActive}
-                >
-                  <Link to={item.url}>
-                    {item.icon}
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-                {item.items?.length ? (
-                  <>
-                    <CollapsibleTrigger
-                      render={
-                        <SidebarMenuAction className="data-[state=open]:rotate-90">
-                          <ChevronRightIcon />
-                          <span className="sr-only">Toggle</span>
-                        </SidebarMenuAction>
-                      }
-                    />
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
+            <Collapsible
+              key={item.title}
+              defaultOpen={item.isActive}
+              render={<SidebarMenuItem />}
+            >
+              <SidebarMenuButton
+                tooltip={item.title}
+                render={<Link to={to} />}
+                isActive={isCurrentRoute}
+              >
+                {item.icon}
+                <span>{item.title}</span>
+              </SidebarMenuButton>
+              {item.items?.length ? (
+                <>
+                  <SidebarMenuAction
+                    render={<CollapsibleTrigger />}
+                    className="aria-expanded:rotate-90"
+                  >
+                    <ChevronRightIcon />
+                    <span className="sr-only">Alternar</span>
+                  </SidebarMenuAction>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {item.items?.map((subItem) => {
+                        const isSubCurrent = location.pathname === subItem.url;
+                        const subTo = isSubCurrent
+                          ? { pathname: subItem.url, search: location.search }
+                          : subItem.url;
+
+                        return (
                           <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild>
-                              <a href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </a>
+                            <SidebarMenuSubButton
+                              render={<Link to={subTo} />}
+                              isActive={isSubCurrent}
+                            >
+                              <span>{subItem.title}</span>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </>
-                ) : null}
-              </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </>
+              ) : null}
             </Collapsible>
           );
         })}
