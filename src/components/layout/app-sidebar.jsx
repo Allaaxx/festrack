@@ -1,7 +1,8 @@
 import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
 
-import NavMain from '@/components/nav-main';
-import NavUser from '@/components/nav-user';
+import NavMain from '@/components/layout/nav-main';
+import NavUser from '@/components/layout/nav-user';
+import ShopSwitcher from '@/components/layout/shop-switcher';
 import {
   Sidebar,
   SidebarContent,
@@ -11,8 +12,6 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
-
-import ShopSwitcher from './shop-switcher';
 
 const data = {
   shops: [
@@ -41,6 +40,7 @@ const data = {
     },
   ],
 };
+
 const AppSidebar = ({ ...props }) => {
   const { user, signout } = useAuthContext();
   return (

@@ -50,41 +50,40 @@ const ShopSwitcher = ({ shops }) => {
                 <ChevronsUpDown className="ml-auto" />
               </SidebarMenuButton>
             }
-          ></DropdownMenuTrigger>
+          />
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+            className="w-(--anchor-width) min-w-56 rounded-lg"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Shop
-              </DropdownMenuLabel>
-              {shops.map((shop, index) => (
-                <DropdownMenuItem
-                  key={shop.name}
-                  onClick={() => setActiveShop(shop)}
-                  className="gap-2 p-2"
-                >
-                  <div className="flex size-6 items-center justify-center rounded-md border">
-                    <shop.logo className="size-3.5 shrink-0" />
-                  </div>
-                  {shop.name}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
-
+            <DropdownMenuLabel className="text-muted-foreground text-xs">
+              Lojas
+            </DropdownMenuLabel>
+            {shops.map((shop, index) => (
+              <DropdownMenuItem
+                key={shop.name}
+                onClick={() => setActiveShop(shop)}
+                className="gap-2 p-2"
+              >
+                <div className="flex size-6 items-center justify-center rounded-xs border">
+                  <shop.logo className="size-4 shrink-0" />
+                </div>
+                {shop.name}
+                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem disabled={true} className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
-              </div>
-              <div className="text-muted-foreground font-medium">
-                Criar loja | Em breve
-              </div>
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem className="gap-2 p-2">
+                <div className="bg-background flex size-6 items-center justify-center rounded-md border">
+                  <Plus className="size-4" />
+                </div>
+                <div className="text-muted-foreground font-medium">
+                  Adicionar Loja
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

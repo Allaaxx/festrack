@@ -2,7 +2,7 @@ import { Loader2Icon } from 'lucide-react';
 import { Controller } from 'react-hook-form';
 import { Link, Navigate } from 'react-router';
 
-import PasswordInput from '@/components/password-input';
+import PasswordInput from '@/components/shared/password-input';
 import { Button } from '@/components/ui/button';
 import {
   Card,

@@ -1,11 +1,9 @@
 import { CalendarXIcon, SearchXIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Navigate } from 'react-router';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuthContext } from '@/contexts/auth';
 import {
   CreateEventButton,
   EventCard,
@@ -22,7 +20,6 @@ const STATUS_FILTERS = [
 ];
 
 const EventPage = () => {
-  const { user, isInitializing } = useAuthContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeStatusFilter, setActiveStatusFilter] = useState('all');
 
@@ -44,12 +41,6 @@ const EventPage = () => {
       return matchesSearch && matchesStatus;
     });
   }, [events, searchQuery, activeStatusFilter]);
-
-  if (isInitializing) return null;
-
-  if (!user) {
-    return <Navigate to="/signin" />;
-  }
 
   const hasActiveFilters =
     searchQuery.trim() !== '' || activeStatusFilter !== 'all';
