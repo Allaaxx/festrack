@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { addMonths, format, isValid } from 'date-fns';
+import { endOfMonth, format, isValid, startOfMonth } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
@@ -11,8 +11,8 @@ const formatDateToQueryParam = (date) => format(date, 'yyyy-MM-dd');
 
 const getInitialDateState = (searchParams) => {
   const defaultDate = {
-    from: new Date(),
-    to: addMonths(new Date(), 1),
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
   };
   const from = searchParams.get('from');
   const to = searchParams.get('to');

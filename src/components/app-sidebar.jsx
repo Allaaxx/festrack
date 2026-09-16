@@ -1,7 +1,7 @@
 import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
 
-import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
+import NavMain from '@/components/nav-main';
+import NavUser from '@/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
 
-import { ShopSwitcher } from './shop-switcher';
+import ShopSwitcher from './shop-switcher';
 
 const data = {
   shops: [

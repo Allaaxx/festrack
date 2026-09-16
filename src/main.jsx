@@ -6,8 +6,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router';
 
-import { AppSidebar } from '@/components/app-sidebar';
-import { Header } from '@/components/header';
+import AppSidebar from '@/components/app-sidebar';
+import Header from '@/components/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';

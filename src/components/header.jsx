@@ -1,7 +1,7 @@
 import { PanelLeftIcon } from 'lucide-react';
 
 import { LogoIcon } from '@/assets/images';
-import { SearchForm } from '@/components/search-form';
+import SearchForm from '@/components/search-form';
 import {
   Breadcrumb,
   BreadcrumbItem,
