@@ -51,6 +51,7 @@ export const useEditEventForm = ({ event, onSuccess, onError }) => {
   });
 
   useEffect(() => {
+    if (!event) return;
     form.reset(getEditEventFormDefaultValues(event));
     form.setValue('id', event.id);
   }, [form, event]);

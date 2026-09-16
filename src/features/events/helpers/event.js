@@ -82,3 +82,32 @@ export const getEventStatusLabel = (status) => {
       return '—';
   }
 };
+
+/**
+ * Mapeia um evento do domínio para o formato esperado pelo EventCalendar.
+ *
+ * @param {{ id: string, name: string, description: string | null, startDate: string | Date, endDate: string | Date }} event
+ * @returns {{ id: string, title: string, description: string | null, start: Date, end: Date, allDay: boolean, color: string, rawEvent: any }}
+ */
+export const mapEventToCalendarItem = (event) => {
+  const start = parseEventDate(event.startDate) ?? new Date();
+  const end = parseEventDate(event.endDate) ?? start;
+  const status = getEventStatus(event);
+
+  const statusColorMap = {
+    scheduled: 'business',
+    in_progress: 'holiday',
+    completed: 'personal',
+  };
+
+  return {
+    id: event.id,
+    title: event.name,
+    description: event.description,
+    start,
+    end,
+    allDay: true,
+    color: statusColorMap[status] ?? 'etc',
+    rawEvent: event,
+  };
+};

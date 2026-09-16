@@ -2,6 +2,7 @@
 export { default as CreateEventButton } from './components/create-event-button';
 export { default as DeleteEventButton } from './components/delete-event-button';
 export { default as EditEventButton } from './components/edit-event-button';
+export { default as EventCalendar } from './components/event-calendar';
 export { default as EventCard } from './components/event-card';
 export { default as EventCombobox } from './components/event-combobox';
 export { default as EventForm } from './components/event-form';
@@ -19,11 +20,15 @@ export {
   useGetEvents,
 } from './api/hooks';
 
+// Forms
+export { useCreateEventForm, useEditEventForm } from './forms/hooks';
+
 // Helpers
 export {
   formatEventDate,
   formatEventDateRange,
   getEventStatus,
   getEventStatusLabel,
+  mapEventToCalendarItem,
   parseEventDate,
 } from './helpers/event';
