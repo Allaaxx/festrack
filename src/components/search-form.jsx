@@ -5,7 +5,7 @@ import { SearchIcon } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { SidebarInput } from '@/components/ui/sidebar';
 
-export function SearchForm({ ...props }) {
+const SearchForm = ({ ...props }) => {
   return (
     <form {...props}>
       <div className="relative">
@@ -21,4 +21,6 @@ export function SearchForm({ ...props }) {
       </div>
     </form>
   );
-}
+};
+
+export default SearchForm;

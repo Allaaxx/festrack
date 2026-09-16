@@ -41,7 +41,7 @@ const data = {
     },
   ],
 };
-export function AppSidebar({ ...props }) {
+const AppSidebar = ({ ...props }) => {
   const { user, signout } = useAuthContext();
   return (
     <Sidebar
@@ -64,4 +64,6 @@ export function AppSidebar({ ...props }) {
       </SidebarFooter>
     </Sidebar>
   );
-}
+};
+
+export default AppSidebar;

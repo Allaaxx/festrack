@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 
-export function Header() {
+const Header = () => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -49,4 +49,6 @@ export function Header() {
       </div>
     </header>
   );
-}
+};
+
+export default Header;

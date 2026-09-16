@@ -17,7 +17,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-export function NavUser({ user, signout }) {
+const NavUser = ({ user, signout }) => {
   const { isMobile } = useSidebar();
   const firstName = user?.firstName ?? '';
   const lastName = user?.lastName ?? '';
@@ -92,4 +92,6 @@ export function NavUser({ user, signout }) {
       </SidebarMenuItem>
     </SidebarMenu>
   );
-}
+};
+
+export default NavUser;

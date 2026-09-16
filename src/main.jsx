@@ -21,9 +21,9 @@ import EventPage from './pages/event';
 
 const queryClient = new QueryClient();
 
-function DashboardLayout() {
+const DashboardLayout = () => {
   return (
-    <div className="md:h-svh md:overflow-hidden [--header-height:calc(--spacing(14))]">
+    <div className="[--header-height:calc(--spacing(14))] md:h-svh md:overflow-hidden">
       <SidebarProvider defaultOpen={false} className="flex flex-col">
         <Header />
         <div className="flex flex-1 md:overflow-hidden">
@@ -37,9 +37,9 @@ function DashboardLayout() {
       </SidebarProvider>
     </div>
   );
-}
+};
 
-function AppRoutes() {
+const AppRoutes = () => {
   return (
     <Routes>
       {/* Rotas sem sidebar */}
@@ -55,7 +55,7 @@ function AppRoutes() {
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
-}
+};
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -73,3 +73,5 @@ createRoot(document.getElementById('root')).render(
     </QueryClientProvider>
   </StrictMode>
 );
+
+export default { DashboardLayout, AppRoutes };

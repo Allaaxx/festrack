@@ -114,7 +114,7 @@ const formatPeriodLabel = (from, to) => {
   return 'Todos os períodos';
 };
 
-export function TransactionsTypeChart() {
+const TransactionsTypeChart = () => {
   const [searchParams] = useSearchParams();
 
   const from = searchParams.get('from');
@@ -215,4 +215,6 @@ export function TransactionsTypeChart() {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default TransactionsTypeChart;

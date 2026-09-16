@@ -23,7 +23,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-export function NavProjects({ projects }) {
+const NavProjects = ({ projects }) => {
   const { isMobile } = useSidebar();
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -80,4 +80,6 @@ export function NavProjects({ projects }) {
       </SidebarMenu>
     </SidebarGroup>
   );
-}
+};
+
+export default NavProjects;

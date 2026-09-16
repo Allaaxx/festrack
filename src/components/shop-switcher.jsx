@@ -20,7 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-export function ShopSwitcher({ shops }) {
+const ShopSwitcher = ({ shops }) => {
   const { isMobile } = useSidebar();
   const [activeShop, setActiveShop] = useState(shops[0]);
 
@@ -90,4 +90,6 @@ export function ShopSwitcher({ shops }) {
       </SidebarMenuItem>
     </SidebarMenu>
   );
-}
+};
+
+export default ShopSwitcher;

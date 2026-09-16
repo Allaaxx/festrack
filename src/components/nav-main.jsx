@@ -20,7 +20,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 
-export function NavMain({ items }) {
+const NavMain = ({ items }) => {
   const location = useLocation();
 
   return (
@@ -85,4 +85,6 @@ export function NavMain({ items }) {
       </SidebarMenu>
     </SidebarGroup>
   );
-}
+};
+
+export default NavMain;

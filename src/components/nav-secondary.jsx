@@ -8,7 +8,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
-export function NavSecondary({ items, ...props }) {
+const NavSecondary = ({ items, ...props }) => {
   return (
     <SidebarGroup {...props}>
       <SidebarGroupContent>
@@ -25,4 +25,6 @@ export function NavSecondary({ items, ...props }) {
       </SidebarGroupContent>
     </SidebarGroup>
   );
-}
+};
+
+export default NavSecondary;
