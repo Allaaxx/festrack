@@ -235,7 +235,7 @@ const EventCalendar = ({
               <div className="flex items-center gap-1 max-sm:justify-between sm:gap-4">
                 <div className="flex items-center gap-1">
                   <Button
-                    onClick={onEventCreate}
+                    onClick={() => onEventCreate(new Date())}
                     className="max-sm:hidden md:max-lg:h-8"
                   >
                     <PlusIcon />
@@ -244,7 +244,7 @@ const EventCalendar = ({
                   <Button
                     size="icon-sm"
                     className="sm:hidden"
-                    onClick={onEventCreate}
+                    onClick={() => onEventCreate(new Date())}
                   >
                     <PlusIcon />
                   </Button>

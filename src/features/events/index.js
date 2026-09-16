@@ -27,6 +27,7 @@ export { useCreateEventForm, useEditEventForm } from './forms/hooks';
 export {
   formatEventDate,
   formatEventDateRange,
+  formatEventDateToApi,
   getEventStatus,
   getEventStatusLabel,
   mapEventToCalendarItem,

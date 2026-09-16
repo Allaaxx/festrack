@@ -20,8 +20,42 @@ export const parseEventDate = (dateValue) => {
   if (dateValue instanceof Date) {
     return isValid(dateValue) ? dateValue : null;
   }
-  const parsed = parseISO(String(dateValue));
+  const str = String(dateValue).trim();
+  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [, year, month, day] = match;
+    const localDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      0,
+      0,
+      0
+    );
+    return isValid(localDate) ? localDate : null;
+  }
+  const parsed = parseISO(str);
   return isValid(parsed) ? parsed : null;
+};
+
+/**
+ * Formata uma data local para o padrão ISO UTC esperado pela API Swagger:
+ * Início: "YYYY-MM-DDT00:00:00.000Z"
+ * Fim: "YYYY-MM-DDT23:59:59.000Z"
+ *
+ * @param {Date | string} dateValue
+ * @param {'start' | 'end'} type
+ * @returns {string}
+ */
+export const formatEventDateToApi = (dateValue, type = 'start') => {
+  if (!dateValue) return '';
+  const date =
+    dateValue instanceof Date ? dateValue : parseEventDate(dateValue);
+  if (!date || !isValid(date)) return '';
+  const datePart = format(date, 'yyyy-MM-dd');
+  return type === 'start'
+    ? `${datePart}T00:00:00.000Z`
+    : `${datePart}T23:59:59.000Z`;
 };
 
 /**

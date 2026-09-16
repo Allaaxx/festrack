@@ -207,9 +207,15 @@ const CreateEventDialog = ({ open, onOpenChange, initialDate }) => {
   });
 
   useEffect(() => {
-    if (initialDate && open) {
-      form.setValue('startDate', initialDate);
-      form.setValue('endDate', initialDate);
+    if (open) {
+      const targetDate =
+        initialDate instanceof Date ? initialDate : new Date();
+      form.reset({
+        name: '',
+        description: '',
+        startDate: targetDate,
+        endDate: targetDate,
+      });
     }
   }, [initialDate, open, form]);
 

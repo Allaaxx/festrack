@@ -22,7 +22,6 @@ import {
 import { useEventVisibility } from '../hooks/use-event-visibility';
 import { CalendarCell } from './calendar-cell';
 import {
-  DefaultStartHour,
   EventGap,
   EventHeight,
   getAllEventsForDay,
@@ -88,7 +87,7 @@ export function MonthView({
 
     const startTime = new Date(day);
 
-    startTime.setHours(DefaultStartHour, 0, 0);
+    startTime.setHours(0, 0, 0, 0);
     onEventCreate(startTime);
   };
 

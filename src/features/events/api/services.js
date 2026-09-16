@@ -1,3 +1,4 @@
+import { formatEventDateToApi } from '@/features/events/helpers/event';
 import protectedApi from '@/lib/axios';
 
 const mapEventFromApi = (event) => ({
@@ -31,14 +32,8 @@ const EventService = {
     const response = await protectedApi.post('/events/me', {
       name: input.name,
       description: input.description || null,
-      start_date:
-        input.startDate instanceof Date
-          ? input.startDate.toISOString()
-          : input.startDate,
-      end_date:
-        input.endDate instanceof Date
-          ? input.endDate.toISOString()
-          : input.endDate,
+      start_date: formatEventDateToApi(input.startDate, 'start'),
+      end_date: formatEventDateToApi(input.endDate, 'end'),
     });
 
     return mapEventFromApi(response.data);
@@ -58,14 +53,8 @@ const EventService = {
     const response = await protectedApi.patch(`/events/me/${input.id}`, {
       name: input.name,
       description: input.description || null,
-      start_date:
-        input.startDate instanceof Date
-          ? input.startDate.toISOString()
-          : input.startDate,
-      end_date:
-        input.endDate instanceof Date
-          ? input.endDate.toISOString()
-          : input.endDate,
+      start_date: formatEventDateToApi(input.startDate, 'start'),
+      end_date: formatEventDateToApi(input.endDate, 'end'),
     });
 
     return mapEventFromApi(response.data);
