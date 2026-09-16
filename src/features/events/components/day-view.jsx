@@ -143,18 +143,13 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
   );
 
   return (
-    <div
-      data-slot="day-view"
-      className="flex h-[calc(100vh-10rem)] min-h-0 flex-col overflow-hidden"
-    >
-      {/* Área scrolável com horas e eventos */}
+    <div data-slot="day-view" className="flex h-[calc(100vh-10rem)]">
       <ScrollArea className="flex-1">
-        {/* Header com eventos all-day (altura fixa) */}
         {showAllDaySection && (
-          <div className="border-border/70 bg-muted/50 shrink-0 border-t">
+          <div className="border-border/70 bg-muted/50 border-t">
             <div className="grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]">
-              <div className="flex flex-col flex-wrap items-center sm:flex-row sm:items-baseline-last">
-                <span className="text-muted-foreground/70 w-full text-center text-[10px] sm:h-6 sm:w-16 sm:text-xs">
+              <div className="relative">
+                <span className="text-muted-foreground/70 absolute bottom-0 left-0 h-6 w-16 max-w-full pe-2 text-right text-[10px] sm:pe-4 sm:text-xs">
                   Dia todo
                 </span>
               </div>
@@ -175,7 +170,7 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
             </div>
           </div>
         )}
-        <div className="border-border/70 grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]">
+        <div className="border-border/70 grid flex-1 grid-cols-[3rem_1fr] overflow-hidden border-t sm:grid-cols-[4rem_1fr]">
           {/* Coluna de horas */}
           <div>
             {hours.map((hour, index) => (
