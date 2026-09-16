@@ -1,69 +1,67 @@
-import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
+import {
+  CalendarCogIcon,
+  ChartSplineIcon,
+  PiggyBankIcon,
+} from 'lucide-react';
 
-import NavMain from '@/components/layout/nav-main';
-import NavUser from '@/components/layout/nav-user';
-import ShopSwitcher from '@/components/layout/shop-switcher';
+import {
+  NavMain,
+  NavUser,
+  SearchForm,
+  ShopSwitcher,
+} from '@/components/layout';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
+  SidebarRail,
 } from '@/components/ui/sidebar';
-import { useAuthContext } from '@/contexts/auth';
 
 const data = {
-  shops: [
-    {
-      name: 'Loja padrão',
-      logo: Store,
-      plan: 'Empresa',
-    },
-  ],
+  user: {
+    name: 'shadcn',
+    email: 'm@example.com',
+    avatar: '/avatars/shadcn.jpg',
+  },
   navMain: [
     {
       title: 'Financeiro',
       url: '/',
       icon: <ChartSplineIcon />,
-      items: [
-        {
-          title: 'Nova transação',
-          url: '#',
-        },
-      ],
     },
     {
       title: 'Eventos',
-      url: '/event',
+      url: '/event/card',
       icon: <CalendarCogIcon />,
+      items: [
+        {
+          title: 'Lista de eventos',
+          url: '/event/card',
+        },
+        {
+          title: 'Calendário de eventos',
+          url: '/event/calendar',
+        },
+      ],
     },
   ],
 };
 
-const AppSidebar = ({ ...props }) => {
-  const { user, signout } = useAuthContext();
+export const AppSidebar = ({ ...props }) => {
   return (
-    <Sidebar
-      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
-      collapsible="icon"
-      {...props}
-    >
+    <Sidebar {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <ShopSwitcher shops={data.shops} />
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <ShopSwitcher />
+        <SearchForm />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} signout={signout} />
+        <NavUser user={data.user} />
       </SidebarFooter>
+      <SidebarRail />
     </Sidebar>
   );
 };
-
-export default AppSidebar;
