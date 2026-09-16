@@ -1,29 +1,26 @@
-import {
-  CalendarCogIcon,
-  ChartSplineIcon,
-  PiggyBankIcon,
-} from 'lucide-react';
+import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
 
-import {
-  NavMain,
-  NavUser,
-  SearchForm,
-  ShopSwitcher,
-} from '@/components/layout';
+import NavMain from '@/components/layout/nav-main';
+import NavUser from '@/components/layout/nav-user';
+import ShopSwitcher from '@/components/layout/shop-switcher';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
+  SidebarMenu,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useAuthContext } from '@/contexts/auth';
 
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
+  shops: [
+    {
+      name: 'Loja padrão',
+      logo: Store,
+      plan: 'Empresa',
+    },
+  ],
   navMain: [
     {
       title: 'Financeiro',
@@ -48,20 +45,29 @@ const data = {
   ],
 };
 
-export const AppSidebar = ({ ...props }) => {
+const AppSidebar = ({ ...props }) => {
+  const { user, signout } = useAuthContext();
   return (
-    <Sidebar {...props}>
+    <Sidebar
+      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
+      collapsible="icon"
+      {...props}
+    >
       <SidebarHeader>
-        <ShopSwitcher />
-        <SearchForm />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <ShopSwitcher shops={data.shops} />
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} signout={signout} />
       </SidebarFooter>
-      <SidebarRail />
     </Sidebar>
   );
 };
+
+export default AppSidebar;
