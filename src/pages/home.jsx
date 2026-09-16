@@ -1,11 +1,13 @@
 import { Navigate } from 'react-router';
 
-import AddTransactionButton from '@/components/add-transaction-button';
-import Balance from '@/components/balance';
-import DateSelection from '@/components/date-selection';
-import TransactionsTable from '@/components/transactions-table';
-import TransactionsTypeChart from '@/components/transactions-type-chart';
 import { useAuthContext } from '@/contexts/auth';
+import {
+  AddTransactionButton,
+  Balance,
+  DateSelection,
+  TransactionsTable,
+  TransactionsTypeChart,
+} from '@/features/transactions';
 
 const HomePage = () => {
   const { user, isInitializing } = useAuthContext();
