@@ -63,8 +63,12 @@ export function MonthView({
     () =>
       Array.from({ length: 7 }).map((_, i) => {
         const d = addDays(startOfWeek(new Date(), { weekStartsOn: 0 }), i);
-        const formatted = format(d, 'EEE', { locale: ptBR }).replace('.', '');
-        return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+        const full = format(d, 'EEE', { locale: ptBR }).replace('.', '');
+        const short = format(d, 'EEEEE', { locale: ptBR });
+        return {
+          full: full.charAt(0).toUpperCase() + full.slice(1),
+          short: short.toUpperCase(),
+        };
       }),
     []
   );
@@ -104,22 +108,23 @@ export function MonthView({
   }, []);
 
   return (
-    <div data-slot="month-view" className="contents">
+    <div data-slot="month-view" className="flex min-h-0 flex-1 flex-col">
       <div className="border-border/70 grid grid-cols-7 border-b">
         {weekdays.map((day) => (
           <div
-            key={day}
-            className="text-muted-foreground/70 py-2 text-center text-sm"
+            key={day.full}
+            className="text-muted-foreground/70 py-2 text-center text-xs font-medium sm:text-sm"
           >
-            {day}
+            <span className="capitalize sm:hidden">{day.short}</span>
+            <span className="capitalize max-sm:hidden">{day.full}</span>
           </div>
         ))}
       </div>
-      <div className="grid flex-1 auto-rows-fr">
+      <div className="grid min-h-0 flex-1 auto-rows-fr">
         {weeks.map((week, weekIndex) => (
           <div
             key={`week-${weekIndex}`}
-            className="grid grid-cols-7 [&:last-child>*]:border-b-0"
+            className="grid min-h-0 grid-cols-7 [&:last-child>*]:border-b-0"
           >
             {week.map((day, dayIndex) => {
               const dayEvents = getEventsForDay(events, day);
@@ -143,20 +148,20 @@ export function MonthView({
               return (
                 <div
                   key={day.toString()}
-                  className="group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 border-r border-b last:border-r-0"
+                  className="group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 min-h-0 border-r border-b last:border-r-0"
                   data-today={isToday(day) || undefined}
                   data-outside-cell={!isCurrentMonth || undefined}
                 >
                   <CalendarCell
-                    className="overflow-visible"
+                    className="min-h-0 overflow-visible"
                     onClick={(event) => handleCellClick(day, event)}
                   >
-                    <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-6 items-center justify-center rounded-full text-sm">
+                    <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs">
                       {format(day, 'd')}
                     </div>
                     <div
                       ref={isReferenceCell ? contentRef : null}
-                      className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] overflow-visible sm:min-h-[calc((var(--event-height)+var(--event-gap))*3)] lg:min-h-[calc((var(--event-height)+var(--event-gap))*4)]"
+                      className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] flex-1 overflow-visible"
                     >
                       {sortEvents(allDayEvents).map((event, index) => {
                         const isFirstDay = isSameDay(day, event.start);

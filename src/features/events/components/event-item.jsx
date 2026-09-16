@@ -55,7 +55,7 @@ export function EventItem({
   );
 
   const getEventTime = () => {
-    if (event.allDay) return 'Dia inteiro';
+    if (event.allDay) return 'Dia todo';
     if (durationMinutes < 45) return formatEventTime(event.start);
 
     return `${formatEventTime(event.start)} - ${formatEventTime(event.end)}`;
