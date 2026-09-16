@@ -2,14 +2,16 @@ import { CalendarXIcon, SearchXIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router';
 
-import { useGetEvents } from '@/api/hooks/event';
-import CreateEventButton from '@/components/create-event-button';
-import EventCard from '@/components/event-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuthContext } from '@/contexts/auth';
-import { getEventStatus } from '@/helpers/event';
+import {
+  CreateEventButton,
+  EventCard,
+  getEventStatus,
+  useGetEvents,
+} from '@/features/events';
 import { cn } from '@/lib/utils';
 
 const STATUS_FILTERS = [

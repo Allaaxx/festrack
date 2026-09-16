@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { NumericFormat } from 'react-number-format';
 
-import EventCombobox from '@/components/event-combobox';
 import { Button } from '@/components/ui/button';
 import DatePicker from '@/components/ui/date-picker';
 import {
@@ -30,6 +29,7 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
+import { EventCombobox } from '@/features/events';
 import { useCreateTransactionForm } from '@/forms/hooks/transaction';
 
 const AddTransactionButton = () => {

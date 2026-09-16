@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { NumericFormat } from 'react-number-format';
 
-import EventCombobox from '@/components/event-combobox';
 import { Button } from '@/components/ui/button';
 import DatePicker from '@/components/ui/date-picker';
 import {
@@ -29,6 +28,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
+import { EventCombobox } from '@/features/events';
 import { useEditTransactionForm } from '@/forms/hooks/transaction';
 const EditTransactionButton = ({ transaction }) => {
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
