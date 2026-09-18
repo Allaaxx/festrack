@@ -1,15 +1,17 @@
 import { CalendarXIcon, SearchXIcon } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { LOCAL_STORAGE_EVENT_CARDS_FILTERS_KEY } from '@/constants/local-storage';
 import {
   CreateEventButton,
   EventCard,
   getEventStatus,
   useGetEvents,
 } from '@/features/events';
+import useStoredSearchParams from '@/hooks/use-stored-search-params';
 import { cn } from '@/lib/utils';
 
 const STATUS_FILTERS = [
@@ -19,14 +21,50 @@ const STATUS_FILTERS = [
   { label: 'Finalizados', value: 'completed' },
 ];
 
+const defaultEventCardsParams = {
+  search: '',
+  status: 'all',
+};
+
 const EventPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeStatusFilter, setActiveStatusFilter] = useState('all');
+  const [params, setParams] = useStoredSearchParams(
+    LOCAL_STORAGE_EVENT_CARDS_FILTERS_KEY,
+    defaultEventCardsParams,
+    {
+      validate: (data) =>
+        typeof data?.search === 'string' &&
+        STATUS_FILTERS.some((f) => f.value === data?.status),
+    }
+  );
+
+  const [searchValue, setSearchValue] = useState(params.search ?? '');
+  const [prevParamSearch, setPrevParamSearch] = useState(params.search ?? '');
+
+  if (params.search !== prevParamSearch) {
+    setPrevParamSearch(params.search ?? '');
+    setSearchValue(params.search ?? '');
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchValue !== (params.search ?? '')) {
+        setParams({ search: searchValue });
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchValue, params.search, setParams]);
+
+  const activeStatusFilter = STATUS_FILTERS.some(
+    (f) => f.value === params.status
+  )
+    ? params.status
+    : 'all';
 
   const { data: events = [], isLoading, isError, refetch } = useGetEvents();
 
   const filteredEvents = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedQuery = searchValue.trim().toLowerCase();
 
     return events.filter((event) => {
       const matchesSearch =
@@ -40,10 +78,15 @@ const EventPage = () => {
 
       return matchesSearch && matchesStatus;
     });
-  }, [events, searchQuery, activeStatusFilter]);
+  }, [events, searchValue, activeStatusFilter]);
 
   const hasActiveFilters =
-    searchQuery.trim() !== '' || activeStatusFilter !== 'all';
+    searchValue.trim() !== '' || activeStatusFilter !== 'all';
+
+  const handleClearFilters = () => {
+    setSearchValue('');
+    setParams({ search: '', status: 'all' });
+  };
 
   return (
     <div className="space-y-6 p-4 py-2 sm:space-y-8 sm:p-8 sm:py-4">
@@ -64,8 +107,8 @@ const EventPage = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           placeholder="Buscar eventos..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           className="sm:max-w-64"
         />
 
@@ -77,7 +120,7 @@ const EventPage = () => {
                 activeStatusFilter === filter.value ? 'default' : 'outline'
               }
               size="sm"
-              onClick={() => setActiveStatusFilter(filter.value)}
+              onClick={() => setParams({ status: filter.value })}
               className={cn(
                 'flex items-center justify-center rounded-full',
                 activeStatusFilter === filter.value && 'shadow-none'
@@ -134,13 +177,7 @@ const EventPage = () => {
                       Tente ajustar sua busca ou os filtros selecionados.
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setActiveStatusFilter('all');
-                    }}
-                  >
+                  <Button variant="outline" onClick={handleClearFilters}>
                     Limpar filtros
                   </Button>
                 </>

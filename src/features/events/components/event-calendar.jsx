@@ -134,17 +134,50 @@ export function getAllEventsForDay(events, day) {
 const EventCalendar = ({
   events,
   initialView = 'month',
+  view: controlledView,
+  onViewChange,
+  currentDate: controlledCurrentDate,
+  onDateChange,
   className,
   onEventSelect = () => {},
   onEventCreate = () => {},
 }) => {
-  const [currentDate, setCurrentDate] = useState(() => new Date());
-  const [view, setView] = useState(initialView);
+  const isControlledDate = controlledCurrentDate !== undefined;
+  const isControlledView = controlledView !== undefined;
 
-  const goToToday = () => setCurrentDate(new Date());
+  const [internalCurrentDate, setInternalCurrentDate] = useState(
+    () => new Date()
+  );
+  const [internalView, setInternalView] = useState(initialView);
+
+  const currentDate = isControlledDate
+    ? controlledCurrentDate
+    : internalCurrentDate;
+  const view = isControlledView ? controlledView : internalView;
+
+  const handleDateChange = (updater) => {
+    const nextDate =
+      typeof updater === 'function' ? updater(currentDate) : updater;
+    if (isControlledDate) {
+      onDateChange?.(nextDate);
+    } else {
+      setInternalCurrentDate(nextDate);
+    }
+  };
+
+  const handleViewChange = (updater) => {
+    const nextView = typeof updater === 'function' ? updater(view) : updater;
+    if (isControlledView) {
+      onViewChange?.(nextView);
+    } else {
+      setInternalView(nextView);
+    }
+  };
+
+  const goToToday = () => handleDateChange(new Date());
 
   const goToPrevious = () => {
-    setCurrentDate((current) => {
+    handleDateChange((current) => {
       if (view === 'month') return subMonths(current, 1);
       if (view === 'week') return subWeeks(current, 1);
 
@@ -153,7 +186,7 @@ const EventCalendar = ({
   };
 
   const goToNext = () => {
-    setCurrentDate((current) => {
+    handleDateChange((current) => {
       if (view === 'month') return addMonths(current, 1);
       if (view === 'week') return addWeeks(current, 1);
 
@@ -173,13 +206,13 @@ const EventCalendar = ({
 
       switch (e.key.toLowerCase()) {
         case 'm':
-          setView('month');
+          handleViewChange('month');
           break;
         case 'w':
-          setView('week');
+          handleViewChange('week');
           break;
         case 'd':
-          setView('day');
+          handleViewChange('day');
           break;
       }
     };
@@ -187,7 +220,7 @@ const EventCalendar = ({
     window.addEventListener('keydown', handleKeyDown);
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  });
 
   const VIEW_LABELS = {
     month: 'Mês',
@@ -310,13 +343,13 @@ const EventCalendar = ({
               }
             />
             <DropdownMenuContent align="end" className="min-w-32">
-              <DropdownMenuItem onClick={() => setView('month')}>
+              <DropdownMenuItem onClick={() => handleViewChange('month')}>
                 Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setView('week')}>
+              <DropdownMenuItem onClick={() => handleViewChange('week')}>
                 Semana <DropdownMenuShortcut>W</DropdownMenuShortcut>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setView('day')}>
+              <DropdownMenuItem onClick={() => handleViewChange('day')}>
                 Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
               </DropdownMenuItem>
             </DropdownMenuContent>
