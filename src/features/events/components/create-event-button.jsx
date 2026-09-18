@@ -18,7 +18,7 @@ import { useCreateEventForm } from '@/features/events/forms/hooks';
 
 const FORM_ID = 'createEvent';
 
-const CreateEventButton = () => {
+const CreateEventButton = ({ className }) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
   const { form, onSubmit } = useCreateEventForm({
@@ -47,7 +47,7 @@ const CreateEventButton = () => {
     <Dialog open={dialogIsOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger
         render={
-          <Button>
+          <Button className={className}>
             <PlusIcon />
             Novo evento
           </Button>

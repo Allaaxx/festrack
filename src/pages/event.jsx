@@ -56,7 +56,7 @@ const EventPage = () => {
           </p>
         </div>
         <div className="shrink-0">
-          <CreateEventButton />
+          <CreateEventButton className="w-full" />
         </div>
       </div>
 
