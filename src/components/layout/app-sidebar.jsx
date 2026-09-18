@@ -1,4 +1,5 @@
 import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
+import { Link } from 'react-router';
 
 import NavMain from '@/components/layout/nav-main';
 import NavUser from '@/components/layout/nav-user';
@@ -12,6 +13,8 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
+
+import { useNavMenu } from './hooks/index';
 
 const data = {
   shops: [
@@ -47,6 +50,9 @@ const data = {
 
 const AppSidebar = ({ ...props }) => {
   const { user, signout } = useAuthContext();
+
+  const activeNavItems = useNavMenu(data.navMain);
+
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -61,7 +67,8 @@ const AppSidebar = ({ ...props }) => {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        {/* 4. Injete os dados processados e o componente de Link */}
+        <NavMain items={activeNavItems} LinkComponent={Link} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} signout={signout} />
