@@ -26,9 +26,12 @@ const NavMain = ({ items }) => {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
-      <SidebarMenu>
+      <SidebarMenu className="space-y-1">
         {items.map((item) => {
-          const isCurrentRoute = location.pathname === item.url;
+          const isCurrentRoute =
+            location.pathname === item.url ||
+            item.items?.some((subItem) => location.pathname === subItem.url);
+
           const to = isCurrentRoute
             ? { pathname: item.url, search: location.search }
             : item.url;
@@ -41,7 +44,9 @@ const NavMain = ({ items }) => {
             >
               <SidebarMenuButton
                 tooltip={item.title}
-                render={<Link to={to} />}
+                render={
+                  item.items?.length ? <CollapsibleTrigger /> : <Link to={to} />
+                }
                 isActive={isCurrentRoute}
               >
                 {item.icon}
@@ -56,7 +61,7 @@ const NavMain = ({ items }) => {
                     <ChevronRightIcon />
                     <span className="sr-only">Alternar</span>
                   </SidebarMenuAction>
-                  <CollapsibleContent>
+                  <CollapsibleContent className="mt-0.5">
                     <SidebarMenuSub>
                       {item.items?.map((subItem) => {
                         const isSubCurrent = location.pathname === subItem.url;

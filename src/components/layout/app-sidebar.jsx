@@ -29,7 +29,7 @@ const data = {
     },
     {
       title: 'Eventos',
-      url: '/event/card',
+      url: '#',
       icon: <CalendarCogIcon />,
       items: [
         {
