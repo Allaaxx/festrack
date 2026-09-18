@@ -45,7 +45,11 @@ const NavMain = ({ items }) => {
               <SidebarMenuButton
                 tooltip={item.title}
                 render={
-                  item.items?.length ? <CollapsibleTrigger /> : <Link to={to} />
+                  item.items?.length ? (
+                    <CollapsibleTrigger className="cursor-pointer" />
+                  ) : (
+                    <Link to={to} />
+                  )
                 }
                 isActive={isCurrentRoute}
               >
@@ -55,7 +59,7 @@ const NavMain = ({ items }) => {
               {item.items?.length ? (
                 <>
                   <SidebarMenuAction
-                    render={<CollapsibleTrigger />}
+                    render={<CollapsibleTrigger className="cursor-pointer" />}
                     className="aria-expanded:rotate-90"
                   >
                     <ChevronRightIcon />
