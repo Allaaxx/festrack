@@ -1,10 +1,6 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AccountSettings } from '@/features/settings';
-const tabs = [
-  { name: 'General', value: 'general' },
-  { name: 'Preferences', value: 'preferences' },
-  { name: 'Users', value: 'users' },
-];
+const tabs = [{ name: 'General', value: 'general' }];
 const SettingsPage = () => {
   return (
     <div className="w-full py-8">
