@@ -1,4 +1,5 @@
-import { ChevronsUpDownIcon, LogOutIcon, UserPenIcon } from 'lucide-react';
+import { ChevronsUpDownIcon, LogOutIcon, SettingsIcon } from 'lucide-react';
+import { Link } from 'react-router';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -75,9 +76,9 @@ const NavUser = ({ user, signout }) => {
             <DropdownMenuSeparator />
 
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <UserPenIcon />
-                Perfil
+              <DropdownMenuItem render={<Link to="/settings" />}>
+                <SettingsIcon />
+                Configurações
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

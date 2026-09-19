@@ -14,6 +14,7 @@ import EventCalendarPage from '@/pages/calendar';
 import EventPage from '@/pages/event';
 import HomePage from '@/pages/home';
 import NotFoundPage from '@/pages/not-found';
+import SettingsPage from '@/pages/settings';
 import SignInPage from '@/pages/signin';
 import SignUpPage from '@/pages/signup';
 
@@ -32,6 +33,7 @@ const AppRoutes = () => {
         <Route path="/event" element={<Navigate to="/event/card" replace />} />
         <Route path="/event/card" element={<EventPage />} />
         <Route path="/event/calendar" element={<EventCalendarPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

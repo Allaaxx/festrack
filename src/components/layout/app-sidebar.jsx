@@ -1,6 +1,12 @@
-import { CalendarCogIcon, ChartSplineIcon, Store } from 'lucide-react';
+import {
+  CalendarCogIcon,
+  ChartSplineIcon,
+  SettingsIcon,
+  Store,
+} from 'lucide-react';
 import { Link } from 'react-router';
 
+import NavFooter from '@/components/layout/nav-footer';
 import NavMain from '@/components/layout/nav-main';
 import NavUser from '@/components/layout/nav-user';
 import ShopSwitcher from '@/components/layout/shop-switcher';
@@ -46,12 +52,20 @@ const data = {
       ],
     },
   ],
+  navFooter: [
+    {
+      title: 'Configurações',
+      url: '/settings',
+      icon: <SettingsIcon />,
+    },
+  ],
 };
 
 const AppSidebar = ({ ...props }) => {
   const { user, signout } = useAuthContext();
 
   const activeNavItems = useNavMenu(data.navMain);
+  const activeNavFooterItems = useNavMenu(data.navFooter);
 
   return (
     <Sidebar
@@ -71,6 +85,7 @@ const AppSidebar = ({ ...props }) => {
         <NavMain items={activeNavItems} LinkComponent={Link} />
       </SidebarContent>
       <SidebarFooter>
+        <NavFooter items={activeNavFooterItems} LinkComponent={Link} />
         <NavUser user={user} signout={signout} />
       </SidebarFooter>
     </Sidebar>
