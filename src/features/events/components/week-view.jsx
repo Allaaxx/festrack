@@ -171,7 +171,7 @@ export function WeekView({
   return (
     <div
       data-slot="week-view"
-      className="flex h-[calc(100vh-10rem)] min-h-0 flex-col overflow-hidden"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
     >
       <div className="bg-background/80 border-border/70 sticky top-0 z-30 grid shrink-0 grid-cols-8 border-b backdrop-blur-md">
         <div className="text-muted-foreground/70 py-2 text-center text-sm">

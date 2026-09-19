@@ -77,7 +77,7 @@ const EventCalendarPage = () => {
     return (
       <div className="flex flex-1 flex-col gap-4">
         <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="h-[calc(100svh-var(--header-height)-6.5rem)] w-full flex-1 rounded-lg" />
+        <Skeleton className="min-h-[600px] w-full flex-1 rounded-lg" />
       </div>
     );
   }

@@ -143,7 +143,7 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
   );
 
   return (
-    <div data-slot="day-view" className="flex h-[calc(100vh-10rem)]">
+    <div data-slot="day-view" className="flex min-h-0 flex-1 flex-col">
       <ScrollArea className="flex-1">
         {showAllDaySection && (
           <div className="border-border/70 bg-muted/50 border-t">

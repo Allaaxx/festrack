@@ -200,8 +200,7 @@ const EventCalendar = ({
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         (e.target instanceof HTMLElement && e.target.isContentEditable) ||
-        (e.target instanceof HTMLElement &&
-          e.target.closest('[role="dialog"]'))
+        (e.target instanceof HTMLElement && e.target.closest('[role="dialog"]'))
       ) {
         return;
       }
@@ -263,8 +262,7 @@ const EventCalendar = ({
   return (
     <div
       className={cn(
-        'bg-card flex flex-1 flex-col overflow-hidden rounded-lg border',
-        'h-[calc(100svh-var(--header-height)-2rem)] min-h-0',
+        'bg-card flex min-h-[600px] flex-1 flex-col overflow-hidden rounded-lg border',
         className
       )}
       style={{
