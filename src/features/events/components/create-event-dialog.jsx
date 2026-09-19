@@ -1,5 +1,5 @@
-import { Loader2Icon, PlusIcon } from 'lucide-react';
-import { useState } from 'react';
+import { Loader2Icon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,16 +18,15 @@ import { useCreateEventForm } from '@/features/events/forms/hooks';
 
 const FORM_ID = 'createEvent';
 
-const CreateEventButton = ({ className }) => {
-  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+const CreateEventDialog = ({ trigger, open, onOpenChange, initialDate }) => {
+  const isControlled = open !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const dialogOpen = isControlled ? open : internalOpen;
 
   const { form, onSubmit } = useCreateEventForm({
     onSuccess: () => {
-      setDialogIsOpen(false);
-      toast.add({
-        type: 'success',
-        title: 'Evento criado com sucesso!',
-      });
+      handleOpenChange(false);
+      toast.add({ type: 'success', title: 'Evento criado com sucesso!' });
     },
     onError: () => {
       toast.add({
@@ -38,22 +37,27 @@ const CreateEventButton = ({ className }) => {
     },
   });
 
-  const handleOpenChange = (open) => {
-    setDialogIsOpen(open);
-    if (!open) form.reset();
+  const handleOpenChange = (value) => {
+    if (!isControlled) setInternalOpen(value);
+    onOpenChange?.(value);
+    if (!value) form.reset();
   };
 
-  return (
-    <Dialog open={dialogIsOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger
-        render={
-          <Button className={className}>
-            <PlusIcon />
-            Novo evento
-          </Button>
-        }
-      />
+  useEffect(() => {
+    if (dialogOpen) {
+      const targetDate = initialDate instanceof Date ? initialDate : new Date();
+      form.reset({
+        name: '',
+        description: '',
+        startDate: targetDate,
+        endDate: targetDate,
+      });
+    }
+  }, [initialDate, dialogOpen, form]);
 
+  return (
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      {trigger && <DialogTrigger render={trigger} />}
       <DialogContent className="sm:min-w-112.5">
         <DialogHeader>
           <DialogTitle>Novo evento</DialogTitle>
@@ -68,7 +72,6 @@ const CreateEventButton = ({ className }) => {
           <DialogClose
             render={
               <Button
-                type="reset"
                 variant="secondary"
                 disabled={form.formState.isSubmitting}
                 className="w-full sm:w-1/2"
@@ -81,8 +84,8 @@ const CreateEventButton = ({ className }) => {
           <Button
             type="submit"
             form={FORM_ID}
-            disabled={form.formState.isSubmitting}
             className="w-full sm:w-1/2"
+            disabled={form.formState.isSubmitting}
           >
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />
@@ -95,4 +98,4 @@ const CreateEventButton = ({ className }) => {
   );
 };
 
-export default CreateEventButton;
+export default CreateEventDialog;

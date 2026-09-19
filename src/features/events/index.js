@@ -1,7 +1,7 @@
 // Components
-export { default as CreateEventButton } from './components/create-event-button';
+export { default as CreateEventDialog } from './components/create-event-dialog';
 export { default as DeleteEventButton } from './components/delete-event-button';
-export { default as EditEventButton } from './components/edit-event-button';
+export { default as EditEventSheet } from './components/edit-event-sheet';
 export { default as EventCalendar } from './components/event-calendar';
 export { default as EventCard } from './components/event-card';
 export { default as EventCombobox } from './components/event-combobox';

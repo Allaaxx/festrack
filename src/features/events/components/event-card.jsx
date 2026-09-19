@@ -1,5 +1,6 @@
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, ExternalLinkIcon } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardAction,
@@ -9,7 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import DeleteEventButton from '@/features/events/components/delete-event-button';
-import EditEventButton from '@/features/events/components/edit-event-button';
+import EditEventSheet from '@/features/events/components/edit-event-sheet';
 import EventStatusBadge from '@/features/events/components/event-status-badge';
 import { formatEventDateRange } from '@/features/events/helpers/event';
 
@@ -28,7 +29,14 @@ const EventCard = ({ event }) => {
         </div>
         <CardAction>
           <div className="flex items-center">
-            <EditEventButton event={event} />
+            <EditEventSheet
+              event={event}
+              trigger={
+                <Button variant="ghost" size="icon">
+                  <ExternalLinkIcon className="text-muted-foreground" />
+                </Button>
+              }
+            />
             <DeleteEventButton event={event} />
           </div>
         </CardAction>

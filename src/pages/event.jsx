@@ -1,4 +1,4 @@
-import { CalendarXIcon, SearchXIcon } from 'lucide-react';
+import { CalendarXIcon, PlusIcon, SearchXIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LOCAL_STORAGE_EVENT_CARDS_FILTERS_KEY } from '@/constants/local-storage';
 import {
-  CreateEventButton,
+  CreateEventDialog,
   EventCard,
   getEventStatus,
   useGetEvents,
@@ -99,7 +99,14 @@ const EventPage = () => {
           </p>
         </div>
         <div className="shrink-0">
-          <CreateEventButton className="w-full" />
+          <CreateEventDialog
+            trigger={
+              <Button className="w-full">
+                <PlusIcon />
+                Novo evento
+              </Button>
+            }
+          />
         </div>
       </div>
 
@@ -191,7 +198,14 @@ const EventPage = () => {
                       financeiros.
                     </p>
                   </div>
-                  <CreateEventButton />
+                  <CreateEventDialog
+                    trigger={
+                      <Button>
+                        <PlusIcon />
+                        Novo evento
+                      </Button>
+                    }
+                  />
                 </>
               )}
             </div>
