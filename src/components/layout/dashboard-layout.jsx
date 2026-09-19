@@ -15,15 +15,15 @@ const DashboardLayout = () => {
   }
 
   return (
-    <div className="[--header-height:calc(--spacing(14))] md:h-svh md:overflow-hidden">
-      <SidebarProvider defaultOpen={false} className="flex flex-col">
+    <div className="h-svh overflow-hidden [--header-height:calc(--spacing(14))]">
+      <SidebarProvider defaultOpen={false} className="h-full min-h-0 flex-col">
         <Header />
-        <div className="flex flex-1 md:overflow-hidden">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           <AppSidebar />
-          <SidebarInset className="md:overflow-y-auto">
-            <main className="flex flex-1 flex-col gap-4 p-4">
+          <SidebarInset className="min-h-0 flex-1 overflow-y-auto">
+            <div className="flex flex-1 flex-col gap-4 p-4">
               <Outlet />
-            </main>
+            </div>
           </SidebarInset>
         </div>
       </SidebarProvider>
