@@ -21,9 +21,26 @@ export const parseEventDate = (dateValue) => {
     return isValid(dateValue) ? dateValue : null;
   }
   const str = String(dateValue).trim();
-  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    const [, year, month, day] = match;
+  
+  // Try to match YYYY-MM-DDTHH:mm
+  const matchTime = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (matchTime) {
+    const [, year, month, day, hour, minute] = matchTime;
+    const localDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      0
+    );
+    return isValid(localDate) ? localDate : null;
+  }
+
+  // Fallback for just date YYYY-MM-DD
+  const matchDate = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matchDate) {
+    const [, year, month, day] = matchDate;
     const localDate = new Date(
       Number(year),
       Number(month) - 1,
@@ -34,6 +51,7 @@ export const parseEventDate = (dateValue) => {
     );
     return isValid(localDate) ? localDate : null;
   }
+  
   const parsed = parseISO(str);
   return isValid(parsed) ? parsed : null;
 };
@@ -152,7 +170,7 @@ export const getEventStatusLabel = (status) => {
 /**
  * Mapeia um evento do domínio para o formato esperado pelo EventCalendar.
  *
- * @param {{ id: string, name: string, description: string | null, startDate: string | Date, endDate: string | Date }} event
+ * @param {{ id: string, name: string, description: string | null, startDate: string | Date, endDate: string | Date, allDay?: boolean }} event
  * @returns {{ id: string, title: string, description: string | null, start: Date, end: Date, allDay: boolean, color: string, rawEvent: any }}
  */
 export const mapEventToCalendarItem = (event) => {
@@ -172,7 +190,7 @@ export const mapEventToCalendarItem = (event) => {
     description: event.description,
     start,
     end,
-    allDay: true,
+    allDay: event.allDay ?? false,
     color: statusColorMap[status] ?? 'etc',
     rawEvent: event,
   };
