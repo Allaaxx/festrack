@@ -38,15 +38,19 @@ export const useCreateEventForm = ({ onSuccess, onError }) => {
   return { form, onSubmit };
 };
 
-const getEditEventFormDefaultValues = (event) => ({
-  name: event?.name ?? '',
-  description: event?.description ?? '',
-  startDate: parseEventDate(event?.startDate) ?? new Date(),
-  endDate: parseEventDate(event?.endDate) ?? new Date(),
-  allDay: event?.allDay ?? false,
-  startTime: parseEventTime(event?.startDate) || '09:00',
-  endTime: parseEventTime(event?.endDate) || '10:00',
-});
+const getEditEventFormDefaultValues = (event) => {
+  const isAllDay = event?.allDay ?? false;
+  
+  return {
+    name: event?.name ?? '',
+    description: event?.description ?? '',
+    startDate: parseEventDate(event?.startDate) ?? new Date(),
+    endDate: parseEventDate(event?.endDate) ?? new Date(),
+    allDay: isAllDay,
+    startTime: (!isAllDay && event?.startDate) ? parseEventTime(event.startDate) : '09:00',
+    endTime: (!isAllDay && event?.endDate) ? parseEventTime(event.endDate) : '10:00',
+  };
+};
 
 export const useEditEventForm = ({ event, onSuccess, onError }) => {
   const { mutateAsync: updateEvent } = useEditEvent();
