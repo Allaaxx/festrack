@@ -14,6 +14,9 @@ const eventBaseSchema = z.object({
     .nullable(),
   startDate: z.date({ error: 'A data inicial é obrigatória.' }),
   endDate: z.date({ error: 'A data final é obrigatória.' }),
+  allDay: z.boolean().default(false),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
 });
 
 export const createEventFormSchema = eventBaseSchema.refine(

@@ -7,7 +7,7 @@ import {
   createEventFormSchema,
   editEventFormSchema,
 } from '@/features/events/forms/schemas';
-import { parseEventDate } from '@/features/events/helpers/event';
+import { parseEventDate, parseEventTime } from '@/features/events/helpers/event';
 
 export const useCreateEventForm = ({ onSuccess, onError }) => {
   const { mutateAsync: createEvent } = useCreateEvent();
@@ -18,6 +18,9 @@ export const useCreateEventForm = ({ onSuccess, onError }) => {
       description: '',
       startDate: new Date(),
       endDate: new Date(),
+      allDay: false,
+      startTime: '09:00',
+      endTime: '10:00',
     },
     shouldUnregister: true,
   });
@@ -40,6 +43,9 @@ const getEditEventFormDefaultValues = (event) => ({
   description: event?.description ?? '',
   startDate: parseEventDate(event?.startDate) ?? new Date(),
   endDate: parseEventDate(event?.endDate) ?? new Date(),
+  allDay: event?.allDay ?? false,
+  startTime: parseEventTime(event?.startDate) || '09:00',
+  endTime: parseEventTime(event?.endDate) || '10:00',
 });
 
 export const useEditEventForm = ({ event, onSuccess, onError }) => {

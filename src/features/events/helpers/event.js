@@ -39,23 +39,55 @@ export const parseEventDate = (dateValue) => {
 };
 
 /**
- * Formata uma data local para o padrão ISO UTC esperado pela API Swagger:
- * Início: "YYYY-MM-DDT00:00:00.000Z"
- * Fim: "YYYY-MM-DDT23:59:59.000Z"
+ * Extrai a string de hora (HH:mm) de uma data ISO.
+ * Retorna '00:00' se não houver ou se não for possível fazer o parse.
+ *
+ * @param {Date | string | null | undefined} dateValue
+ * @returns {string}
+ */
+export const parseEventTime = (dateValue) => {
+  if (!dateValue) return '00:00';
+  const str = String(dateValue).trim();
+  const match = str.match(/T(\d{2}):(\d{2})/);
+  if (match) {
+    return `${match[1]}:${match[2]}`;
+  }
+  return '00:00';
+};
+
+/**
+ * Formata uma data local para o padrão ISO esperado pela API Swagger.
+ * Se allDay for true, zera o horário ou coloca no final do dia.
+ * Se houver timeStr ("HH:mm"), injeta ele.
  *
  * @param {Date | string} dateValue
  * @param {'start' | 'end'} type
+ * @param {boolean} allDay
+ * @param {string} timeStr
  * @returns {string}
  */
-export const formatEventDateToApi = (dateValue, type = 'start') => {
+export const formatEventDateToApi = (
+  dateValue,
+  type = 'start',
+  allDay = true,
+  timeStr = ''
+) => {
   if (!dateValue) return '';
   const date =
     dateValue instanceof Date ? dateValue : parseEventDate(dateValue);
   if (!date || !isValid(date)) return '';
   const datePart = format(date, 'yyyy-MM-dd');
-  return type === 'start'
-    ? `${datePart}T00:00:00.000Z`
-    : `${datePart}T23:59:59.000Z`;
+
+  if (allDay) {
+    return type === 'start'
+      ? `${datePart}T00:00:00.000Z`
+      : `${datePart}T23:59:59.000Z`;
+  }
+
+  // Se tem hora específica
+  const defaultTime = type === 'start' ? '00:00' : '23:59';
+  const finalTime = timeStr || defaultTime;
+  return `${datePart}T${finalTime}:00.000Z`;
 };
 
 /**
