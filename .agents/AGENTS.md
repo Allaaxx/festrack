@@ -6,6 +6,8 @@ Festrack is a personal finance tracker built with React 19 and Vite.
 The UI language is **Portuguese (BR)**. Always generate UI text, labels,
 and user-facing strings in Portuguese (BR).
 
+> **API Reference:** The backend API documentation (endpoints, payloads, and models) is available at [API.md](file:///home/allan/projects/festrack/.agents/API.md). Use it as a source of truth for all API integrations.
+
 ---
 
 ## Tech Stack
