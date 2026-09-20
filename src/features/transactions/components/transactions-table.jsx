@@ -214,7 +214,7 @@ const TransactionsTable = () => {
     <section>
       <h2 className="mb-4 text-2xl font-bold">Transações</h2>
 
-      <ScrollArea className="h-90 rounded-md border">
+      <ScrollArea className="h-85 rounded-md border">
         <DataTable columns={columns} data={transactions} />
       </ScrollArea>
     </section>
