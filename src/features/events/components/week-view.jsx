@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 
 import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
 import { CalendarCell } from './calendar-cell';
+import { CalendarEventBlock } from './calendar-event-block';
 import {
   EndHour,
   isMultiDayEvent,
@@ -35,6 +36,8 @@ export function WeekView({
   events,
   onEventSelect,
   onEventCreate,
+  onEventResize,
+  onEventResizeEnd,
 }) {
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -278,29 +281,14 @@ export function WeekView({
               data-today={isToday(day) || undefined}
             >
               {(processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
-                <div
+                <CalendarEventBlock
                   key={positionedEvent.event.id}
-                  className="absolute z-10 px-0.5"
-                  style={{
-                    top: `${positionedEvent.top}px`,
-                    height: `${positionedEvent.height}px`,
-                    left: `${positionedEvent.left * 100}%`,
-                    width: `${positionedEvent.width * 100}%`,
-                    zIndex: positionedEvent.zIndex,
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="h-full w-full">
-                    <EventItem
-                      event={positionedEvent.event}
-                      view="week"
-                      onClick={(e) =>
-                        handleEventClick(positionedEvent.event, e)
-                      }
-                      showTime
-                    />
-                  </div>
-                </div>
+                  positionedEvent={positionedEvent}
+                  view="week"
+                  onEventSelect={onEventSelect}
+                  onEventResize={onEventResize}
+                  onEventResizeEnd={onEventResizeEnd}
+                />
               ))}
 
               {currentTimeVisible && isToday(day) && (
@@ -322,29 +310,31 @@ export function WeekView({
                     key={hour.toString()}
                     className="border-border/70 relative min-h-(--week-cells-height) border-b last:border-b-0"
                   >
-                    {[0, 1, 2, 3].map((quarter) => (
-                      <CalendarCell
-                        key={`${hour.toString()}-${quarter}`}
-                        time={hourValue + quarter * 0.25}
-                        className={cn(
-                          'absolute h-[calc(var(--week-cells-height)/4)] w-full',
-                          quarter === 0 && 'top-0',
-                          quarter === 1 &&
-                            'top-[calc(var(--week-cells-height)/4)]',
-                          quarter === 2 &&
-                            'top-[calc(var(--week-cells-height)/4*2)]',
-                          quarter === 3 &&
-                            'top-[calc(var(--week-cells-height)/4*3)]'
-                        )}
-                        onClick={() => {
-                          const startTime = new Date(day);
+                    {[0, 1, 2, 3].map((quarter) => {
+                      const slotDate = new Date(day);
+                      slotDate.setHours(hourValue, quarter * 15, 0, 0);
+                      const cellId = `drop-week-${slotDate.getTime()}`;
 
-                          startTime.setHours(hourValue);
-                          startTime.setMinutes(quarter * 15);
-                          onEventCreate(startTime);
-                        }}
-                      />
-                    ))}
+                      return (
+                        <CalendarCell
+                          key={cellId}
+                          id={cellId}
+                          date={slotDate}
+                          time={hourValue + quarter * 0.25}
+                          className={cn(
+                            'absolute h-[calc(var(--week-cells-height)/4)] w-full',
+                            quarter === 0 && 'top-0',
+                            quarter === 1 &&
+                              'top-[calc(var(--week-cells-height)/4)]',
+                            quarter === 2 &&
+                              'top-[calc(var(--week-cells-height)/4*2)]',
+                            quarter === 3 &&
+                              'top-[calc(var(--week-cells-height)/4*3)]'
+                          )}
+                          onClick={() => onEventCreate(slotDate)}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}

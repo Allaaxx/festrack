@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 
 import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
 import { CalendarCell } from './calendar-cell';
+import { CalendarEventBlock } from './calendar-event-block';
 import {
   EndHour,
   isMultiDayEvent,
@@ -24,7 +25,14 @@ import {
 } from './event-calendar';
 import { EventItem } from './event-item';
 
-export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
+export function DayView({
+  currentDate,
+  events,
+  onEventSelect,
+  onEventCreate,
+  onEventResize,
+  onEventResizeEnd,
+}) {
   const hours = useMemo(() => {
     const dayStart = startOfDay(currentDate);
 
@@ -45,15 +53,15 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
       .sort((a, b) => a.start.getTime() - b.start.getTime());
   }, [currentDate, events]);
 
-  const allDayEvents = useMemo(
-    () => dayEvents.filter((event) => event.allDay || isMultiDayEvent(event)),
-    [dayEvents]
-  );
+  const allDayEvents = useMemo(() => {
+    return dayEvents.filter((event) => event.allDay || isMultiDayEvent(event));
+  }, [dayEvents]);
 
-  const timeEvents = useMemo(
-    () => dayEvents.filter((event) => !event.allDay && !isMultiDayEvent(event)),
-    [dayEvents]
-  );
+  const timeEvents = useMemo(() => {
+    return dayEvents.filter(
+      (event) => !event.allDay && !isMultiDayEvent(event)
+    );
+  }, [dayEvents]);
 
   const positionedEvents = useMemo(() => {
     const result = [];
@@ -190,26 +198,14 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
           {/* Coluna de eventos */}
           <div className="relative">
             {positionedEvents.map((positionedEvent) => (
-              <div
+              <CalendarEventBlock
                 key={positionedEvent.event.id}
-                className="absolute z-10 px-0.5"
-                style={{
-                  top: `${positionedEvent.top}px`,
-                  height: `${positionedEvent.height}px`,
-                  left: `${positionedEvent.left * 100}%`,
-                  width: `${positionedEvent.width * 100}%`,
-                  zIndex: positionedEvent.zIndex,
-                }}
-              >
-                <div className="h-full w-full">
-                  <EventItem
-                    event={positionedEvent.event}
-                    view="day"
-                    onClick={(e) => handleEventClick(positionedEvent.event, e)}
-                    showTime
-                  />
-                </div>
-              </div>
+                positionedEvent={positionedEvent}
+                view="day"
+                onEventSelect={onEventSelect}
+                onEventResize={onEventResize}
+                onEventResizeEnd={onEventResizeEnd}
+              />
             ))}
 
             {currentTimeVisible && (
@@ -224,7 +220,7 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
               </div>
             )}
 
-            {/* Células clicáveis para criar eventos */}
+            {/* Células clicáveis e soltáveis para criar ou mover eventos */}
             {hours.map((hour) => {
               const hourValue = getHours(hour);
 
@@ -233,29 +229,31 @@ export function DayView({ currentDate, events, onEventSelect, onEventCreate }) {
                   key={hour.toString()}
                   className="border-border/70 relative h-(--week-cells-height) border-b last:border-b-0"
                 >
-                  {[0, 1, 2, 3].map((quarter) => (
-                    <CalendarCell
-                      key={`${hour.toString()}-${quarter}`}
-                      time={hourValue + quarter * 0.25}
-                      className={cn(
-                        'absolute h-[calc(var(--week-cells-height)/4)] w-full',
-                        quarter === 0 && 'top-0',
-                        quarter === 1 &&
-                          'top-[calc(var(--week-cells-height)/4)]',
-                        quarter === 2 &&
-                          'top-[calc(var(--week-cells-height)/4*2)]',
-                        quarter === 3 &&
-                          'top-[calc(var(--week-cells-height)/4*3)]'
-                      )}
-                      onClick={() => {
-                        const startTime = new Date(currentDate);
+                  {[0, 1, 2, 3].map((quarter) => {
+                    const slotDate = new Date(currentDate);
+                    slotDate.setHours(hourValue, quarter * 15, 0, 0);
+                    const cellId = `drop-day-${slotDate.getTime()}`;
 
-                        startTime.setHours(hourValue);
-                        startTime.setMinutes(quarter * 15);
-                        onEventCreate(startTime);
-                      }}
-                    />
-                  ))}
+                    return (
+                      <CalendarCell
+                        key={cellId}
+                        id={cellId}
+                        date={slotDate}
+                        time={hourValue + quarter * 0.25}
+                        className={cn(
+                          'absolute h-[calc(var(--week-cells-height)/4)] w-full',
+                          quarter === 0 && 'top-0',
+                          quarter === 1 &&
+                            'top-[calc(var(--week-cells-height)/4)]',
+                          quarter === 2 &&
+                            'top-[calc(var(--week-cells-height)/4*2)]',
+                          quarter === 3 &&
+                            'top-[calc(var(--week-cells-height)/4*3)]'
+                        )}
+                        onClick={() => onEventCreate(slotDate)}
+                      />
+                    );
+                  })}
                 </div>
               );
             })}

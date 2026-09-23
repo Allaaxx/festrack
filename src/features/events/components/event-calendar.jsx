@@ -1,7 +1,18 @@
 import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
   addDays,
+  addMinutes,
   addMonths,
   addWeeks,
+  differenceInMinutes,
   endOfWeek,
   format,
   isSameDay,
@@ -31,6 +42,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { DayView } from './day-view';
+import { EventItem } from './event-item';
 import { MonthView } from './month-view';
 import { WeekView } from './week-view';
 
@@ -90,7 +102,7 @@ export function getMonthViewEventPaddingClasses(spansLeft, spansRight) {
 }
 
 export function isMultiDayEvent(event) {
-  return event.allDay || event.start.getDate() !== event.end.getDate();
+  return event.allDay || !isSameDay(event.start, event.end);
 }
 
 export function getEventsForDay(events, day) {
@@ -141,9 +153,93 @@ const EventCalendar = ({
   className,
   onEventSelect = () => {},
   onEventCreate = () => {},
+  onEventUpdate = () => {},
 }) => {
   const isControlledDate = controlledCurrentDate !== undefined;
   const isControlledView = controlledView !== undefined;
+
+  const [prevEvents, setPrevEvents] = useState(events);
+  const [calendarEvents, setCalendarEvents] = useState(events);
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [activeDragWidth, setActiveDragWidth] = useState(null);
+
+  if (prevEvents !== events) {
+    setPrevEvents(events);
+    setCalendarEvents(events);
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  const customCollisionDetection = (args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+    return closestCenter(args);
+  };
+
+  const handleDragStart = (event) => {
+    const evt = event.active.data.current?.event;
+    setActiveEvent(evt);
+    if (event.active.rect.current?.initial) {
+      setActiveDragWidth(event.active.rect.current.initial.width);
+    }
+  };
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    setActiveEvent(null);
+    setActiveDragWidth(null);
+
+    if (!over || !over.data?.current?.timestamp) {
+      return;
+    }
+
+    const draggedEvent = active.data?.current?.event;
+    if (!draggedEvent) return;
+
+    const dropTimestamp = over.data.current.timestamp;
+    const newStart = new Date(dropTimestamp);
+    const durationMinutes = differenceInMinutes(
+      draggedEvent.end,
+      draggedEvent.start
+    );
+    const newEnd = addMinutes(newStart, durationMinutes);
+
+    const updatedEvent = {
+      ...draggedEvent,
+      start: newStart,
+      end: newEnd,
+    };
+
+    handleEventCommit(updatedEvent);
+  };
+
+  const handleDragCancel = () => {
+    setActiveEvent(null);
+    setActiveDragWidth(null);
+  };
+
+  const handleEventResize = (eventId, newStart, newEnd) => {
+    setCalendarEvents((prev) =>
+      prev.map((evt) =>
+        evt.id === eventId ? { ...evt, start: newStart, end: newEnd } : evt
+      )
+    );
+  };
+
+  const handleEventCommit = (updatedEvent) => {
+    setCalendarEvents((prev) =>
+      prev.map((evt) => (evt.id === updatedEvent.id ? updatedEvent : evt))
+    );
+    onEventUpdate?.(updatedEvent);
+  };
 
   const [internalCurrentDate, setInternalCurrentDate] = useState(
     () => new Date()
@@ -260,129 +356,161 @@ const EventCalendar = ({
   }, [currentDate, view]);
 
   return (
-    <div
-      className={cn(
-        'bg-card flex min-h-[600px] flex-1 flex-col overflow-hidden rounded-lg border',
-        className
-      )}
-      style={{
-        '--event-height': `${EventHeight}px`,
-        '--event-gap': `${EventGap}px`,
-        '--week-cells-height': `${WeekCellsHeight}px`,
-      }}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={customCollisionDetection}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
-      <div className="flex items-center justify-between gap-1 p-2 sm:p-4">
-        <div className="flex items-center gap-1 max-sm:justify-between sm:gap-4">
+      <div
+        className={cn(
+          'bg-card flex min-h-[600px] flex-1 flex-col overflow-hidden rounded-lg border',
+          className
+        )}
+        style={{
+          '--event-height': `${EventHeight}px`,
+          '--event-gap': `${EventGap}px`,
+          '--week-cells-height': `${WeekCellsHeight}px`,
+        }}
+      >
+        <div className="flex items-center justify-between gap-1 p-2 sm:p-4">
+          <div className="flex items-center gap-1 max-sm:justify-between sm:gap-4">
+            <div className="flex items-center gap-1">
+              <Button
+                onClick={() => onEventCreate(new Date())}
+                className="max-sm:hidden md:max-lg:h-8"
+              >
+                <PlusIcon />
+                <span>Novo evento</span>
+              </Button>
+              <Button
+                size="icon-sm"
+                className="sm:hidden"
+                onClick={() => onEventCreate(new Date())}
+              >
+                <PlusIcon />
+              </Button>
+              <Button
+                variant="outline"
+                className="max-sm:hidden md:max-lg:h-8"
+                onClick={goToToday}
+              >
+                <CalendarClockIcon />
+                <span>Hoje</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="sm:hidden"
+                onClick={goToToday}
+              >
+                <CalendarClockIcon />
+              </Button>
+            </div>
+          </div>
           <div className="flex items-center gap-1">
             <Button
-              onClick={() => onEventCreate(new Date())}
-              className="max-sm:hidden md:max-lg:h-8"
-            >
-              <PlusIcon />
-              <span>Novo evento</span>
-            </Button>
-            <Button
+              variant="ghost"
               size="icon-sm"
-              className="sm:hidden"
-              onClick={() => onEventCreate(new Date())}
+              onClick={goToPrevious}
+              aria-label="Anterior"
             >
-              <PlusIcon />
+              <ChevronLeftIcon />
             </Button>
+            <h2 className="truncate text-center text-sm font-semibold sm:text-lg md:text-xl">
+              {viewTitle}
+            </h2>
             <Button
-              variant="outline"
-              className="max-sm:hidden md:max-lg:h-8"
-              onClick={goToToday}
-            >
-              <CalendarClockIcon />
-              <span>Hoje</span>
-            </Button>
-            <Button
-              variant="outline"
+              variant="ghost"
               size="icon-sm"
-              className="sm:hidden"
-              onClick={goToToday}
+              onClick={goToNext}
+              aria-label="Próximo"
             >
-              <CalendarClockIcon />
+              <ChevronRightIcon />
             </Button>
           </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={goToPrevious}
-            aria-label="Anterior"
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <h2 className="truncate text-center text-sm font-semibold sm:text-lg md:text-xl">
-            {viewTitle}
-          </h2>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={goToNext}
-            aria-label="Próximo"
-          >
-            <ChevronRightIcon />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" className="max-sm:h-8!">
-                  <span>
-                    <span className="sm:hidden" aria-hidden="true">
-                      {VIEW_LABELS[view]?.charAt(0)}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" className="max-sm:h-8!">
+                    <span>
+                      <span className="sm:hidden" aria-hidden="true">
+                        {VIEW_LABELS[view]?.charAt(0)}
+                      </span>
+                      <span className="max-sm:sr-only">
+                        {VIEW_LABELS[view]}
+                      </span>
                     </span>
-                    <span className="max-sm:sr-only">{VIEW_LABELS[view]}</span>
-                  </span>
-                  <ChevronDownIcon className="-me-1 opacity-60" />
-                </Button>
-              }
+                    <ChevronDownIcon className="-me-1 opacity-60" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="min-w-32">
+                <DropdownMenuItem onClick={() => handleViewChange('month')}>
+                  Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewChange('week')}>
+                  Semana <DropdownMenuShortcut>W</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewChange('day')}>
+                  Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {view === 'month' && (
+            <MonthView
+              currentDate={currentDate}
+              events={calendarEvents}
+              onEventSelect={onEventSelect}
+              onEventCreate={onEventCreate}
             />
-            <DropdownMenuContent align="end" className="min-w-32">
-              <DropdownMenuItem onClick={() => handleViewChange('month')}>
-                Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewChange('week')}>
-                Semana <DropdownMenuShortcut>W</DropdownMenuShortcut>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleViewChange('day')}>
-                Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          )}
+          {view === 'week' && (
+            <WeekView
+              currentDate={currentDate}
+              events={calendarEvents}
+              onEventSelect={onEventSelect}
+              onEventCreate={onEventCreate}
+              onEventResize={handleEventResize}
+              onEventResizeEnd={handleEventCommit}
+            />
+          )}
+          {view === 'day' && (
+            <DayView
+              currentDate={currentDate}
+              events={calendarEvents}
+              onEventSelect={onEventSelect}
+              onEventCreate={onEventCreate}
+              onEventResize={handleEventResize}
+              onEventResizeEnd={handleEventCommit}
+            />
+          )}
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {view === 'month' && (
-          <MonthView
-            currentDate={currentDate}
-            events={events}
-            onEventSelect={onEventSelect}
-            onEventCreate={onEventCreate}
-          />
-        )}
-        {view === 'week' && (
-          <WeekView
-            currentDate={currentDate}
-            events={events}
-            onEventSelect={onEventSelect}
-            onEventCreate={onEventCreate}
-          />
-        )}
-        {view === 'day' && (
-          <DayView
-            currentDate={currentDate}
-            events={events}
-            onEventSelect={onEventSelect}
-            onEventCreate={onEventCreate}
-          />
-        )}
-      </div>
-    </div>
+
+      <DragOverlay dropAnimation={null}>
+        {activeEvent ? (
+          <div
+            style={{
+              width: activeDragWidth ? `${activeDragWidth}px` : '180px',
+              height: `${Math.max(
+                (differenceInMinutes(activeEvent.end, activeEvent.start) / 60) *
+                  WeekCellsHeight,
+                24
+              )}px`,
+            }}
+            className="pointer-events-none cursor-grabbing opacity-100 shadow-lg"
+          >
+            <EventItem event={activeEvent} view={view} showTime />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
 };
 

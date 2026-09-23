@@ -10,6 +10,7 @@ import {
   EditEventSheet,
   EventCalendar,
   mapEventToCalendarItem,
+  useEditEvent,
   useGetEvents,
 } from '@/features/events';
 import useStoredSearchParams from '@/hooks/use-stored-search-params';
@@ -64,6 +65,8 @@ const EventCalendarPage = () => {
     [rawEvents]
   );
 
+  const editEventMutation = useEditEvent();
+
   const handleEventCreate = (date) => {
     setCreateInitialDate(date instanceof Date ? date : new Date());
     setCreateDialogOpen(true);
@@ -71,6 +74,20 @@ const EventCalendarPage = () => {
 
   const handleEventSelect = (calendarItem) => {
     setSelectedEvent(calendarItem.rawEvent ?? null);
+  };
+
+  const handleEventUpdate = (updatedItem) => {
+    const raw = updatedItem.rawEvent || {};
+    editEventMutation.mutate({
+      id: updatedItem.id,
+      name: updatedItem.title || raw.name,
+      description: updatedItem.description ?? raw.description,
+      startDate: updatedItem.start,
+      endDate: updatedItem.end,
+      allDay: false,
+      startTime: format(updatedItem.start, 'HH:mm'),
+      endTime: format(updatedItem.end, 'HH:mm'),
+    });
   };
 
   if (isLoading) {
@@ -109,6 +126,7 @@ const EventCalendarPage = () => {
         onDateChange={handleDateChange}
         onEventCreate={handleEventCreate}
         onEventSelect={handleEventSelect}
+        onEventUpdate={handleEventUpdate}
       />
 
       <CreateEventDialog
