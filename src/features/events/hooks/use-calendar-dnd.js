@@ -24,6 +24,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
   const [overrides, setOverrides] = useState({});
   const [activeEvent, setActiveEvent] = useState(null);
   const [activeDragWidth, setActiveDragWidth] = useState(null);
+  const [dragOverSlot, setDragOverSlot] = useState(null);
 
   if (prevEvents !== events) {
     setPrevEvents(events);
@@ -57,8 +58,35 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
   const handleDragStart = useCallback((event) => {
     const evt = event.active.data.current?.event;
     setActiveEvent(evt);
+    setDragOverSlot(null);
     if (event.active.rect.current?.initial) {
       setActiveDragWidth(event.active.rect.current.initial.width);
+    }
+  }, []);
+
+  const handleDragMove = useCallback((event) => {
+    const { active, over } = event;
+    if (!over || !active) {
+      setDragOverSlot(null);
+      return;
+    }
+
+    const overData = over.data?.current;
+    if (overData?.type === 'day-column') {
+      const translatedTop = active.rect.current?.translated?.top ?? 0;
+      const columnTop = over.rect.top;
+      const deltaY = translatedTop - columnTop;
+
+      const pixelsPerQuarter = WeekCellsHeight / 4;
+      const rawQuarterIndex = Math.round(deltaY / pixelsPerQuarter);
+      const quarterIndex = Math.max(0, Math.min(24 * 4 - 1, rawQuarterIndex));
+
+      setDragOverSlot({
+        dayTimestamp: overData.dayTimestamp,
+        quarterIndex,
+      });
+    } else {
+      setDragOverSlot(null);
     }
   }, []);
 
@@ -85,6 +113,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
       const { active, over } = event;
       setActiveEvent(null);
       setActiveDragWidth(null);
+      setDragOverSlot(null);
 
       if (!over || !active.data?.current?.event) {
         return;
@@ -175,15 +204,19 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
   const handleDragCancel = useCallback(() => {
     setActiveEvent(null);
     setActiveDragWidth(null);
+    setDragOverSlot(null);
   }, []);
 
   return {
     calendarEvents,
     activeEvent,
+    isDragging: Boolean(activeEvent),
+    dragOverSlot,
     activeDragWidth,
     sensors,
     collisionDetection,
     handleDragStart,
+    handleDragMove,
     handleDragEnd,
     handleDragCancel,
     handleEventResize,

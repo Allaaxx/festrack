@@ -30,6 +30,8 @@ import { EventItem } from './event-item';
 export function WeekView({
   currentDate,
   events,
+  dragOverSlot = null,
+  isDragging = false,
   onEventSelect,
   onEventCreate,
   onEventResize,
@@ -192,71 +194,80 @@ export function WeekView({
           ))}
         </div>
 
-        {days.map((day, dayIndex) => (
-          <CalendarDayColumn
-            key={day.toString()}
-            day={day}
-            className="border-border/70 grid auto-cols-fr border-r last:border-r-0"
-            data-today={isToday(day) || undefined}
-          >
-            {(processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
-              <CalendarEventBlock
-                key={positionedEvent.event.id}
-                positionedEvent={positionedEvent}
-                view="week"
-                onEventSelect={onEventSelect}
-                onEventResize={onEventResize}
-                onEventResizeEnd={onEventResizeEnd}
-              />
-            ))}
+        {days.map((day, dayIndex) => {
+          const isTargetDay = dragOverSlot?.dayTimestamp === day.getTime();
+          const activeQuarterIndex = isTargetDay
+            ? dragOverSlot.quarterIndex
+            : null;
 
-            {currentTimeVisible && isToday(day) && (
-              <div
-                className="pointer-events-none absolute right-0 left-0 z-20"
-                style={{ top: `${currentTimePosition}%` }}
-              >
-                <div className="relative flex items-center">
-                  <div className="bg-primary absolute -left-1 h-2 w-2 rounded-full"></div>
-                  <div className="bg-primary h-0.5 w-full"></div>
-                </div>
-              </div>
-            )}
+          return (
+            <CalendarDayColumn
+              key={day.toString()}
+              day={day}
+              activeQuarterIndex={activeQuarterIndex}
+              className="border-border/70 grid auto-cols-fr border-r last:border-r-0"
+              data-today={isToday(day) || undefined}
+            >
+              {(processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
+                <CalendarEventBlock
+                  key={positionedEvent.event.id}
+                  positionedEvent={positionedEvent}
+                  view="week"
+                  onEventSelect={onEventSelect}
+                  onEventResize={onEventResize}
+                  onEventResizeEnd={onEventResizeEnd}
+                />
+              ))}
 
-            {hours.map((hour) => {
-              const hourValue = getHours(hour);
-
-              return (
+              {currentTimeVisible && isToday(day) && (
                 <div
-                  key={hour.toString()}
-                  className="border-border/70 relative min-h-(--week-cells-height) border-b last:border-b-0"
+                  className="pointer-events-none absolute right-0 left-0 z-20"
+                  style={{ top: `${currentTimePosition}%` }}
                 >
-                  {[0, 1, 2, 3].map((quarter) => {
-                    const slotDate = new Date(day);
-                    slotDate.setHours(hourValue, quarter * 15, 0, 0);
-
-                    return (
-                      <CalendarCell
-                        key={`slot-${slotDate.getTime()}`}
-                        time={hourValue + quarter * 0.25}
-                        className={cn(
-                          'absolute h-[calc(var(--week-cells-height)/4)] w-full',
-                          quarter === 0 && 'top-0',
-                          quarter === 1 &&
-                            'top-[calc(var(--week-cells-height)/4)]',
-                          quarter === 2 &&
-                            'top-[calc(var(--week-cells-height)/4*2)]',
-                          quarter === 3 &&
-                            'top-[calc(var(--week-cells-height)/4*3)]'
-                        )}
-                        onClick={() => onEventCreate(slotDate)}
-                      />
-                    );
-                  })}
+                  <div className="relative flex items-center">
+                    <div className="bg-primary absolute -left-1 h-2 w-2 rounded-full"></div>
+                    <div className="bg-primary h-0.5 w-full"></div>
+                  </div>
                 </div>
-              );
-            })}
-          </CalendarDayColumn>
-        ))}
+              )}
+
+              {hours.map((hour) => {
+                const hourValue = getHours(hour);
+
+                return (
+                  <div
+                    key={hour.toString()}
+                    className="border-border/70 relative min-h-(--week-cells-height) border-b last:border-b-0"
+                  >
+                    {[0, 1, 2, 3].map((quarter) => {
+                      const slotDate = new Date(day);
+                      slotDate.setHours(hourValue, quarter * 15, 0, 0);
+
+                      return (
+                        <CalendarCell
+                          key={`slot-${slotDate.getTime()}`}
+                          time={hourValue + quarter * 0.25}
+                          isDragging={isDragging}
+                          className={cn(
+                            'absolute h-[calc(var(--week-cells-height)/4)] w-full',
+                            quarter === 0 && 'top-0',
+                            quarter === 1 &&
+                              'top-[calc(var(--week-cells-height)/4)]',
+                            quarter === 2 &&
+                              'top-[calc(var(--week-cells-height)/4*2)]',
+                            quarter === 3 &&
+                              'top-[calc(var(--week-cells-height)/4*3)]'
+                          )}
+                          onClick={() => onEventCreate(slotDate)}
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </CalendarDayColumn>
+          );
+        })}
       </div>
     </div>
   );

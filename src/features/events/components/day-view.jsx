@@ -24,6 +24,8 @@ import { EventItem } from './event-item';
 export function DayView({
   currentDate,
   events,
+  dragOverSlot = null,
+  isDragging = false,
   onEventSelect,
   onEventCreate,
   onEventResize,
@@ -122,7 +124,14 @@ export function DayView({
         </div>
 
         {/* Coluna de eventos */}
-        <CalendarDayColumn day={currentDate}>
+        <CalendarDayColumn
+          day={currentDate}
+          activeQuarterIndex={
+            dragOverSlot?.dayTimestamp === currentDate.getTime()
+              ? dragOverSlot.quarterIndex
+              : null
+          }
+        >
           {positionedEvents.map((positionedEvent) => (
             <CalendarEventBlock
               key={positionedEvent.event.id}
@@ -163,6 +172,7 @@ export function DayView({
                     <CalendarCell
                       key={`slot-${slotDate.getTime()}`}
                       time={hourValue + quarter * 0.25}
+                      isDragging={isDragging}
                       className={cn(
                         'absolute h-[calc(var(--week-cells-height)/4)] w-full',
                         quarter === 0 && 'top-0',

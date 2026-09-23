@@ -67,10 +67,13 @@ const EventCalendar = ({
   const {
     calendarEvents,
     activeEvent,
+    isDragging,
+    dragOverSlot,
     activeDragWidth,
     sensors,
     collisionDetection,
     handleDragStart,
+    handleDragMove,
     handleDragEnd,
     handleDragCancel,
     handleEventResize,
@@ -85,6 +88,7 @@ const EventCalendar = ({
       sensors={sensors}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
@@ -123,6 +127,8 @@ const EventCalendar = ({
             <WeekView
               currentDate={currentDate}
               events={calendarEvents}
+              dragOverSlot={dragOverSlot}
+              isDragging={isDragging}
               onEventSelect={onEventSelect}
               onEventCreate={onEventCreate}
               onEventResize={handleEventResize}
@@ -133,6 +139,8 @@ const EventCalendar = ({
             <DayView
               currentDate={currentDate}
               events={calendarEvents}
+              dragOverSlot={dragOverSlot}
+              isDragging={isDragging}
               onEventSelect={onEventSelect}
               onEventCreate={onEventCreate}
               onEventResize={handleEventResize}

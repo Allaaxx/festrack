@@ -6,8 +6,14 @@ import { cn } from '@/lib/utils';
  * Coluna de dia atuando como container droppable único para o @dnd-kit.
  * Reduz centenas de droppables individuais a 1 por dia.
  */
-export function CalendarDayColumn({ day, className, children, ...props }) {
-  const { isOver, setNodeRef } = useDroppable({
+export function CalendarDayColumn({
+  day,
+  activeQuarterIndex = null,
+  className,
+  children,
+  ...props
+}) {
+  const { setNodeRef } = useDroppable({
     id: `day-column-${day.getTime()}`,
     data: {
       type: 'day-column',
@@ -20,14 +26,19 @@ export function CalendarDayColumn({ day, className, children, ...props }) {
     <div
       ref={setNodeRef}
       data-slot="day-column"
-      data-over={isOver || undefined}
-      className={cn(
-        'relative transition-colors',
-        isOver && 'bg-primary/5 ring-primary/20 inset-ring-primary/20 ring-1',
-        className
-      )}
+      className={cn('relative', className)}
       {...props}
     >
+      {activeQuarterIndex !== null && activeQuarterIndex !== undefined && (
+        <div
+          data-slot="drop-indicator"
+          className="bg-accent/60 dark:bg-accent/40 pointer-events-none absolute right-0 left-0 z-20 rounded-sm transition-all duration-75"
+          style={{
+            top: `calc(var(--week-cells-height) / 4 * ${activeQuarterIndex})`,
+            height: `calc(var(--week-cells-height) / 4)`,
+          }}
+        />
+      )}
       {children}
     </div>
   );
