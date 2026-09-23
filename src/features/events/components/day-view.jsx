@@ -25,7 +25,6 @@ export function DayView({
   currentDate,
   events,
   dragOverSlot = null,
-  isDragging = false,
   onEventSelect,
   onEventCreate,
   onEventResize,
@@ -172,7 +171,6 @@ export function DayView({
                     <CalendarCell
                       key={`slot-${slotDate.getTime()}`}
                       time={hourValue + quarter * 0.25}
-                      isDragging={isDragging}
                       className={cn(
                         'absolute h-[calc(var(--week-cells-height)/4)] w-full',
                         quarter === 0 && 'top-0',

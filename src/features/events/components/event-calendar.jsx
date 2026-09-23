@@ -67,7 +67,6 @@ const EventCalendar = ({
   const {
     calendarEvents,
     activeEvent,
-    isDragging,
     dragOverSlot,
     activeDragWidth,
     sensors,
@@ -128,7 +127,6 @@ const EventCalendar = ({
               currentDate={currentDate}
               events={calendarEvents}
               dragOverSlot={dragOverSlot}
-              isDragging={isDragging}
               onEventSelect={onEventSelect}
               onEventCreate={onEventCreate}
               onEventResize={handleEventResize}
@@ -140,7 +138,6 @@ const EventCalendar = ({
               currentDate={currentDate}
               events={calendarEvents}
               dragOverSlot={dragOverSlot}
-              isDragging={isDragging}
               onEventSelect={onEventSelect}
               onEventCreate={onEventCreate}
               onEventResize={handleEventResize}
