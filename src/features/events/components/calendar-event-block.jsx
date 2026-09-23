@@ -1,18 +1,35 @@
 import { useDraggable } from '@dnd-kit/core';
-import {
-  addHours,
-  addMinutes,
-  isAfter,
-  isBefore,
-  startOfDay,
-  subMinutes,
-} from 'date-fns';
-import { useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-import { WeekCellsHeight } from './event-calendar';
+import { useEventResizable } from '../hooks/use-event-resizable';
 import { EventItem } from './event-item';
+
+function ResizeHandle({
+  position,
+  onPointerDown,
+  onPointerMove,
+  onPointerUp,
+  title,
+}) {
+  const isTop = position === 'top';
+
+  return (
+    <div
+      data-resize-handle={position}
+      onPointerDown={(e) => onPointerDown(e, position)}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      className={cn(
+        'group/handle absolute right-0 left-0 z-30 flex h-3 cursor-ns-resize touch-none items-center justify-center opacity-0 transition-opacity group-hover/event-block:opacity-100',
+        isTop ? '-top-1.5' : '-bottom-1.5'
+      )}
+      title={title}
+    >
+      <div className="bg-foreground/40 group-hover/handle:bg-foreground/80 h-1 w-7 rounded-full shadow-xs transition-colors" />
+    </div>
+  );
+}
 
 export function CalendarEventBlock({
   positionedEvent,
@@ -23,8 +40,12 @@ export function CalendarEventBlock({
 }) {
   const { event, top, height, left, width, zIndex } = positionedEvent;
 
-  const [isResizing, setIsResizing] = useState(false);
-  const resizeRef = useRef(null);
+  const { isResizing, handlePointerDown, handlePointerMove, handlePointerUp } =
+    useEventResizable({
+      event,
+      onEventResize,
+      onEventResizeEnd,
+    });
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: event.id,
@@ -33,94 +54,6 @@ export function CalendarEventBlock({
     },
     disabled: isResizing,
   });
-
-  const handlePointerDown = (e, type) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    e.currentTarget.setPointerCapture(e.pointerId);
-
-    setIsResizing(true);
-    resizeRef.current = {
-      type,
-      startY: e.clientY,
-      initialStart: new Date(event.start),
-      initialEnd: new Date(event.end),
-      lastDeltaMinutes: 0,
-      currentStart: new Date(event.start),
-      currentEnd: new Date(event.end),
-    };
-  };
-
-  const handlePointerMove = (e) => {
-    if (!resizeRef.current) return;
-    e.stopPropagation();
-
-    const { type, startY, initialStart, initialEnd, lastDeltaMinutes } =
-      resizeRef.current;
-    const deltaY = e.clientY - startY;
-
-    // WeekCellsHeight = 72px (1 hora) -> 18px (15 minutos)
-    const pixelsPerQuarter = WeekCellsHeight / 4;
-    const quarterDelta = Math.round(deltaY / pixelsPerQuarter);
-    const deltaMinutes = quarterDelta * 15;
-
-    if (deltaMinutes === lastDeltaMinutes) return;
-    resizeRef.current.lastDeltaMinutes = deltaMinutes;
-
-    if (type === 'top') {
-      let candidateStart = addMinutes(initialStart, deltaMinutes);
-      const minPossibleStart = startOfDay(initialStart);
-      const maxPossibleStart = subMinutes(initialEnd, 15);
-
-      if (isBefore(candidateStart, minPossibleStart)) {
-        candidateStart = minPossibleStart;
-      }
-      if (isAfter(candidateStart, maxPossibleStart)) {
-        candidateStart = maxPossibleStart;
-      }
-
-      resizeRef.current.currentStart = candidateStart;
-      onEventResize?.(event.id, candidateStart, initialEnd);
-    } else if (type === 'bottom') {
-      let candidateEnd = addMinutes(initialEnd, deltaMinutes);
-      const minPossibleEnd = addMinutes(initialStart, 15);
-      const maxPossibleEnd = addHours(startOfDay(initialStart), 24);
-
-      if (isBefore(candidateEnd, minPossibleEnd)) {
-        candidateEnd = minPossibleEnd;
-      }
-      if (isAfter(candidateEnd, maxPossibleEnd)) {
-        candidateEnd = maxPossibleEnd;
-      }
-
-      resizeRef.current.currentEnd = candidateEnd;
-      onEventResize?.(event.id, initialStart, candidateEnd);
-    }
-  };
-
-  const handlePointerUp = (e) => {
-    if (!resizeRef.current) return;
-    e.stopPropagation();
-
-    const { currentStart, currentEnd } = resizeRef.current;
-
-    try {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch {
-      // Ignora erro se a captura já tiver sido liberada pelo navegador
-    }
-
-    setIsResizing(false);
-    const updatedEvent = {
-      ...event,
-      start: currentStart,
-      end: currentEnd,
-    };
-    resizeRef.current = null;
-
-    onEventResizeEnd?.(updatedEvent);
-  };
 
   const handleClick = (e) => {
     e.stopPropagation();
@@ -144,19 +77,14 @@ export function CalendarEventBlock({
         zIndex: isResizing ? 30 : zIndex,
       }}
     >
-      {/* Alça superior (Top Handle) para redimensionar horário de início */}
-      <div
-        data-resize-handle="top"
-        onPointerDown={(e) => handlePointerDown(e, 'top')}
+      <ResizeHandle
+        position="top"
+        onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        className="group/top-handle absolute -top-1.5 right-0 left-0 z-30 flex h-3 cursor-ns-resize touch-none items-center justify-center opacity-0 transition-opacity group-hover/event-block:opacity-100"
         title="Ajustar início"
-      >
-        <div className="bg-foreground/40 group-hover/top-handle:bg-foreground/80 h-1 w-7 rounded-full shadow-xs transition-colors" />
-      </div>
+      />
 
-      {/* Corpo arrastável do evento */}
       <div
         ref={setNodeRef}
         {...listeners}
@@ -166,17 +94,13 @@ export function CalendarEventBlock({
         <EventItem event={event} view={view} onClick={handleClick} showTime />
       </div>
 
-      {/* Alça inferior (Bottom Handle) para redimensionar horário de término */}
-      <div
-        data-resize-handle="bottom"
-        onPointerDown={(e) => handlePointerDown(e, 'bottom')}
+      <ResizeHandle
+        position="bottom"
+        onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        className="group/bottom-handle absolute right-0 -bottom-1.5 left-0 z-30 flex h-3 cursor-ns-resize touch-none items-center justify-center opacity-0 transition-opacity group-hover/event-block:opacity-100"
         title="Ajustar término"
-      >
-        <div className="bg-foreground/40 group-hover/bottom-handle:bg-foreground/80 h-1 w-7 rounded-full shadow-xs transition-colors" />
-      </div>
+      />
     </div>
   );
 }
