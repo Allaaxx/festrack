@@ -1,7 +1,7 @@
 import { DragOverlay } from '@dnd-kit/core';
 import { differenceInMinutes } from 'date-fns';
 
-import { WeekCellsHeight } from '../constants';
+import { EventGap, EventHeight, WeekCellsHeight } from '../constants';
 import { EventItem } from './event-item';
 
 export function CalendarDragOverlay({
@@ -13,7 +13,7 @@ export function CalendarDragOverlay({
   const isMonth = view === 'month';
   const overlayHeight =
     isMonth && activeEvent
-      ? 29
+      ? EventHeight
       : activeEvent
         ? Math.max(
             (differenceInMinutes(activeEvent.end, activeEvent.start) / 60) *
@@ -27,10 +27,13 @@ export function CalendarDragOverlay({
       {activeEvent ? (
         <div
           style={{
+            '--event-height': `${EventHeight}px`,
+            '--event-gap': `${EventGap}px`,
+            '--week-cells-height': `${cellHeight}px`,
             width: activeDragWidth ? `${activeDragWidth}px` : '180px',
             height: `${overlayHeight}px`,
           }}
-          className="pointer-events-none cursor-grabbing opacity-100 shadow-lg"
+          className="bg-card pointer-events-none cursor-grabbing overflow-hidden rounded-sm shadow-md"
         >
           <EventItem
             event={activeEvent}
@@ -38,6 +41,7 @@ export function CalendarDragOverlay({
             showTime={!isMonth}
             isFirstDay
             isLastDay
+            isOverlay
           />
         </div>
       ) : null}

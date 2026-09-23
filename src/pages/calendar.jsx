@@ -78,13 +78,14 @@ const EventCalendarPage = () => {
 
   const handleEventUpdate = (updatedItem) => {
     const raw = updatedItem.rawEvent || {};
+    const isAllDay = Boolean(updatedItem.allDay ?? raw.allDay);
     editEventMutation.mutate({
       id: updatedItem.id,
       name: updatedItem.title || raw.name,
       description: updatedItem.description ?? raw.description,
       startDate: updatedItem.start,
       endDate: updatedItem.end,
-      allDay: false,
+      allDay: isAllDay,
       startTime: format(updatedItem.start, 'HH:mm'),
       endTime: format(updatedItem.end, 'HH:mm'),
     });

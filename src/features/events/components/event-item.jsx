@@ -46,6 +46,7 @@ export function EventItem({
   isLastDay = true,
   spansLeft = false,
   spansRight = false,
+  isOverlay = false,
   children,
   className,
 }) {
@@ -75,29 +76,35 @@ export function EventItem({
         </span>
       ) : null);
 
+    const eventWrapper = (
+      <EventWrapper
+        event={event}
+        isFirstDay={isFirstDay}
+        isLastDay={isLastDay}
+        onClick={onClick}
+        className={cn(
+          'relative h-(--event-height) w-full min-w-0 items-center overflow-hidden text-[10px] sm:text-xs',
+          getMonthViewBleedClasses(spansRight),
+          getMonthViewEventPaddingClasses(spansLeft, spansRight),
+          className
+        )}
+      >
+        {monthContent ? (
+          <span className="relative z-10 block min-w-0 flex-1 truncate overflow-hidden">
+            {monthContent}
+          </span>
+        ) : (
+          <span className="sr-only">{event.title}</span>
+        )}
+      </EventWrapper>
+    );
+
+    if (isOverlay) {
+      return eventWrapper;
+    }
+
     return (
-      <div className="relative mt-(--event-gap) w-full">
-        <EventWrapper
-          event={event}
-          isFirstDay={isFirstDay}
-          isLastDay={isLastDay}
-          onClick={onClick}
-          className={cn(
-            'relative h-(--event-height) w-full min-w-0 items-center overflow-hidden text-[10px] sm:text-xs',
-            getMonthViewBleedClasses(spansRight),
-            getMonthViewEventPaddingClasses(spansLeft, spansRight),
-            className
-          )}
-        >
-          {monthContent ? (
-            <span className="relative z-10 block min-w-0 flex-1 truncate overflow-hidden">
-              {monthContent}
-            </span>
-          ) : (
-            <span className="sr-only">{event.title}</span>
-          )}
-        </EventWrapper>
-      </div>
+      <div className="relative mt-(--event-gap) w-full">{eventWrapper}</div>
     );
   }
 
