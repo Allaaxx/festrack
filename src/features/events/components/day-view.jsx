@@ -11,7 +11,6 @@ import {
 } from 'date-fns';
 import { useMemo } from 'react';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
@@ -152,33 +151,37 @@ export function DayView({
 
   return (
     <div data-slot="day-view" className="flex min-h-0 flex-1 flex-col">
-      <ScrollArea className="flex-1">
-        {showAllDaySection && (
-          <div className="border-border/70 bg-muted/50 border-t">
-            <div className="grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]">
-              <div className="relative">
-                <span className="text-muted-foreground/70 absolute bottom-0 left-0 h-6 w-16 max-w-full pe-2 text-right text-[10px] sm:pe-4 sm:text-xs">
-                  Dia todo
-                </span>
-              </div>
-              <div className="border-border/70 relative border-r p-1 last:border-r-0">
-                {allDayEvents.map((event) => (
-                  <EventItem
-                    key={`spanning-${event.id}`}
-                    onClick={(e) => handleEventClick(event, e)}
-                    event={event}
-                    view="month"
-                    isFirstDay={isSameDay(currentDate, event.start)}
-                    isLastDay={isSameDay(currentDate, event.end)}
-                  >
-                    <div>{event.title}</div>
-                  </EventItem>
-                ))}
-              </div>
+      {showAllDaySection && (
+        <div className="border-border/70 bg-muted/50 rounded-t-lg border-b">
+          <div className="grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]">
+            <div className="relative">
+              <span className="text-muted-foreground/70 absolute bottom-0 left-0 h-6 w-16 max-w-full pe-2 text-right text-[10px] sm:pe-4 sm:text-xs">
+                Dia todo
+              </span>
+            </div>
+            <div className="border-border/70 relative border-r p-1 last:border-r-0">
+              {allDayEvents.map((event) => (
+                <EventItem
+                  key={`spanning-${event.id}`}
+                  onClick={(e) => handleEventClick(event, e)}
+                  event={event}
+                  view="month"
+                  isFirstDay={isSameDay(currentDate, event.start)}
+                  isLastDay={isSameDay(currentDate, event.end)}
+                >
+                  <div>{event.title}</div>
+                </EventItem>
+              ))}
             </div>
           </div>
+        </div>
+      )}
+      <div
+        className={cn(
+          'border-border/70 grid flex-1 grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]',
+          !showAllDaySection && 'rounded-t-lg'
         )}
-        <div className="border-border/70 grid flex-1 grid-cols-[3rem_1fr] overflow-hidden border-t sm:grid-cols-[4rem_1fr]">
+      >
           {/* Coluna de horas */}
           <div>
             {hours.map((hour, index) => (
@@ -259,7 +262,6 @@ export function DayView({
             })}
           </div>
         </div>
-      </ScrollArea>
     </div>
   );
 }

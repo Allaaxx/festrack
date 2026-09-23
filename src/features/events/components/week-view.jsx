@@ -17,7 +17,6 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { useMemo } from 'react';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
@@ -174,9 +173,9 @@ export function WeekView({
   return (
     <div
       data-slot="week-view"
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="bg-background/80 border-border/70 sticky top-0 z-30 grid shrink-0 grid-cols-8 border-b backdrop-blur-md">
+      <div className="bg-card border-border/70 sticky top-14 sm:top-16 z-30 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
         <div className="text-muted-foreground/70 py-2 text-center text-sm">
           <span className="max-[479px]:sr-only">{format(new Date(), 'O')}</span>
         </div>
@@ -196,7 +195,6 @@ export function WeekView({
           </div>
         ))}
       </div>
-      <ScrollArea className="flex-1">
         {showAllDaySection && (
           <div className="border-border/70 bg-muted/50 shrink-0 border-b">
             <div className="grid grid-cols-8">
@@ -341,7 +339,6 @@ export function WeekView({
             </div>
           ))}
         </div>
-      </ScrollArea>
     </div>
   );
 }
