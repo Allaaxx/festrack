@@ -178,7 +178,7 @@ export function MonthView({
                             key={
                               isFirstDay
                                 ? event.id
-                                : `spanning-${event.id}-${day.toISOString().slice(0, 10)}`
+                                : `spanning-${event.id}-${format(day, 'yyyy-MM-dd')}`
                             }
                             className="w-full aria-hidden:hidden"
                             aria-hidden={isHidden ? 'true' : undefined}

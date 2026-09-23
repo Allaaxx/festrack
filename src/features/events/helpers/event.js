@@ -21,7 +21,7 @@ export const parseEventDate = (dateValue) => {
     return isValid(dateValue) ? dateValue : null;
   }
   const str = String(dateValue).trim();
-  
+
   // Try to match YYYY-MM-DDTHH:mm
   const matchTime = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
   if (matchTime) {
@@ -51,7 +51,7 @@ export const parseEventDate = (dateValue) => {
     );
     return isValid(localDate) ? localDate : null;
   }
-  
+
   const parsed = parseISO(str);
   return isValid(parsed) ? parsed : null;
 };
@@ -103,8 +103,17 @@ export const formatEventDateToApi = (
   }
 
   // Se tem hora específica
-  const defaultTime = type === 'start' ? '00:00' : '23:59';
-  const finalTime = timeStr || defaultTime;
+  let finalTime = timeStr;
+  if (!finalTime && dateValue instanceof Date) {
+    const hours = dateValue.getHours();
+    const minutes = dateValue.getMinutes();
+    if (hours !== 0 || minutes !== 0) {
+      finalTime = format(dateValue, 'HH:mm');
+    }
+  }
+  if (!finalTime) {
+    finalTime = type === 'start' ? '00:00' : '23:59';
+  }
   return `${datePart}T${finalTime}:00.000Z`;
 };
 

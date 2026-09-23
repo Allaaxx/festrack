@@ -1,3 +1,4 @@
+import { addHours, format, startOfDay } from 'date-fns';
 import { Loader2Icon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -46,11 +47,23 @@ const CreateEventDialog = ({ trigger, open, onOpenChange, initialDate }) => {
   useEffect(() => {
     if (dialogOpen) {
       const targetDate = initialDate instanceof Date ? initialDate : new Date();
+      const hasSpecificTime =
+        initialDate instanceof Date &&
+        (initialDate.getHours() !== 0 || initialDate.getMinutes() !== 0);
+
+      const startTime = hasSpecificTime ? format(targetDate, 'HH:mm') : '09:00';
+      const endTime = hasSpecificTime
+        ? format(addHours(targetDate, 1), 'HH:mm')
+        : '10:00';
+
       form.reset({
         name: '',
         description: '',
-        startDate: targetDate,
-        endDate: targetDate,
+        startDate: startOfDay(targetDate),
+        endDate: startOfDay(targetDate),
+        allDay: false,
+        startTime,
+        endTime,
       });
     }
   }, [initialDate, dialogOpen, form]);
