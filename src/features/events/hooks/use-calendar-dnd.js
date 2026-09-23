@@ -5,11 +5,15 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { addMinutes, differenceInMinutes } from 'date-fns';
+import { addMinutes, differenceInMinutes, startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
+
+import { WeekCellsHeight } from '../constants';
 
 /**
  * Hook para orquestrar o drag and drop e manipulação otimista de eventos do calendário com @dnd-kit.
+ * Utiliza a ponta superior do elemento arrastado como referência para cálculo de horários
+ * e gerencia colisões em colunas diárias e células mensais com alta performance.
  *
  * @param {Object} params
  * @param {Array} params.events
@@ -82,28 +86,88 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
       setActiveEvent(null);
       setActiveDragWidth(null);
 
-      if (!over || !over.data?.current?.timestamp) {
+      if (!over || !active.data?.current?.event) {
         return;
       }
 
-      const draggedEvent = active.data?.current?.event;
-      if (!draggedEvent) return;
+      const draggedEvent = active.data.current.event;
+      const overData = over.data?.current;
 
-      const dropTimestamp = over.data.current.timestamp;
-      const newStart = new Date(dropTimestamp);
-      const durationMinutes = differenceInMinutes(
-        draggedEvent.end,
-        draggedEvent.start
-      );
-      const newEnd = addMinutes(newStart, durationMinutes);
+      // Caso 1: Drop em coluna horária (DayView ou WeekView)
+      // O horário é calculado pela ponta superior (top edge) do card arrastado
+      if (overData?.type === 'day-column') {
+        const dayDate = new Date(overData.dayTimestamp);
+        const translatedTop = active.rect.current?.translated?.top ?? 0;
+        const columnTop = over.rect.top;
+        const deltaY = translatedTop - columnTop;
 
-      const updatedEvent = {
-        ...draggedEvent,
-        start: newStart,
-        end: newEnd,
-      };
+        const pixelsPerQuarter = WeekCellsHeight / 4; // 18px para 15 minutos
+        const quarterIndex = Math.round(deltaY / pixelsPerQuarter);
+        const durationMinutes = Math.max(
+          15,
+          differenceInMinutes(draggedEvent.end, draggedEvent.start)
+        );
 
-      handleEventCommit(updatedEvent);
+        // Clamping estrito dentro do mesmo dia (00:00 às 23:59)
+        const maxStartMinutes = 24 * 60 - durationMinutes;
+        const clampedStartMinutes = Math.max(
+          0,
+          Math.min(maxStartMinutes, quarterIndex * 15)
+        );
+
+        const newStart = addMinutes(startOfDay(dayDate), clampedStartMinutes);
+        const newEnd = addMinutes(newStart, durationMinutes);
+
+        handleEventCommit({
+          ...draggedEvent,
+          start: newStart,
+          end: newEnd,
+        });
+        return;
+      }
+
+      // Caso 2: Drop em célula de dia da MonthView
+      if (overData?.type === 'month-day') {
+        const targetDate = new Date(overData.dayTimestamp);
+        const originalStart = new Date(draggedEvent.start);
+        const durationMinutes = Math.max(
+          15,
+          differenceInMinutes(draggedEvent.end, draggedEvent.start)
+        );
+
+        const newStart = new Date(targetDate);
+        newStart.setHours(
+          originalStart.getHours(),
+          originalStart.getMinutes(),
+          0,
+          0
+        );
+        const newEnd = addMinutes(newStart, durationMinutes);
+
+        handleEventCommit({
+          ...draggedEvent,
+          start: newStart,
+          end: newEnd,
+        });
+        return;
+      }
+
+      // Fallback para containers com timestamp direto
+      if (overData?.timestamp) {
+        const dropTimestamp = overData.timestamp;
+        const newStart = new Date(dropTimestamp);
+        const durationMinutes = differenceInMinutes(
+          draggedEvent.end,
+          draggedEvent.start
+        );
+        const newEnd = addMinutes(newStart, durationMinutes);
+
+        handleEventCommit({
+          ...draggedEvent,
+          start: newStart,
+          end: newEnd,
+        });
+      }
     },
     [handleEventCommit]
   );
@@ -126,3 +190,5 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
     handleEventCommit,
   };
 }
+
+export default useCalendarDnd;

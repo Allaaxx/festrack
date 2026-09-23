@@ -23,6 +23,7 @@ import {
 } from '../helpers/calendar-layout';
 import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
 import { CalendarCell } from './calendar-cell';
+import { CalendarDayColumn } from './calendar-day-column';
 import { CalendarEventBlock } from './calendar-event-block';
 import { EventItem } from './event-item';
 
@@ -192,9 +193,10 @@ export function WeekView({
         </div>
 
         {days.map((day, dayIndex) => (
-          <div
+          <CalendarDayColumn
             key={day.toString()}
-            className="border-border/70 relative grid auto-cols-fr border-r last:border-r-0"
+            day={day}
+            className="border-border/70 grid auto-cols-fr border-r last:border-r-0"
             data-today={isToday(day) || undefined}
           >
             {(processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
@@ -231,13 +233,10 @@ export function WeekView({
                   {[0, 1, 2, 3].map((quarter) => {
                     const slotDate = new Date(day);
                     slotDate.setHours(hourValue, quarter * 15, 0, 0);
-                    const cellId = `drop-week-${slotDate.getTime()}`;
 
                     return (
                       <CalendarCell
-                        key={cellId}
-                        id={cellId}
-                        date={slotDate}
+                        key={`slot-${slotDate.getTime()}`}
                         time={hourValue + quarter * 0.25}
                         className={cn(
                           'absolute h-[calc(var(--week-cells-height)/4)] w-full',
@@ -256,7 +255,7 @@ export function WeekView({
                 </div>
               );
             })}
-          </div>
+          </CalendarDayColumn>
         ))}
       </div>
     </div>

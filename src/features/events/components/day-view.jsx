@@ -17,6 +17,7 @@ import {
 } from '../helpers/calendar-layout';
 import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
 import { CalendarCell } from './calendar-cell';
+import { CalendarDayColumn } from './calendar-day-column';
 import { CalendarEventBlock } from './calendar-event-block';
 import { EventItem } from './event-item';
 
@@ -121,7 +122,7 @@ export function DayView({
         </div>
 
         {/* Coluna de eventos */}
-        <div className="relative">
+        <CalendarDayColumn day={currentDate}>
           {positionedEvents.map((positionedEvent) => (
             <CalendarEventBlock
               key={positionedEvent.event.id}
@@ -145,7 +146,7 @@ export function DayView({
             </div>
           )}
 
-          {/* Células clicáveis e soltáveis para criar ou mover eventos */}
+          {/* Células clicáveis para criar eventos */}
           {hours.map((hour) => {
             const hourValue = getHours(hour);
 
@@ -157,13 +158,10 @@ export function DayView({
                 {[0, 1, 2, 3].map((quarter) => {
                   const slotDate = new Date(currentDate);
                   slotDate.setHours(hourValue, quarter * 15, 0, 0);
-                  const cellId = `drop-day-${slotDate.getTime()}`;
 
                   return (
                     <CalendarCell
-                      key={cellId}
-                      id={cellId}
-                      date={slotDate}
+                      key={`slot-${slotDate.getTime()}`}
                       time={hourValue + quarter * 0.25}
                       className={cn(
                         'absolute h-[calc(var(--week-cells-height)/4)] w-full',
@@ -182,7 +180,7 @@ export function DayView({
               </div>
             );
           })}
-        </div>
+        </CalendarDayColumn>
       </div>
     </div>
   );

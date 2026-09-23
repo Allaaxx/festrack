@@ -1,3 +1,4 @@
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import {
   addDays,
   eachDayOfInterval,
@@ -18,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 import { EventGap, EventHeight } from '../constants';
 import {
@@ -27,8 +29,73 @@ import {
   sortEvents,
 } from '../helpers/calendar-layout';
 import { useEventVisibility } from '../hooks/use-event-visibility';
-import { CalendarCell } from './calendar-cell';
 import { EventItem } from './event-item';
+
+function MonthDayCell({ day, isCurrentMonth, isToday, children, onClick }) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `month-day-${day.getTime()}`,
+    data: {
+      type: 'month-day',
+      dayTimestamp: day.getTime(),
+      day,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      data-slot="month-day-cell"
+      data-today={isToday || undefined}
+      data-outside-cell={!isCurrentMonth || undefined}
+      data-over={isOver || undefined}
+      onClick={onClick}
+      className={cn(
+        'group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 flex min-h-0 flex-col overflow-visible border-r border-b px-0.5 py-1 transition-colors last:border-r-0 sm:px-1',
+        isOver && 'bg-primary/10 ring-primary/20 ring-1'
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggableMonthEvent({
+  event,
+  isFirstDay,
+  isLastDay,
+  spansLeft,
+  spansRight,
+  onClick,
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `month-event-${event.id}`,
+    data: {
+      event,
+    },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        'w-full cursor-grab select-none active:cursor-grabbing',
+        isDragging && 'pointer-events-none opacity-0'
+      )}
+    >
+      <EventItem
+        event={event}
+        view="month"
+        onClick={onClick}
+        isFirstDay={isFirstDay}
+        isLastDay={isLastDay}
+        spansLeft={spansLeft}
+        spansRight={spansRight}
+      />
+    </div>
+  );
+}
 
 export function MonthView({
   currentDate,
@@ -89,7 +156,6 @@ export function MonthView({
       return;
 
     const startTime = new Date(day);
-
     startTime.setHours(0, 0, 0, 0);
     onEventCreate(startTime);
   };
@@ -108,7 +174,7 @@ export function MonthView({
 
   return (
     <div data-slot="month-view" className="flex min-h-0 flex-1 flex-col">
-      <div className="bg-card border-border/70 sticky top-14 z-30 grid grid-cols-7 rounded-t-lg border-b sm:top-16">
+      <div className="bg-card border-border/70 grid shrink-0 grid-cols-7 border-b">
         {weekdays.map((day) => (
           <div
             key={day.full}
@@ -145,102 +211,97 @@ export function MonthView({
                 : 0;
 
               return (
-                <div
+                <MonthDayCell
                   key={day.toString()}
-                  className="group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 min-h-0 border-r border-b last:border-r-0"
-                  data-today={isToday(day) || undefined}
-                  data-outside-cell={!isCurrentMonth || undefined}
+                  day={day}
+                  isCurrentMonth={isCurrentMonth}
+                  isToday={isToday(day)}
+                  onClick={(event) => handleCellClick(day, event)}
                 >
-                  <CalendarCell
-                    className="min-h-0 overflow-visible"
-                    onClick={(event) => handleCellClick(day, event)}
+                  <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs">
+                    {format(day, 'd')}
+                  </div>
+                  <div
+                    ref={isReferenceCell ? contentRef : null}
+                    className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] flex-1 overflow-visible"
                   >
-                    <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full text-xs">
-                      {format(day, 'd')}
-                    </div>
-                    <div
-                      ref={isReferenceCell ? contentRef : null}
-                      className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] flex-1 overflow-visible"
-                    >
-                      {sortEvents(allDayEvents).map((event, index) => {
-                        const isFirstDay = isSameDay(day, event.start);
-                        const isLastDay = isSameDay(day, event.end);
-                        const spansRight = !isLastDay && dayIndex < 6;
-                        const spansLeft = !isFirstDay && dayIndex > 0;
-                        const isHidden =
-                          isMounted && !!visibleCount && index >= visibleCount;
+                    {sortEvents(allDayEvents).map((event, index) => {
+                      const isFirstDay = isSameDay(day, event.start);
+                      const isLastDay = isSameDay(day, event.end);
+                      const spansRight = !isLastDay && dayIndex < 6;
+                      const spansLeft = !isFirstDay && dayIndex > 0;
+                      const isHidden =
+                        isMounted && !!visibleCount && index >= visibleCount;
 
-                        if (!visibleCount) return null;
+                      if (!visibleCount) return null;
 
-                        return (
-                          <div
-                            key={
-                              isFirstDay
-                                ? event.id
-                                : `spanning-${event.id}-${format(day, 'yyyy-MM-dd')}`
-                            }
-                            className="w-full aria-hidden:hidden"
-                            aria-hidden={isHidden ? 'true' : undefined}
-                          >
-                            <EventItem
-                              event={event}
-                              view="month"
-                              onClick={(e) => handleEventClick(event, e)}
-                              isFirstDay={isFirstDay}
-                              isLastDay={isLastDay}
-                              spansLeft={spansLeft}
-                              spansRight={spansRight}
-                            />
-                          </div>
-                        );
-                      })}
-
-                      {hasMore && (
-                        <Popover
-                          open={openPopoverDay === format(day, 'yyyy-MM-dd')}
-                          onOpenChange={(open) =>
-                            setOpenPopoverDay(
-                              open ? format(day, 'yyyy-MM-dd') : null
-                            )
+                      return (
+                        <div
+                          key={
+                            isFirstDay
+                              ? event.id
+                              : `spanning-${event.id}-${format(day, 'yyyy-MM-dd')}`
                           }
+                          className="w-full aria-hidden:hidden"
+                          aria-hidden={isHidden ? 'true' : undefined}
                         >
-                          <PopoverTrigger
-                            className="focus-visible:border-ring focus-visible:ring-ring/50 text-muted-foreground hover:text-foreground hover:bg-muted/50 mt-(--event-gap) flex h-(--event-height) w-full cursor-pointer items-center overflow-hidden px-1 text-left text-[10px] backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] sm:px-2 sm:text-xs"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <span>
-                              + {remainingCount}{' '}
-                              <span className="max-sm:sr-only">mais</span>
-                            </span>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            align="center"
-                            className="max-w-52 p-3"
-                            style={{ '--event-height': `${EventHeight}px` }}
-                          >
-                            <div className="space-y-2">
-                              <div className="text-sm font-medium capitalize">
-                                {format(day, 'EEE, d', { locale: ptBR })}
-                              </div>
-                              <div className="space-y-1">
-                                {sortEvents(allEvents).map((event) => (
-                                  <EventItem
-                                    key={event.id}
-                                    onClick={(e) => handleEventClick(event, e)}
-                                    event={event}
-                                    view="month"
-                                    isFirstDay={isSameDay(day, event.start)}
-                                    isLastDay={isSameDay(day, event.end)}
-                                  />
-                                ))}
-                              </div>
+                          <DraggableMonthEvent
+                            event={event}
+                            onClick={(e) => handleEventClick(event, e)}
+                            isFirstDay={isFirstDay}
+                            isLastDay={isLastDay}
+                            spansLeft={spansLeft}
+                            spansRight={spansRight}
+                          />
+                        </div>
+                      );
+                    })}
+
+                    {hasMore && (
+                      <Popover
+                        open={openPopoverDay === format(day, 'yyyy-MM-dd')}
+                        onOpenChange={(open) =>
+                          setOpenPopoverDay(
+                            open ? format(day, 'yyyy-MM-dd') : null
+                          )
+                        }
+                      >
+                        <PopoverTrigger
+                          className="focus-visible:border-ring focus-visible:ring-ring/50 text-muted-foreground hover:text-foreground hover:bg-muted/50 mt-(--event-gap) flex h-(--event-height) w-full cursor-pointer items-center overflow-hidden px-1 text-left text-[10px] backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] sm:px-2 sm:text-xs"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span>
+                            + {remainingCount}{' '}
+                            <span className="max-sm:sr-only">mais</span>
+                          </span>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          align="center"
+                          className="max-w-52 p-3"
+                          style={{ '--event-height': `${EventHeight}px` }}
+                        >
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium capitalize">
+                              {format(day, 'EEE, d', { locale: ptBR })}
                             </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                    </div>
-                  </CalendarCell>
-                </div>
+                            <div className="space-y-1">
+                              {sortEvents(allEvents).map((event) => (
+                                <EventItem
+                                  key={event.id}
+                                  onClick={(e) => handleEventClick(event, e)}
+                                  event={event}
+                                  view="month"
+                                  isFirstDay={isSameDay(day, event.start)}
+                                  isLastDay={isSameDay(day, event.end)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
+                </MonthDayCell>
               );
             })}
           </div>
@@ -249,3 +310,5 @@ export function MonthView({
     </div>
   );
 }
+
+export default MonthView;

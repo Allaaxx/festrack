@@ -1,17 +1,10 @@
-import { useDroppable } from '@dnd-kit/core';
-
 import { cn } from '@/lib/utils';
 
-export function CalendarCell({ id, date, time, children, className, onClick }) {
-  const { isOver, setNodeRef } = useDroppable({
-    id: id || 'cell-unassigned',
-    disabled: !id,
-    data: {
-      timestamp: date ? date.getTime() : undefined,
-      date,
-    },
-  });
-
+/**
+ * Célula pura e leve para seleção e hover de horários de 15 minutos no calendário.
+ * Não utiliza hooks de droppable, otimizando massivamente o DOM e o ciclo de renderização.
+ */
+export function CalendarCell({ time, children, className, onClick }) {
   const formattedTime =
     time !== undefined
       ? `${Math.floor(time)}:${Math.round((time - Math.floor(time)) * 60)
@@ -21,12 +14,9 @@ export function CalendarCell({ id, date, time, children, className, onClick }) {
 
   return (
     <div
-      ref={id ? setNodeRef : undefined}
       onClick={onClick}
       className={cn(
-        'flex h-full flex-col overflow-hidden px-0.5 py-1 transition-colors sm:px-1',
-        isOver &&
-          'bg-accent/60 dark:bg-accent/40 border-primary/30 z-20 border-y',
+        'hover:bg-accent/40 dark:hover:bg-accent/25 flex h-full cursor-pointer flex-col overflow-hidden px-0.5 py-1 transition-colors sm:px-1',
         className
       )}
       title={formattedTime}
@@ -35,3 +25,5 @@ export function CalendarCell({ id, date, time, children, className, onClick }) {
     </div>
   );
 }
+
+export default CalendarCell;
