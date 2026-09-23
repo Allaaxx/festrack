@@ -104,16 +104,27 @@ export function useCalendarNavigation({
 
   const viewTitle = useMemo(() => {
     if (view === 'month') {
-      return capitalize(format(currentDate, 'MMMM yyyy', { locale: ptBR }));
+      const monthTitle = capitalize(
+        format(currentDate, 'MMMM yyyy', { locale: ptBR })
+      );
+      return {
+        mobile: monthTitle,
+        desktop: monthTitle,
+      };
     }
 
     if (view === 'week') {
       const start = startOfWeek(currentDate, { weekStartsOn: 0 });
       const end = endOfWeek(currentDate, { weekStartsOn: 0 });
 
-      return isSameMonth(start, end)
+      const weekTitle = isSameMonth(start, end)
         ? capitalize(format(start, 'MMMM yyyy', { locale: ptBR }))
         : `${capitalize(format(start, 'MMM', { locale: ptBR }))} - ${capitalize(format(end, 'MMM yyyy', { locale: ptBR }))}`;
+
+      return {
+        mobile: weekTitle,
+        desktop: weekTitle,
+      };
     }
 
     const fullDayTitle = capitalize(

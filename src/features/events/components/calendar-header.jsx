@@ -72,8 +72,14 @@ export function CalendarHeader({
           <ChevronLeftIcon />
         </Button>
         <h2 className="truncate text-center text-sm font-semibold sm:text-lg md:text-xl">
-          <span className="sm:hidden">{viewTitle.mobile}</span>
-          <span className="max-sm:hidden">{viewTitle.desktop}</span>
+          {viewTitle && typeof viewTitle === 'object' ? (
+            <>
+              <span className="sm:hidden">{viewTitle.mobile}</span>
+              <span className="max-sm:hidden">{viewTitle.desktop}</span>
+            </>
+          ) : (
+            viewTitle
+          )}
         </h2>
         <Button
           variant="ghost"
