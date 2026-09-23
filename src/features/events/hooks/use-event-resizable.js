@@ -112,6 +112,7 @@ export function useEventResizable({
       ...event,
       start: currentStart,
       end: currentEnd,
+      action: 'resize',
     };
     resizeRef.current = null;
 

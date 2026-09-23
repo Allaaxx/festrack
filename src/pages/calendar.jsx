@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/toast';
 import { LOCAL_STORAGE_EVENT_CALENDAR_FILTERS_KEY } from '@/constants/local-storage';
 import {
   CreateEventDialog,
@@ -79,16 +80,38 @@ const EventCalendarPage = () => {
   const handleEventUpdate = (updatedItem) => {
     const raw = updatedItem.rawEvent || {};
     const isAllDay = Boolean(updatedItem.allDay ?? raw.allDay);
-    editEventMutation.mutate({
-      id: updatedItem.id,
-      name: updatedItem.title || raw.name,
-      description: updatedItem.description ?? raw.description,
-      startDate: updatedItem.start,
-      endDate: updatedItem.end,
-      allDay: isAllDay,
-      startTime: format(updatedItem.start, 'HH:mm'),
-      endTime: format(updatedItem.end, 'HH:mm'),
-    });
+    const eventName = updatedItem.title || raw.name || 'Evento';
+    const isResize = updatedItem.action === 'resize';
+
+    editEventMutation.mutate(
+      {
+        id: updatedItem.id,
+        name: updatedItem.title || raw.name,
+        description: updatedItem.description ?? raw.description,
+        startDate: updatedItem.start,
+        endDate: updatedItem.end,
+        allDay: isAllDay,
+        startTime: format(updatedItem.start, 'HH:mm'),
+        endTime: format(updatedItem.end, 'HH:mm'),
+      },
+      {
+        onSuccess: () => {
+          toast.add({
+            type: 'success',
+            title: isResize
+              ? `Evento "${eventName}" redimensionado`
+              : `Evento "${eventName}" movido`,
+          });
+        },
+        onError: () => {
+          toast.add({
+            type: 'error',
+            title: `Ocorreu um erro ao ${isResize ? 'redimensionar' : 'mover'} o evento!`,
+            description: 'Por favor tente novamente mais tarde.',
+          });
+        },
+      }
+    );
   };
 
   if (isLoading) {

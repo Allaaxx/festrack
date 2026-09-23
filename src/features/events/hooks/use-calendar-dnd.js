@@ -151,6 +151,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          action: 'move',
         });
         return;
       }
@@ -177,6 +178,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          action: 'move',
         });
         return;
       }
@@ -195,6 +197,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          action: 'move',
         });
       }
     },
