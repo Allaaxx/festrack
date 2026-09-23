@@ -19,16 +19,15 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 
-import { useEventVisibility } from '../hooks/use-event-visibility';
-import { CalendarCell } from './calendar-cell';
+import { EventGap, EventHeight } from '../constants';
 import {
-  EventGap,
-  EventHeight,
   getAllEventsForDay,
   getEventsForDay,
   getSpanningEventsForDay,
   sortEvents,
-} from './event-calendar';
+} from '../helpers/calendar-layout';
+import { useEventVisibility } from '../hooks/use-event-visibility';
+import { CalendarCell } from './calendar-cell';
 import { EventItem } from './event-item';
 
 export function MonthView({
@@ -109,7 +108,7 @@ export function MonthView({
 
   return (
     <div data-slot="month-view" className="flex min-h-0 flex-1 flex-col">
-      <div className="bg-card border-border/70 sticky top-14 sm:top-16 z-30 grid grid-cols-7 rounded-t-lg border-b">
+      <div className="bg-card border-border/70 sticky top-14 z-30 grid grid-cols-7 rounded-t-lg border-b sm:top-16">
         {weekdays.map((day) => (
           <div
             key={day.full}

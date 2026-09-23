@@ -8,7 +8,7 @@ import {
   getEventColorClasses,
   getMonthViewBleedClasses,
   getMonthViewEventPaddingClasses,
-} from './event-calendar';
+} from '../helpers/calendar-styles';
 
 const formatEventTime = (date) => format(date, 'HH:mm');
 
