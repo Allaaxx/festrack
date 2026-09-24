@@ -118,7 +118,7 @@ const EventCalendarPage = () => {
     return (
       <div className="flex flex-1 flex-col gap-4">
         <Skeleton className="h-14 w-full rounded-lg" />
-        <Skeleton className="min-h-[600px] w-full flex-1 rounded-lg" />
+        <Skeleton className="min-h-150 w-full flex-1 rounded-lg" />
       </div>
     );
   }
@@ -142,16 +142,21 @@ const EventCalendarPage = () => {
 
   return (
     <>
-      <EventCalendar
-        events={events}
-        view={currentView}
-        onViewChange={handleViewChange}
-        currentDate={currentDate}
-        onDateChange={handleDateChange}
-        onEventCreate={handleEventCreate}
-        onEventSelect={handleEventSelect}
-        onEventUpdate={handleEventUpdate}
-      />
+      <div className="bg-background flex h-full flex-1 flex-row overflow-hidden rounded-lg border">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <EventCalendar
+            events={events}
+            view={currentView}
+            onViewChange={handleViewChange}
+            currentDate={currentDate}
+            onDateChange={handleDateChange}
+            onEventCreate={handleEventCreate}
+            onEventSelect={handleEventSelect}
+            onEventUpdate={handleEventUpdate}
+            className="rounded-none border-0 shadow-none"
+          />
+        </div>
+      </div>
 
       <CreateEventDialog
         open={createDialogOpen}

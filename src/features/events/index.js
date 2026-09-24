@@ -7,6 +7,7 @@ export { default as EventCard } from './components/event-card';
 export { default as EventCombobox } from './components/event-combobox';
 export { default as EventForm } from './components/event-form';
 export { default as EventStatusBadge } from './components/event-status-badge';
+export { default as EventsSidebar } from './components/events-sidebar';
 
 // Hooks & Queries
 export {
