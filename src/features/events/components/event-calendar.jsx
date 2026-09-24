@@ -2,7 +2,6 @@ import { DndContext } from '@dnd-kit/core';
 
 import { cn } from '@/lib/utils';
 
-import { EventsSidebar } from '..';
 import { EventGap, EventHeight, WeekCellsHeight } from '../constants';
 import { useCalendarDnd } from '../hooks/use-calendar-dnd';
 import { useCalendarNavigation } from '../hooks/use-calendar-navigation';
@@ -103,53 +102,48 @@ const EventCalendar = ({
         onNext={goToNext}
       />
 
-      <div className="flex">
-        <div
-          className={cn(
-            'bg-card flex min-h-150 flex-1 flex-col rounded-lg border',
-            className
+      <div
+        className={cn(
+          'bg-card flex min-h-0 flex-1 flex-col rounded-lg border',
+          className
+        )}
+        style={{
+          '--event-height': `${EventHeight}px`,
+          '--event-gap': `${EventGap}px`,
+          '--week-cells-height': `${WeekCellsHeight}px`,
+        }}
+      >
+        <div className="flex min-h-0 flex-1 flex-col">
+          {view === 'month' && (
+            <MonthView
+              currentDate={currentDate}
+              events={calendarEvents}
+              onEventSelect={onEventSelect}
+              onEventCreate={onEventCreate}
+            />
           )}
-          style={{
-            '--event-height': `${EventHeight}px`,
-            '--event-gap': `${EventGap}px`,
-            '--week-cells-height': `${WeekCellsHeight}px`,
-          }}
-        >
-          <div className="flex min-h-0 flex-1 flex-col">
-            {view === 'month' && (
-              <MonthView
-                currentDate={currentDate}
-                events={calendarEvents}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-              />
-            )}
-            {view === 'week' && (
-              <WeekView
-                currentDate={currentDate}
-                events={calendarEvents}
-                dragOverSlot={dragOverSlot}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-                onEventResize={handleEventResize}
-                onEventResizeEnd={handleEventCommit}
-              />
-            )}
-            {view === 'day' && (
-              <DayView
-                currentDate={currentDate}
-                events={calendarEvents}
-                dragOverSlot={dragOverSlot}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-                onEventResize={handleEventResize}
-                onEventResizeEnd={handleEventCommit}
-              />
-            )}
-          </div>
-        </div>
-        <div className="shrink-0">
-          <EventsSidebar />
+          {view === 'week' && (
+            <WeekView
+              currentDate={currentDate}
+              events={calendarEvents}
+              dragOverSlot={dragOverSlot}
+              onEventSelect={onEventSelect}
+              onEventCreate={onEventCreate}
+              onEventResize={handleEventResize}
+              onEventResizeEnd={handleEventCommit}
+            />
+          )}
+          {view === 'day' && (
+            <DayView
+              currentDate={currentDate}
+              events={calendarEvents}
+              dragOverSlot={dragOverSlot}
+              onEventSelect={onEventSelect}
+              onEventCreate={onEventCreate}
+              onEventResize={handleEventResize}
+              onEventResizeEnd={handleEventCommit}
+            />
+          )}
         </div>
       </div>
       <CalendarDragOverlay

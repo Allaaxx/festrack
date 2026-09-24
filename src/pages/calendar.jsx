@@ -141,8 +141,8 @@ const EventCalendarPage = () => {
   }
 
   return (
-    <>
-      <div className="bg-background flex h-full flex-1 flex-row overflow-hidden rounded-lg border">
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="bg-background absolute inset-0 flex flex-row overflow-hidden rounded-lg border shadow-sm">
         <div className="flex min-w-0 flex-1 flex-col">
           <EventCalendar
             events={events}
@@ -173,7 +173,7 @@ const EventCalendarPage = () => {
           }}
         />
       )}
-    </>
+    </div>
   );
 };
 
