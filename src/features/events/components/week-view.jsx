@@ -178,7 +178,7 @@ export function WeekView({
         </div>
       )}
 
-      <ScrollArea className="flex-1 rounded-b-lg border-b">
+      <ScrollArea className="flex-1">
         <div className="grid grid-cols-8">
           <div className="border-border/70 grid auto-cols-fr border-r">
             {hours.map((hour, index) => (

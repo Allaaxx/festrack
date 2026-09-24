@@ -10,6 +10,7 @@ import {
   CreateEventDialog,
   EditEventSheet,
   EventCalendar,
+  EventsSidebar,
   mapEventToCalendarItem,
   useEditEvent,
   useGetEvents,
@@ -142,7 +143,7 @@ const EventCalendarPage = () => {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="bg-background absolute inset-0 flex flex-row overflow-hidden rounded-lg border shadow-sm">
+      <div className="bg-background absolute inset-0 flex flex-row overflow-hidden rounded-lg border">
         <div className="flex min-w-0 flex-1 flex-col">
           <EventCalendar
             events={events}
@@ -155,6 +156,9 @@ const EventCalendarPage = () => {
             onEventUpdate={handleEventUpdate}
             className="rounded-none border-0 shadow-none"
           />
+        </div>
+        <div className="hidden shrink-0 lg:block">
+          <EventsSidebar />
         </div>
       </div>
 
