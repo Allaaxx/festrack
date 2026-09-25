@@ -61,7 +61,10 @@ const EditEventSheet = ({ event, trigger, open, onOpenChange }) => {
         </div>
 
         <SheetFooter className="flex flex-row justify-between">
-          <DeleteEventButton event={event} />
+          <DeleteEventButton
+            event={event}
+            onSuccess={() => handleOpenChange(false)}
+          />
 
           <div className="flex">
             <SheetClose

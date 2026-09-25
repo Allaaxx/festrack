@@ -20,7 +20,7 @@ import { useDeleteEvent } from '@/features/events/api/hooks';
  *
  * @param {{ event: { id: string, name: string } }} props
  */
-const DeleteEventButton = ({ event }) => {
+const DeleteEventButton = ({ event, onSuccess }) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const { mutateAsync: deleteEvent, isPending } = useDeleteEvent();
 
@@ -28,6 +28,7 @@ const DeleteEventButton = ({ event }) => {
     try {
       await deleteEvent({ id: event.id });
       setDialogIsOpen(false);
+      onSuccess?.();
       toast.add({
         type: 'success',
         title: 'Evento excluído com sucesso!',
