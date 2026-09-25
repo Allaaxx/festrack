@@ -2,21 +2,7 @@ import { addDays, format, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMemo } from 'react';
 
-const getDotColorClass = (color) => {
-  switch (color) {
-    case 'business':
-      return 'bg-violet-400';
-    case 'family':
-      return 'bg-amber-400';
-    case 'personal':
-      return 'bg-rose-400';
-    case 'holiday':
-      return 'bg-emerald-400';
-    case 'etc':
-    default:
-      return 'bg-sky-400';
-  }
-};
+import { EVENT_STATUSES } from '../helpers/event';
 
 const getEventInitials = (title) => {
   if (!title) return 'E';
@@ -33,7 +19,7 @@ export function useEventsSidebar({ events = [], onDateChange, sidebarDate }) {
 
       while (current <= endDate) {
         const dateKey = format(current, 'yyyy-MM-dd');
-        const color = getDotColorClass(event.color);
+        const color = EVENT_STATUSES[event.color]?.dotClass || 'bg-sky-400';
 
         if (!map.has(dateKey)) {
           map.set(dateKey, { colors: [], moreCount: 0 });
@@ -80,7 +66,6 @@ export function useEventsSidebar({ events = [], onDateChange, sidebarDate }) {
     currentMonthYear,
     handleDateSelect,
     handleEventClick,
-    getDotColorClass,
     getEventInitials,
   };
 }

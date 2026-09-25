@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { EventStatusFilters } from './event-status-filters';
 import { EventsSidebarSheet } from './events-sidebar-sheet';
 
 export function CalendarHeader({
@@ -31,6 +32,8 @@ export function CalendarHeader({
   onDateChange,
   sidebarDate,
   onSidebarDateChange,
+  selectedStatuses,
+  onToggleStatus,
 }) {
   return (
     <div className="flex flex-col">
@@ -125,36 +128,10 @@ export function CalendarHeader({
       </div>
 
       {/* Filters Bar */}
-      <div className="flex scrollbar-none items-center gap-3 overflow-x-auto border-t border-b px-2 py-2 sm:px-4">
-        <span className="text-muted-foreground shrink-0 text-sm font-medium">
-          Exibir:
-        </span>
-        <div className="flex shrink-0 gap-2">
-          <span className="border-border bg-muted/50 text-foreground hover:bg-muted flex cursor-pointer items-center rounded-full border px-3 py-1 text-xs font-medium">
-            Todos
-          </span>
-          <span className="flex cursor-pointer items-center gap-1.5 rounded-full border border-yellow-200 bg-yellow-100/50 px-3 py-1 text-xs font-medium text-yellow-800 hover:bg-yellow-100 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/40">
-            <div className="h-2 w-2 rounded-full bg-yellow-500" />
-            Família
-          </span>
-          <span className="flex cursor-pointer items-center gap-1.5 rounded-full border border-purple-200 bg-purple-100/50 px-3 py-1 text-xs font-medium text-purple-800 hover:bg-purple-100 dark:border-purple-900/50 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40">
-            <div className="h-2 w-2 rounded-full bg-purple-500" />
-            Trabalho
-          </span>
-          <span className="flex cursor-pointer items-center gap-1.5 rounded-full border border-red-200 bg-red-100/50 px-3 py-1 text-xs font-medium text-red-800 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40">
-            <div className="h-2 w-2 rounded-full bg-red-500" />
-            Pessoal
-          </span>
-          <span className="flex cursor-pointer items-center gap-1.5 rounded-full border border-green-200 bg-green-100/50 px-3 py-1 text-xs font-medium text-green-800 hover:bg-green-100 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40">
-            <div className="h-2 w-2 rounded-full bg-green-500" />
-            Feriado
-          </span>
-          <span className="flex cursor-pointer items-center gap-1.5 rounded-full border border-blue-200 bg-blue-100/50 px-3 py-1 text-xs font-medium text-blue-800 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40">
-            <div className="h-2 w-2 rounded-full bg-blue-500" />
-            Outros
-          </span>
-        </div>
-      </div>
+      <EventStatusFilters
+        selectedStatuses={selectedStatuses}
+        onToggleStatus={onToggleStatus}
+      />
     </div>
   );
 }

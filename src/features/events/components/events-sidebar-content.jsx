@@ -8,6 +8,7 @@ import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
+import { EVENT_STATUSES } from '../helpers/event';
 import { useEventsSidebar } from '../hooks/use-events-sidebar';
 
 export function EventsSidebarContent({
@@ -24,7 +25,6 @@ export function EventsSidebarContent({
     currentMonthYear,
     handleDateSelect,
     handleEventClick,
-    getDotColorClass,
     getEventInitials,
   } = useEventsSidebar({ events, onDateChange, sidebarDate });
 
@@ -106,7 +106,8 @@ export function EventsSidebarContent({
       <ScrollArea className="relative min-h-0 flex-1 px-4">
         <div className="flex flex-col gap-2 pb-4">
           {upcomingEvents.map((event) => {
-            const dotColor = getDotColorClass(event.color);
+            const dotColor =
+              EVENT_STATUSES[event.color]?.dotClass || 'bg-sky-400';
             const eventTime = event.allDay
               ? 'O dia todo'
               : `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`;

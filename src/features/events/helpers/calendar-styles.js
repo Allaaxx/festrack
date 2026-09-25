@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
 
+import { EVENT_STATUSES } from './event';
+
 /**
  * Retorna as classes Tailwind de cores de fundo, texto e sombra com base na categoria/cor do evento.
  *
@@ -7,19 +9,10 @@ import { cn } from '@/lib/utils';
  * @returns {string}
  */
 export function getEventColorClasses(color) {
-  switch (color) {
-    case 'family':
-      return 'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8';
-    case 'business':
-      return 'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8';
-    case 'personal':
-      return 'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8';
-    case 'holiday':
-      return 'bg-emerald-200/50 text-emerald-950/80 dark:bg-emerald-400/25 dark:text-emerald-200 shadow-emerald-700/8';
-    case 'etc':
-    default:
-      return 'bg-sky-200/50 text-sky-950/80 dark:bg-sky-400/25 dark:text-sky-200 shadow-sky-700/8';
-  }
+  return (
+    EVENT_STATUSES[color]?.calendarClass ||
+    'bg-sky-200/50 text-sky-950/80 dark:bg-sky-400/25 dark:text-sky-200 shadow-sky-700/8'
+  );
 }
 
 /**

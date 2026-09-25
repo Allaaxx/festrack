@@ -1,9 +1,11 @@
 import { DndContext } from '@dnd-kit/core';
+import { useMemo, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
 import { EventsSidebar } from '..';
 import { EventGap, EventHeight, WeekCellsHeight } from '../constants';
+import { EVENT_STATUSES } from '../helpers/event';
 import { useCalendarDnd } from '../hooks/use-calendar-dnd';
 import { useCalendarNavigation } from '../hooks/use-calendar-navigation';
 import { CalendarDragOverlay } from './calendar-drag-overlay';
@@ -35,6 +37,7 @@ export {
   getMonthViewBleedClasses,
   getMonthViewEventPaddingClasses,
 } from '../helpers/calendar-styles';
+export { EVENT_STATUSES } from '../helpers/event';
 
 const EventCalendar = ({
   events = [],
@@ -50,6 +53,8 @@ const EventCalendar = ({
   onEventCreate = () => {},
   onEventUpdate = () => {},
 }) => {
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
+
   const {
     currentDate,
     view,
@@ -67,6 +72,36 @@ const EventCalendar = ({
     onDateChange,
   });
 
+  const handleToggleStatus = (statusKey) => {
+    if (statusKey === 'all') {
+      setSelectedStatuses([]);
+      return;
+    }
+
+    setSelectedStatuses((prev) => {
+      let next;
+      if (prev.includes(statusKey)) {
+        next = prev.filter((s) => s !== statusKey);
+      } else {
+        next = [...prev, statusKey];
+      }
+
+      // Se selecionou todos os status disponíveis, reseta para "Todos" (array vazio)
+      const allStatusKeys = Object.keys(EVENT_STATUSES);
+      if (next.length === allStatusKeys.length) {
+        return [];
+      }
+
+      return next;
+    });
+  };
+
+  const filteredEvents = useMemo(() => {
+    if (selectedStatuses.length === 0) return events;
+    // event.color contains the mapped status key from EVENT_STATUSES
+    return events.filter((event) => selectedStatuses.includes(event.color));
+  }, [events, selectedStatuses]);
+
   const {
     calendarEvents,
     activeEvent,
@@ -81,7 +116,7 @@ const EventCalendar = ({
     handleEventResize,
     handleEventCommit,
   } = useCalendarDnd({
-    events,
+    events: filteredEvents,
     onEventUpdate,
   });
 
@@ -108,6 +143,8 @@ const EventCalendar = ({
         onDateChange={onDateChange}
         sidebarDate={sidebarDate}
         onSidebarDateChange={onSidebarDateChange}
+        selectedStatuses={selectedStatuses}
+        onToggleStatus={handleToggleStatus}
       />
       <div className="flex min-h-0 flex-1 flex-row">
         <div

@@ -157,6 +157,39 @@ export const getEventStatus = (event) => {
   return 'in_progress';
 };
 
+export const EVENT_STATUSES = {
+  scheduled: {
+    key: 'scheduled',
+    label: 'Agendado',
+    dotClass: 'bg-violet-500',
+    badgeClass: 'text-violet-500 fill-violet-500',
+    filterClass:
+      'border-violet-200 bg-violet-100/50 text-violet-800 hover:bg-violet-100 dark:border-violet-900/50 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/40',
+    calendarClass:
+      'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8',
+  },
+  in_progress: {
+    key: 'in_progress',
+    label: 'Em andamento',
+    dotClass: 'bg-amber-500',
+    badgeClass: 'text-amber-500 fill-amber-500',
+    filterClass:
+      'border-amber-200 bg-amber-100/50 text-amber-800 hover:bg-amber-100 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40',
+    calendarClass:
+      'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8',
+  },
+  completed: {
+    key: 'completed',
+    label: 'Finalizado',
+    dotClass: 'bg-rose-500',
+    badgeClass: 'text-rose-500 fill-rose-500',
+    filterClass:
+      'border-rose-200 bg-rose-100/50 text-rose-800 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-400 dark:hover:bg-rose-900/40',
+    calendarClass:
+      'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8',
+  },
+};
+
 /**
  * Mapeia o valor interno do status para o texto em pt-BR.
  *
@@ -164,16 +197,7 @@ export const getEventStatus = (event) => {
  * @returns {string}
  */
 export const getEventStatusLabel = (status) => {
-  switch (status) {
-    case 'scheduled':
-      return 'Agendado';
-    case 'in_progress':
-      return 'Em andamento';
-    case 'completed':
-      return 'Finalizado';
-    default:
-      return '—';
-  }
+  return EVENT_STATUSES[status]?.label ?? '—';
 };
 
 /**
@@ -187,12 +211,6 @@ export const mapEventToCalendarItem = (event) => {
   const end = parseEventDate(event.endDate) ?? start;
   const status = getEventStatus(event);
 
-  const statusColorMap = {
-    scheduled: 'business',
-    in_progress: 'holiday',
-    completed: 'personal',
-  };
-
   return {
     id: event.id,
     title: event.name,
@@ -200,7 +218,7 @@ export const mapEventToCalendarItem = (event) => {
     start,
     end,
     allDay: event.allDay ?? false,
-    color: statusColorMap[status] ?? 'etc',
+    color: status,
     rawEvent: event,
   };
 };
