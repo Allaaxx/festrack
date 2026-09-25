@@ -4,7 +4,6 @@ import {
   addWeeks,
   endOfWeek,
   format,
-  isSameMonth,
   startOfWeek,
   subMonths,
   subWeeks,
@@ -117,13 +116,33 @@ export function useCalendarNavigation({
       const start = startOfWeek(currentDate, { weekStartsOn: 0 });
       const end = endOfWeek(currentDate, { weekStartsOn: 0 });
 
-      const weekTitle = isSameMonth(start, end)
-        ? capitalize(format(start, 'MMMM yyyy', { locale: ptBR }))
-        : `${capitalize(format(start, 'MMM', { locale: ptBR }))} - ${capitalize(format(end, 'MMM yyyy', { locale: ptBR }))}`;
+      const startDay = format(start, 'd', { locale: ptBR });
+      const endDay = format(end, 'd', { locale: ptBR });
+      const startMonth = capitalize(
+        format(start, 'MMM', { locale: ptBR }).replace('.', '')
+      );
+      const endMonth = capitalize(
+        format(end, 'MMM', { locale: ptBR }).replace('.', '')
+      );
+      const startYear = format(start, 'yyyy', { locale: ptBR });
+      const endYear = format(end, 'yyyy', { locale: ptBR });
+
+      let mobileTitle, desktopTitle;
+
+      if (startYear !== endYear) {
+        desktopTitle = `${startDay} de ${startMonth}, ${startYear} - ${endDay} de ${endMonth}, ${endYear}`;
+        mobileTitle = `${startDay} ${startMonth}, ${startYear} - ${endDay} ${endMonth}, ${endYear}`;
+      } else if (startMonth !== endMonth) {
+        desktopTitle = `${startDay} de ${startMonth} - ${endDay} de ${endMonth}, ${endYear}`;
+        mobileTitle = `${startDay} ${startMonth} - ${endDay} ${endMonth}, ${endYear}`;
+      } else {
+        desktopTitle = `${startDay} - ${endDay} de ${startMonth}, ${endYear}`;
+        mobileTitle = `${startDay} - ${endDay} ${startMonth}, ${endYear}`;
+      }
 
       return {
-        mobile: weekTitle,
-        desktop: weekTitle,
+        mobile: mobileTitle,
+        desktop: desktopTitle,
       };
     }
 

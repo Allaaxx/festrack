@@ -60,7 +60,7 @@ export function CalendarHeader({
             >
               <ChevronLeftIcon />
             </Button>
-            <h2 className="truncate text-center text-sm font-semibold sm:text-lg md:text-xl">
+            <h2 className="truncate text-center text-[11px] font-semibold min-[375px]:text-[13px] sm:text-lg md:text-xl">
               {viewTitle && typeof viewTitle === 'object' ? (
                 <>
                   <span className="sm:hidden">{viewTitle.mobile}</span>
