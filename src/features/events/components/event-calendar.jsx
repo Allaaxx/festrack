@@ -101,6 +101,9 @@ const EventCalendar = ({
         onToday={goToToday}
         onPrevious={goToPrevious}
         onNext={goToNext}
+        events={calendarEvents}
+        currentDate={currentDate}
+        onDateChange={onDateChange}
       />
       <div className="flex min-h-0 flex-1 flex-row">
         <div
