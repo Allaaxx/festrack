@@ -1,28 +1,10 @@
-import {
-  addHours,
-  eachDayOfInterval,
-  eachHourOfInterval,
-  endOfWeek,
-  format,
-  getHours,
-  isBefore,
-  isSameDay,
-  isToday,
-  startOfDay,
-  startOfWeek,
-} from 'date-fns';
+import { format, getHours, isBefore, isSameDay, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useMemo } from 'react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-import { EndHour, StartHour } from '../constants';
-import {
-  calculateDayPositionedEvents,
-  isMultiDayEvent,
-} from '../helpers/calendar-layout';
-import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
+import { useWeekView } from '../hooks/use-week-view';
 import { CalendarCell } from './calendar-cell';
 import { CalendarDayColumn } from './calendar-day-column';
 import { CalendarEventBlock } from './calendar-event-block';
@@ -37,62 +19,17 @@ export function WeekView({
   onEventResize,
   onEventResizeEnd,
 }) {
-  const days = useMemo(() => {
-    const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-    const end = endOfWeek(currentDate, { weekStartsOn: 0 });
-
-    return eachDayOfInterval({ start, end });
-  }, [currentDate]);
-
-  const weekStart = useMemo(
-    () => startOfWeek(currentDate, { weekStartsOn: 0 }),
-    [currentDate]
-  );
-
-  const hours = useMemo(() => {
-    const dayStart = startOfDay(currentDate);
-
-    return eachHourOfInterval({
-      start: addHours(dayStart, StartHour),
-      end: addHours(dayStart, EndHour - 1),
-    });
-  }, [currentDate]);
-
-  const allDayEvents = useMemo(() => {
-    return events
-      .filter((event) => isMultiDayEvent(event))
-      .filter((event) =>
-        days.some(
-          (day) =>
-            isSameDay(day, event.start) ||
-            isSameDay(day, event.end) ||
-            (day > event.start && day < event.end)
-        )
-      );
-  }, [events, days]);
-
-  const processedDayEvents = useMemo(() => {
-    return days.map((day) =>
-      calculateDayPositionedEvents({
-        day,
-        events,
-      })
-    );
-  }, [days, events]);
-
-  const handleEventClick = (event, e) => {
-    e.stopPropagation();
-    onEventSelect(event);
-  };
-
-  const showAllDaySection = allDayEvents.length > 0;
-
-  const { currentTimePosition, currentTimeVisible } = useCurrentTimeIndicator(
-    currentDate,
-    'week',
-    StartHour,
-    EndHour
-  );
+  const {
+    days,
+    weekStart,
+    hours,
+    allDayEvents,
+    processedDayEvents,
+    showAllDaySection,
+    currentTimePosition,
+    currentTimeVisible,
+    handleEventClick,
+  } = useWeekView({ currentDate, events, onEventSelect });
 
   return (
     <div data-slot="week-view" className="flex min-h-0 flex-1 flex-col">

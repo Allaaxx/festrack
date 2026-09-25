@@ -1,18 +1,6 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import {
-  addDays,
-  eachDayOfInterval,
-  endOfMonth,
-  endOfWeek,
-  format,
-  isSameDay,
-  isSameMonth,
-  isToday,
-  startOfMonth,
-  startOfWeek,
-} from 'date-fns';
+import { format, isSameDay, isSameMonth, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useEffect, useMemo, useState } from 'react';
 
 import {
   Popover,
@@ -21,14 +9,14 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { EventGap, EventHeight } from '../constants';
+import { EventHeight } from '../constants';
 import {
   getAllEventsForDay,
   getEventsForDay,
   getSpanningEventsForDay,
   sortEvents,
 } from '../helpers/calendar-layout';
-import { useEventVisibility } from '../hooks/use-event-visibility';
+import { useMonthView } from '../hooks/use-month-view';
 import { EventItem } from './event-item';
 
 function MonthDayCell({ day, isCurrentMonth, isToday, children, onClick }) {
@@ -103,74 +91,17 @@ export function MonthView({
   onEventSelect,
   onEventCreate,
 }) {
-  const weeks = useMemo(() => {
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(monthStart);
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
-    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
-
-    const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
-    const result = [];
-    let week = [];
-
-    for (let i = 0; i < days.length; i++) {
-      week.push(days[i]);
-
-      if (week.length === 7 || i === days.length - 1) {
-        result.push(week);
-        week = [];
-      }
-    }
-
-    return result;
-  }, [currentDate]);
-
-  const weekdays = useMemo(
-    () =>
-      Array.from({ length: 7 }).map((_, i) => {
-        const d = addDays(startOfWeek(new Date(), { weekStartsOn: 0 }), i);
-        const full = format(d, 'EEE', { locale: ptBR }).replace('.', '');
-        const short = format(d, 'EEEEE', { locale: ptBR });
-        return {
-          full: full.charAt(0).toUpperCase() + full.slice(1),
-          short: short.toUpperCase(),
-        };
-      }),
-    []
-  );
-
-  const handleEventClick = (event, e) => {
-    e.stopPropagation();
-    onEventSelect(event);
-  };
-
-  const [openPopoverDay, setOpenPopoverDay] = useState(null);
-
-  const handleCellClick = (day, event) => {
-    const target = event.target;
-
-    if (
-      target.closest('[data-calendar-event]') ||
-      target.closest('[data-slot^="popover-"]')
-    )
-      return;
-
-    const startTime = new Date(day);
-    startTime.setHours(0, 0, 0, 0);
-    onEventCreate(startTime);
-  };
-
-  const [isMounted, setIsMounted] = useState(false);
-
-  const { contentRef, getVisibleEventCount } = useEventVisibility({
-    eventHeight: EventHeight,
-    eventGap: EventGap,
-  });
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true);
-  }, []);
+  const {
+    weeks,
+    weekdays,
+    openPopoverDay,
+    setOpenPopoverDay,
+    isMounted,
+    contentRef,
+    getVisibleEventCount,
+    handleEventClick,
+    handleCellClick,
+  } = useMonthView({ currentDate, onEventSelect, onEventCreate });
 
   return (
     <div data-slot="month-view" className="flex min-h-0 flex-1 flex-col">

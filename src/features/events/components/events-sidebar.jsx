@@ -1,7 +1,6 @@
-import { addDays, format, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { GlobeIcon, PlusIcon } from 'lucide-react';
-import { useMemo } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,26 +8,7 @@ import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-const getDotColorClass = (color) => {
-  switch (color) {
-    case 'business':
-      return 'bg-violet-400';
-    case 'family':
-      return 'bg-amber-400';
-    case 'personal':
-      return 'bg-rose-400';
-    case 'holiday':
-      return 'bg-emerald-400';
-    case 'etc':
-    default:
-      return 'bg-sky-400';
-  }
-};
-
-const getEventInitials = (title) => {
-  if (!title) return 'E';
-  return title.charAt(0).toUpperCase();
-};
+import { useEventsSidebar } from '../hooks/use-events-sidebar';
 
 export default function EventsSidebar({
   currentDate,
@@ -36,45 +16,15 @@ export default function EventsSidebar({
   events = [],
   onEventCreate,
 }) {
-  const dotsByDate = useMemo(() => {
-    const map = new Map();
-    events.forEach((event) => {
-      const startDate = startOfDay(event.start);
-      const endDate = startOfDay(event.end);
-      let current = startDate;
-
-      while (current <= endDate) {
-        const dateKey = format(current, 'yyyy-MM-dd');
-        const color = getDotColorClass(event.color);
-
-        if (!map.has(dateKey)) {
-          map.set(dateKey, { colors: [], moreCount: 0 });
-        }
-
-        const dayDots = map.get(dateKey);
-        if (dayDots.colors.length < 2) {
-          dayDots.colors.push(color);
-        } else {
-          dayDots.moreCount += 1;
-        }
-
-        current = addDays(current, 1);
-      }
-    });
-    return map;
-  }, [events]);
-
-  const upcomingEvents = useMemo(() => {
-    const today = startOfDay(new Date());
-    return events
-      .filter(
-        (event) =>
-          startOfDay(event.start) >= today || startOfDay(event.end) >= today
-      )
-      .sort((a, b) => a.start.getTime() - b.start.getTime());
-  }, [events]);
-
-  const currentMonthYear = format(new Date(), 'MMMM yyyy', { locale: ptBR });
+  const {
+    dotsByDate,
+    upcomingEvents,
+    currentMonthYear,
+    handleDateSelect,
+    handleEventClick,
+    getDotColorClass,
+    getEventInitials,
+  } = useEventsSidebar({ events, onDateChange });
 
   return (
     <div className="bg-muted hidden w-72 shrink-0 flex-col border-l lg:flex xl:w-80">
@@ -84,9 +34,7 @@ export default function EventsSidebar({
           <Calendar
             mode="single"
             selected={currentDate}
-            onSelect={(date) => {
-              if (date) onDateChange(date);
-            }}
+            onSelect={handleDateSelect}
             locale={ptBR}
             className="cn-calendar group/calendar bg-muted w-full p-2 [--cell-size:--spacing(8)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent rtl:**:[.rdp-button_next>svg]:rotate-180 rtl:**:[.rdp-button_previous>svg]:rotate-180"
             classNames={{
@@ -164,7 +112,7 @@ export default function EventsSidebar({
                 <button
                   key={event.id}
                   type="button"
-                  onClick={() => onDateChange(startOfDay(event.start))}
+                  onClick={() => handleEventClick(event)}
                   className="bg-background hover:border-primary/40 hover:bg-accent/40 flex w-full items-stretch gap-3 rounded-lg border p-3 text-left transition"
                 >
                   <span

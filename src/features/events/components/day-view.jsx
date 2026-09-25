@@ -1,22 +1,9 @@
-import {
-  addHours,
-  eachHourOfInterval,
-  format,
-  getHours,
-  isSameDay,
-  startOfDay,
-} from 'date-fns';
-import { useMemo } from 'react';
+import { format, getHours, isSameDay } from 'date-fns';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-import { EndHour, StartHour } from '../constants';
-import {
-  calculateDayPositionedEvents,
-  isMultiDayEvent,
-} from '../helpers/calendar-layout';
-import { useCurrentTimeIndicator } from '../hooks/use-current-time-indicator';
+import { useDayView } from '../hooks/use-day-view';
 import { CalendarCell } from './calendar-cell';
 import { CalendarDayColumn } from './calendar-day-column';
 import { CalendarEventBlock } from './calendar-event-block';
@@ -31,47 +18,15 @@ export function DayView({
   onEventResize,
   onEventResizeEnd,
 }) {
-  const hours = useMemo(() => {
-    const dayStart = startOfDay(currentDate);
-
-    return eachHourOfInterval({
-      start: addHours(dayStart, StartHour),
-      end: addHours(dayStart, EndHour - 1),
-    });
-  }, [currentDate]);
-
-  const allDayEvents = useMemo(() => {
-    return events
-      .filter((event) => isMultiDayEvent(event))
-      .filter(
-        (event) =>
-          isSameDay(currentDate, event.start) ||
-          isSameDay(currentDate, event.end) ||
-          (currentDate > event.start && currentDate < event.end)
-      )
-      .sort((a, b) => a.start.getTime() - b.start.getTime());
-  }, [currentDate, events]);
-
-  const positionedEvents = useMemo(() => {
-    return calculateDayPositionedEvents({
-      day: currentDate,
-      events,
-    });
-  }, [currentDate, events]);
-
-  const handleEventClick = (event, e) => {
-    e.stopPropagation();
-    onEventSelect(event);
-  };
-
-  const showAllDaySection = allDayEvents.length > 0;
-
-  const { currentTimePosition, currentTimeVisible } = useCurrentTimeIndicator(
-    currentDate,
-    'day',
-    StartHour,
-    EndHour
-  );
+  const {
+    hours,
+    allDayEvents,
+    positionedEvents,
+    showAllDaySection,
+    currentTimePosition,
+    currentTimeVisible,
+    handleEventClick,
+  } = useDayView({ currentDate, events, onEventSelect });
 
   return (
     <div data-slot="day-view" className="flex min-h-0 flex-1 flex-col">

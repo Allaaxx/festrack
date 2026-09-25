@@ -22,6 +22,7 @@ export {
 } from './api/hooks';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';
 export { useCalendarNavigation } from './hooks/use-calendar-navigation';
+export { useEventCalendarPage } from './hooks/use-event-calendar-page';
 export { useEventResizable } from './hooks/use-event-resizable';
 
 // Forms
