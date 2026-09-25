@@ -147,7 +147,12 @@ const EventCalendar = ({
             )}
           </div>
         </div>
-        <EventsSidebar />
+        <EventsSidebar
+          currentDate={currentDate}
+          onDateChange={onDateChange}
+          events={calendarEvents}
+          onEventCreate={onEventCreate}
+        />
       </div>
       <CalendarDragOverlay
         activeEvent={activeEvent}
