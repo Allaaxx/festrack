@@ -1,5 +1,5 @@
 import {
-  CalendarCogIcon,
+  CalendarDaysIcon,
   ChartSplineIcon,
   SettingsIcon,
   Store,
@@ -38,18 +38,8 @@ const data = {
     },
     {
       title: 'Eventos',
-      url: '#',
-      icon: <CalendarCogIcon />,
-      items: [
-        {
-          title: 'Lista de eventos',
-          url: '/event/card',
-        },
-        {
-          title: 'Calendário de eventos',
-          url: '/event/calendar',
-        },
-      ],
+      url: '/event',
+      icon: <CalendarDaysIcon />,
     },
   ],
   navFooter: [

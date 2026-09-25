@@ -10,7 +10,6 @@ import { DashboardLayout } from '@/components/layout';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthContextProvider } from '@/contexts/auth';
-import EventCalendarPage from '@/pages/calendar';
 import EventPage from '@/pages/event';
 import HomePage from '@/pages/home';
 import NotFoundPage from '@/pages/not-found';
@@ -30,9 +29,12 @@ const AppRoutes = () => {
       {/* Layout principal da aplicação (rotas autenticadas) */}
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/event" element={<Navigate to="/event/card" replace />} />
-        <Route path="/event/card" element={<EventPage />} />
-        <Route path="/event/calendar" element={<EventCalendarPage />} />
+        <Route path="/event" element={<EventPage />} />
+        <Route path="/event/card" element={<Navigate to="/event" replace />} />
+        <Route
+          path="/event/calendar"
+          element={<Navigate to="/event" replace />}
+        />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
 
