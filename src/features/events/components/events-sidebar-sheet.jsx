@@ -20,7 +20,11 @@ export function EventsSidebarSheet(props) {
           </Button>
         }
       />
-      <SheetContent side="right" className="w-80 p-0 sm:max-w-sm">
+      <SheetContent
+        side="right"
+        className="w-80 p-0 sm:max-w-sm"
+        showCloseButton={false}
+      >
         <EventsSidebarContent {...props} />
       </SheetContent>
     </Sheet>
