@@ -21,12 +21,12 @@ import {
 } from '@/components/ui/sidebar';
 
 const NavMainItem = ({ item, LinkComponent }) => {
-  const [isOpen, setIsOpen] = useState(item.isActive);
-  const [prevIsActive, setPrevIsActive] = useState(item.isActive);
+  const [isOpen, setIsOpen] = useState(Boolean(item.isActive));
+  const [prevIsActive, setPrevIsActive] = useState(Boolean(item.isActive));
 
-  if (item.isActive !== prevIsActive) {
-    setPrevIsActive(item.isActive);
-    setIsOpen(item.isActive);
+  if (Boolean(item.isActive) !== prevIsActive) {
+    setPrevIsActive(Boolean(item.isActive));
+    setIsOpen(Boolean(item.isActive));
   }
 
   return (
