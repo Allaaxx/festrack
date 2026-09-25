@@ -1,16 +1,40 @@
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AccountSettings } from '@/features/settings';
-const tabs = [{ name: 'General', value: 'general' }];
+import { useSearchParams } from 'react-router';
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AccountSettings, ProfileSettings } from '@/features/settings';
+
+const TABS = [
+  { name: 'Perfil', value: 'perfil' },
+  { name: 'Conta', value: 'conta' },
+];
+
+const VALID_TABS = TABS.map((tab) => tab.value);
+
 const SettingsPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab');
+  const activeTab = VALID_TABS.includes(currentTab) ? currentTab : 'perfil';
+
+  const handleTabChange = (value) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', value);
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
   return (
-    <div className="w-full py-8">
-      <div className="mx-auto min-h-screen max-w-7xl px-4 sm:px-6 lg:px-8">
-        <Tabs defaultValue="general">
+    <div className="w-full py-2">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList
             variant="line"
             className="w-full gap-2 rounded-none border-b p-0 sm:justify-start"
           >
-            {tabs.map((tab) => (
+            {TABS.map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
@@ -20,10 +44,15 @@ const SettingsPage = () => {
               </TabsTrigger>
             ))}
           </TabsList>
+
+          <TabsContent value="perfil" className="mt-4">
+            <ProfileSettings />
+          </TabsContent>
+
+          <TabsContent value="conta" className="mt-4">
+            <AccountSettings />
+          </TabsContent>
         </Tabs>
-        <div className="mt-4">
-          <AccountSettings />
-        </div>
       </div>
     </div>
   );

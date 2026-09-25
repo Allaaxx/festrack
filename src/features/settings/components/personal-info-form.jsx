@@ -4,39 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
-
-const countries = [
-  {
-    value: 'brazil',
-    label: 'Brasil',
-    flag: 'https://cdn.shadcnstudio.com/ss-assets/flags/india.png', // Fallback or flag icon
-  },
-  {
-    value: 'united-states',
-    label: 'Estados Unidos',
-    flag: 'https://cdn.shadcnstudio.com/ss-assets/flags/monaco.png',
-  },
-  {
-    value: 'portugal',
-    label: 'Portugal',
-    flag: 'https://cdn.shadcnstudio.com/ss-assets/flags/serbia.png',
-  },
-  {
-    value: 'spain',
-    label: 'Espanha',
-    flag: 'https://cdn.shadcnstudio.com/ss-assets/flags/romania.png',
-  },
-];
 
 const PersonalInfoForm = () => {
   const { user } = useAuthContext();
@@ -45,10 +14,6 @@ const PersonalInfoForm = () => {
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [prevUser, setPrevUser] = useState(user);
-  const [mobile, setMobile] = useState('');
-  const [country, setCountry] = useState('brazil');
-  const [gender, setGender] = useState('other');
-  const [role, setRole] = useState('user');
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -207,67 +172,6 @@ const PersonalInfoForm = () => {
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Seu sobrenome"
               />
-            </div>
-
-            <div className="flex flex-col items-start gap-2">
-              <Label htmlFor="mobile">Celular</Label>
-              <Input
-                id="mobile"
-                type="tel"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="+55 (11) 99999-9999"
-              />
-            </div>
-
-            <div className="flex flex-col items-start gap-2">
-              <Label htmlFor="country">País</Label>
-              <Select value={country} onValueChange={setCountry}>
-                <SelectTrigger id="country" className="w-full">
-                  <SelectValue placeholder="Selecione o país" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {countries.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      <span className="truncate">{c.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gênero</Label>
-              <Select value={gender} onValueChange={setGender}>
-                <SelectTrigger id="gender" className="w-full">
-                  <SelectValue placeholder="Selecione o gênero" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="male">Masculino</SelectItem>
-                    <SelectItem value="female">Feminino</SelectItem>
-                    <SelectItem value="other">
-                      Outro / Prefiro não dizer
-                    </SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Função / Perfil</Label>
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger id="role" className="w-full">
-                  <SelectValue placeholder="Selecione a função" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                    <SelectItem value="user">Usuário</SelectItem>
-                    <SelectItem value="other">Outro</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

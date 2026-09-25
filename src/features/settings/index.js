@@ -3,4 +3,5 @@ export { default as ConnectedAccountsCard } from './components/connected-account
 export { default as DangerZoneCard } from './components/danger-zone-card';
 export { default as EmailPasswordForm } from './components/email-password-form';
 export { default as PersonalInfoForm } from './components/personal-info-form';
+export { default as ProfileSettings } from './components/profile-settings';
 export { default as SocialUrlsCard } from './components/social-urls-card';
