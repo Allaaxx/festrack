@@ -62,7 +62,7 @@
   --primary-blue: oklch(63.34% 0.1923 259.62);
   --primary-green: oklch(68.13% 0.1872 138.09);
   --primary-red: oklch(60.71% 0.2204 26.87);
-  --background: oklch(0.98 0 0);
+  --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -86,7 +86,7 @@
   --chart-4: oklch(61.93% 0.2029 312.74);
   --chart-5: oklch(61.18% 0.2093 6.14);
   --radius: 0.5rem;
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
