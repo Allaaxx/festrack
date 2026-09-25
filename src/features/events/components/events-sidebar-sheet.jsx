@@ -13,7 +13,7 @@ export function EventsSidebarSheet(props) {
           <Button
             variant="outline"
             size="icon"
-            className="max-sm:h-8! md:max-lg:h-8! lg:hidden"
+            className="w-12 max-sm:h-8! sm:w-fit md:max-lg:h-8! lg:hidden"
           >
             <CalendarDaysIcon className="h-4 w-4" />
             <span className="sr-only">Abrir barra lateral</span>

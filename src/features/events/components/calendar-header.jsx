@@ -38,7 +38,7 @@ export function CalendarHeader({
           <div className="space-x-2">
             <Button
               variant="outline"
-              className="max-sm:h-8 md:max-lg:h-8"
+              className="w-12 max-sm:h-8 sm:w-fit md:max-lg:h-8"
               onClick={onToday}
             >
               <CalendarArrowUp className="h-4 w-4 sm:mr-2" />
@@ -86,7 +86,7 @@ export function CalendarHeader({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="outline" className="max-sm:h-8!">
+                <Button variant="outline" className="w-12 max-sm:h-8! sm:w-fit">
                   <span>
                     <span className="sm:hidden" aria-hidden="true">
                       {viewLabels[view]?.charAt(0)}
@@ -112,7 +112,7 @@ export function CalendarHeader({
 
           <Button
             onClick={() => onEventCreate(new Date())}
-            className="max-sm:h-8 md:max-lg:h-8"
+            className="w-12 max-sm:h-8 sm:w-fit md:max-lg:h-8"
           >
             <PlusIcon className="h-4 w-4 sm:mr-2" />
             <span className="max-sm:hidden">Novo evento</span>
