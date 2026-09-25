@@ -4,6 +4,32 @@ import { differenceInMinutes } from 'date-fns';
 import { EventGap, EventHeight, WeekCellsHeight } from '../constants';
 import { EventItem } from './event-item';
 
+const snapCenterToCursor = ({
+  activatorEvent,
+  activeNodeRect,
+  overlayNodeRect,
+  transform,
+}) => {
+  if (activatorEvent && activeNodeRect && overlayNodeRect) {
+    const clientX =
+      activatorEvent.clientX ?? activatorEvent.touches?.[0]?.clientX;
+    const clientY =
+      activatorEvent.clientY ?? activatorEvent.touches?.[0]?.clientY;
+
+    if (clientX != null && clientY != null) {
+      const offsetX = clientX - activeNodeRect.left - overlayNodeRect.width / 2;
+      const offsetY = clientY - activeNodeRect.top - overlayNodeRect.height / 2;
+
+      return {
+        ...transform,
+        x: transform.x + offsetX,
+        y: transform.y + offsetY,
+      };
+    }
+  }
+  return transform;
+};
+
 export function CalendarDragOverlay({
   activeEvent,
   activeDragWidth,
@@ -23,7 +49,7 @@ export function CalendarDragOverlay({
         : 24;
 
   return (
-    <DragOverlay dropAnimation={null}>
+    <DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
       {activeEvent ? (
         <div
           style={{
