@@ -40,14 +40,14 @@ export function CalendarHeader({
       <div className="sm:p-4h-14 sticky flex flex-wrap items-center justify-between gap-2 border-b p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
         {/* Left Side: Today & Navigation */}
         <div className="flex w-full flex-row-reverse items-center justify-between gap-2 sm:w-fit sm:flex-row sm:gap-4">
-          <div className="space-x-2">
+          <div className="flex space-x-2">
             <Button
               variant="outline"
               className="w-12 max-sm:h-8 sm:w-fit md:max-lg:h-8"
               onClick={onToday}
             >
-              <CalendarArrowUp className="h-4 w-4 sm:mr-2" />
-              <span className="max-sm:hidden">Hoje</span>
+              <CalendarArrowUp className="h-4 w-4 md:mr-2" />
+              <span className="max-md:hidden">Hoje</span>
             </Button>
             <EventsSidebarSheet
               events={events}

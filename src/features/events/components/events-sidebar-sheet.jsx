@@ -12,11 +12,10 @@ export function EventsSidebarSheet(props) {
         render={
           <Button
             variant="outline"
-            size="icon"
-            className="w-12 max-sm:h-8! sm:w-fit md:max-lg:h-8! lg:hidden"
+            className="w-12 px-2.5 max-sm:h-8 sm:w-fit md:flex-row-reverse md:max-lg:h-8 lg:hidden"
           >
-            <CalendarDaysIcon className="h-4 w-4" />
-            <span className="sr-only">Abrir barra lateral</span>
+            <CalendarDaysIcon className="h-4 w-4 max-md:mr-0 md:mr-2 md:ml-2" />
+            <span className="max-md:hidden">Mini</span>
           </Button>
         }
       />
