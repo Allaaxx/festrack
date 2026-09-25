@@ -89,7 +89,7 @@ export function useCalendarNavigation({
         case 'm':
           handleViewChange('month');
           break;
-        case 'w':
+        case 's':
           handleViewChange('week');
           break;
         case 'd':

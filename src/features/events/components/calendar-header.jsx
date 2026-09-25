@@ -102,7 +102,7 @@ export function CalendarHeader({
                 Mês <DropdownMenuShortcut>M</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onViewChange('week')}>
-                Semana <DropdownMenuShortcut>W</DropdownMenuShortcut>
+                Semana <DropdownMenuShortcut>S</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onViewChange('day')}>
                 Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
