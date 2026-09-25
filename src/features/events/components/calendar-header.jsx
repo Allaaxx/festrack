@@ -1,5 +1,5 @@
 import {
-  CalendarClockIcon,
+  CalendarArrowUp,
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { EventsSidebarSheet } from './events-sidebar-sheet';
+
 export function CalendarHeader({
   view,
   viewTitle,
@@ -24,21 +26,31 @@ export function CalendarHeader({
   onToday,
   onPrevious,
   onNext,
+  events,
+  currentDate,
+  onDateChange,
 }) {
   return (
     <div className="flex flex-col">
-      <div className="sticky top-0 z-40 flex h-14 items-center justify-between gap-1 px-2 sm:h-16 sm:px-4">
+      <div className="sm:p-4h-14 sticky flex flex-wrap items-center justify-between gap-2 border-b p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
         {/* Left Side: Today & Navigation */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          <Button
-            variant="outline"
-            className="max-sm:h-8 md:max-lg:h-8"
-            onClick={onToday}
-          >
-            <CalendarClockIcon className="h-4 w-4 sm:mr-2" />
-            <span className="max-sm:hidden">Hoje</span>
-          </Button>
-
+        <div className="flex w-full flex-row-reverse items-center justify-between gap-2 sm:w-fit sm:flex-row sm:gap-4">
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              className="max-sm:h-8 md:max-lg:h-8"
+              onClick={onToday}
+            >
+              <CalendarArrowUp className="h-4 w-4 sm:mr-2" />
+              <span className="max-sm:hidden">Hoje</span>
+            </Button>
+            <EventsSidebarSheet
+              events={events}
+              currentDate={currentDate}
+              onDateChange={onDateChange}
+              onEventCreate={onEventCreate}
+            />
+          </div>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -70,7 +82,7 @@ export function CalendarHeader({
         </div>
 
         {/* Right Side: View & New Event */}
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-row items-center justify-end gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -102,7 +114,7 @@ export function CalendarHeader({
             onClick={() => onEventCreate(new Date())}
             className="max-sm:h-8 md:max-lg:h-8"
           >
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <PlusIcon className="h-4 w-4 sm:mr-2" />
             <span className="max-sm:hidden">Novo evento</span>
           </Button>
         </div>
