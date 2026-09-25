@@ -105,7 +105,7 @@ export function MonthView({
 
   return (
     <div data-slot="month-view" className="flex min-h-0 flex-1 flex-col">
-      <div className="bg-card border-border/70 grid shrink-0 grid-cols-7 border-b">
+      <div className="bg-background border-border/70 grid shrink-0 grid-cols-7 border-b">
         {weekdays.map((day) => (
           <div
             key={day.full}
