@@ -29,6 +29,8 @@ export function CalendarHeader({
   events,
   currentDate,
   onDateChange,
+  sidebarDate,
+  onSidebarDateChange,
 }) {
   return (
     <div className="flex flex-col">
@@ -48,6 +50,8 @@ export function CalendarHeader({
               events={events}
               currentDate={currentDate}
               onDateChange={onDateChange}
+              sidebarDate={sidebarDate}
+              onSidebarDateChange={onSidebarDateChange}
               onEventCreate={onEventCreate}
             />
           </div>

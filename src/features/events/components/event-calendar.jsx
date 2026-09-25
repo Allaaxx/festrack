@@ -43,6 +43,8 @@ const EventCalendar = ({
   onViewChange,
   currentDate: controlledCurrentDate,
   onDateChange,
+  sidebarDate,
+  onSidebarDateChange,
   className,
   onEventSelect = () => {},
   onEventCreate = () => {},
@@ -104,6 +106,8 @@ const EventCalendar = ({
         events={calendarEvents}
         currentDate={currentDate}
         onDateChange={onDateChange}
+        sidebarDate={sidebarDate}
+        onSidebarDateChange={onSidebarDateChange}
       />
       <div className="flex min-h-0 flex-1 flex-row">
         <div
@@ -153,6 +157,8 @@ const EventCalendar = ({
         <EventsSidebar
           currentDate={currentDate}
           onDateChange={onDateChange}
+          sidebarDate={sidebarDate}
+          onSidebarDateChange={onSidebarDateChange}
           events={calendarEvents}
           onEventCreate={onEventCreate}
         />

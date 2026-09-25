@@ -17,6 +17,7 @@ const EventCalendarPage = () => {
     events,
     currentView,
     currentDate,
+    sidebarDate,
     createDialogOpen,
     setCreateDialogOpen,
     createInitialDate,
@@ -61,6 +62,8 @@ const EventCalendarPage = () => {
             onViewChange={handlers.handleViewChange}
             currentDate={currentDate}
             onDateChange={handlers.handleDateChange}
+            sidebarDate={sidebarDate}
+            onSidebarDateChange={handlers.handleSidebarDateChange}
             onEventCreate={handlers.handleEventCreate}
             onEventSelect={handlers.handleEventSelect}
             onEventUpdate={handlers.handleEventUpdate}

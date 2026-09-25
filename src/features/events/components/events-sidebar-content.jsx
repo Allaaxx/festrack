@@ -13,6 +13,8 @@ import { useEventsSidebar } from '../hooks/use-events-sidebar';
 export function EventsSidebarContent({
   currentDate,
   onDateChange,
+  sidebarDate,
+  onSidebarDateChange,
   events = [],
   onEventCreate,
 }) {
@@ -24,7 +26,7 @@ export function EventsSidebarContent({
     handleEventClick,
     getDotColorClass,
     getEventInitials,
-  } = useEventsSidebar({ events, onDateChange });
+  } = useEventsSidebar({ events, onDateChange, sidebarDate });
 
   return (
     <div className="flex h-full flex-col">
@@ -34,6 +36,8 @@ export function EventsSidebarContent({
           mode="single"
           selected={currentDate}
           onSelect={handleDateSelect}
+          month={sidebarDate}
+          onMonthChange={onSidebarDateChange}
           locale={ptBR}
           className="cn-calendar group/calendar bg-muted w-full p-2 [--cell-size:--spacing(8)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent rtl:**:[.rdp-button_next>svg]:rotate-180 rtl:**:[.rdp-button_previous>svg]:rotate-180"
           classNames={{

@@ -16,10 +16,14 @@ const isValidDateString = (val) => {
   return isValid(date);
 };
 
-const getDefaultCalendarParams = () => ({
-  view: 'month',
-  date: format(new Date(), 'yyyy-MM-dd'),
-});
+const getDefaultCalendarParams = () => {
+  const now = new Date();
+  return {
+    view: 'month',
+    date: format(now, 'yyyy-MM-dd'),
+    sidebarDate: '',
+  };
+};
 
 export function useEventCalendarPage() {
   const { data: rawEvents = [], isLoading, isError, refetch } = useGetEvents();
@@ -47,12 +51,21 @@ export function useEventCalendarPage() {
     return new Date(params.date + 'T00:00:00');
   }, [params.date]);
 
+  const sidebarDate = useMemo(() => {
+    if (!isValidDateString(params.sidebarDate)) return currentDate;
+    return new Date(params.sidebarDate + 'T00:00:00');
+  }, [params.sidebarDate, currentDate]);
+
   const handleViewChange = (newView) => {
     setParams({ view: newView });
   };
 
   const handleDateChange = (newDate) => {
     setParams({ date: format(newDate, 'yyyy-MM-dd') });
+  };
+
+  const handleSidebarDateChange = (newDate) => {
+    setParams({ sidebarDate: format(newDate, 'yyyy-MM-01') });
   };
 
   const events = useMemo(
@@ -115,6 +128,7 @@ export function useEventCalendarPage() {
     events,
     currentView,
     currentDate,
+    sidebarDate,
     createDialogOpen,
     setCreateDialogOpen,
     createInitialDate,
@@ -123,6 +137,7 @@ export function useEventCalendarPage() {
     handlers: {
       handleViewChange,
       handleDateChange,
+      handleSidebarDateChange,
       handleEventCreate,
       handleEventSelect,
       handleEventUpdate,

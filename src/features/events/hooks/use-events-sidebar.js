@@ -23,7 +23,7 @@ const getEventInitials = (title) => {
   return title.charAt(0).toUpperCase();
 };
 
-export function useEventsSidebar({ events = [], onDateChange }) {
+export function useEventsSidebar({ events = [], onDateChange, sidebarDate }) {
   const dotsByDate = useMemo(() => {
     const map = new Map();
     events.forEach((event) => {
@@ -62,7 +62,9 @@ export function useEventsSidebar({ events = [], onDateChange }) {
       .sort((a, b) => a.start.getTime() - b.start.getTime());
   }, [events]);
 
-  const currentMonthYear = format(new Date(), 'MMMM yyyy', { locale: ptBR });
+  const currentMonthYear = format(sidebarDate || new Date(), 'MMMM yyyy', {
+    locale: ptBR,
+  });
 
   const handleDateSelect = (date) => {
     if (date) onDateChange(date);
