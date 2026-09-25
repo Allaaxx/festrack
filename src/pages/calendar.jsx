@@ -53,8 +53,8 @@ const EventCalendarPage = () => {
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="bg-background absolute inset-0 flex flex-row overflow-hidden rounded-lg border">
-        <div className="flex min-w-0 flex-1 flex-col">
+      <div className="bg-card absolute inset-0 flex flex-row overflow-hidden rounded-lg border">
+        <div className="bg-card flex min-w-0 flex-1 flex-col">
           <EventCalendar
             events={events}
             view={currentView}
