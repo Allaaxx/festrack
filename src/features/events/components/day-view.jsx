@@ -101,7 +101,7 @@ export function DayView({
         </div>
       )}
 
-      <ScrollArea className="flex-1 rounded-b-lg border-b">
+      <ScrollArea className="flex-1">
         <div
           className={cn(
             'border-border/70 grid flex-1 grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]',

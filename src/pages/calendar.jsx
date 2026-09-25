@@ -10,7 +10,6 @@ import {
   CreateEventDialog,
   EditEventSheet,
   EventCalendar,
-  EventsSidebar,
   mapEventToCalendarItem,
   useEditEvent,
   useGetEvents,
@@ -156,9 +155,6 @@ const EventCalendarPage = () => {
             onEventUpdate={handleEventUpdate}
             className="rounded-none border-0 shadow-none"
           />
-        </div>
-        <div className="hidden shrink-0 lg:block">
-          <EventsSidebar />
         </div>
       </div>
 

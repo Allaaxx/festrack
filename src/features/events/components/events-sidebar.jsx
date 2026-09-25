@@ -5,39 +5,42 @@ import { useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
 const mockDots = [
-  { date: '2026-08-31', colors: ['bg-purple-500'] },
-  { date: '2026-09-01', colors: ['bg-purple-500'] },
-  { date: '2026-09-02', colors: ['bg-purple-500', 'bg-purple-500'] },
+  { date: '2026-08-30', colors: ['bg-violet-400'] },
+  { date: '2026-09-01', colors: ['bg-violet-400'] },
+  { date: '2026-09-02', colors: ['bg-violet-400', 'bg-violet-400'] },
   {
     date: '2026-09-03',
-    colors: ['bg-purple-500', 'bg-purple-500'],
+    colors: ['bg-violet-400', 'bg-violet-400'],
     moreCount: 1,
   },
-  { date: '2026-09-04', colors: ['bg-yellow-500'] },
-  { date: '2026-09-05', colors: ['bg-purple-500'] },
-  { date: '2026-09-06', colors: ['bg-yellow-500', 'bg-red-500'] },
-  { date: '2026-09-07', colors: ['bg-purple-500'] },
-  { date: '2026-09-09', colors: ['bg-purple-500', 'bg-purple-500'] },
-  { date: '2026-09-10', colors: ['bg-red-500'] },
-  { date: '2026-09-12', colors: ['bg-blue-500', 'bg-yellow-500'] },
-  { date: '2026-09-14', colors: ['bg-green-500'] },
-  { date: '2026-09-18', colors: ['bg-red-500'] },
-  { date: '2026-09-19', colors: ['bg-purple-500', 'bg-purple-500'] },
-  { date: '2026-09-21', colors: ['bg-yellow-500'] },
-  { date: '2026-09-23', colors: ['bg-green-500', 'bg-purple-500'] },
-  { date: '2026-09-26', colors: ['bg-red-500'] },
-  { date: '2026-09-28', colors: ['bg-blue-500'] },
-  { date: '2026-10-01', colors: ['bg-purple-500'] },
-  { date: '2026-10-02', colors: ['bg-purple-500', 'bg-purple-500'] },
+  { date: '2026-09-04', colors: ['bg-amber-400'] },
+  { date: '2026-09-05', colors: ['bg-violet-400'] },
+  { date: '2026-09-06', colors: ['bg-rose-400', 'bg-amber-400'] },
+  { date: '2026-09-07', colors: ['bg-violet-400'] },
+  { date: '2026-09-09', colors: ['bg-violet-400', 'bg-violet-400'] },
+  { date: '2026-09-10', colors: ['bg-rose-400'] },
+  { date: '2026-09-11', colors: ['bg-violet-400'] },
+  { date: '2026-09-12', colors: ['bg-amber-400', 'bg-sky-400'] },
+  { date: '2026-09-14', colors: ['bg-emerald-400'] },
+  { date: '2026-09-15', colors: ['bg-emerald-400'] },
+  { date: '2026-09-16', colors: ['bg-emerald-400'] },
+  { date: '2026-09-17', colors: ['bg-emerald-400', 'bg-violet-400'] },
+  { date: '2026-09-18', colors: ['bg-rose-400'] },
+  { date: '2026-09-19', colors: ['bg-violet-400', 'bg-violet-400'] },
+  { date: '2026-09-21', colors: ['bg-amber-400'] },
+  { date: '2026-09-23', colors: ['bg-violet-400', 'bg-emerald-400'] },
+  { date: '2026-09-26', colors: ['bg-rose-400'] },
+  { date: '2026-09-28', colors: ['bg-sky-400'] },
+  { date: '2026-10-01', colors: ['bg-violet-400'] },
+  { date: '2026-10-02', colors: ['bg-violet-400', 'bg-violet-400'] },
   {
     date: '2026-10-03',
-    colors: ['bg-purple-500', 'bg-purple-500'],
+    colors: ['bg-violet-400', 'bg-violet-400'],
     moreCount: 1,
   },
 ];
@@ -91,122 +94,131 @@ export default function EventsSidebar() {
   const [date, setDate] = useState(new Date(2026, 8, 24)); // 24 de Setembro de 2026
 
   return (
-    <div className="bg-background flex h-full w-80 flex-col border-l">
-      {/* Mini Calendar */}
-      <div>
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          locale={ptBR}
-          className="w-full p-2"
-          components={{
-            DayButton: ({ day, modifiers, className, ...props }) => {
-              const dotData = mockDots.find((d) =>
-                isSameDay(parseISO(d.date), day.date)
-              );
+    <div className="bg-muted hidden w-72 shrink-0 flex-col border-l lg:flex xl:w-80">
+      <div className="flex h-full flex-col">
+        {/* Mini Calendar */}
+        <div className="border-b">
+          <Calendar
+            mode="single"
+            selected={date}
+            onSelect={setDate}
+            locale={ptBR}
+            className="cn-calendar group/calendar bg-muted w-full p-2 [--cell-size:--spacing(8)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent rtl:**:[.rdp-button_next>svg]:rotate-180 rtl:**:[.rdp-button_previous>svg]:rotate-180"
+            classNames={{
+              month_grid: 'w-full border-collapse rdp-month_grid',
+              weekdays: 'flex w-full',
+              weekday:
+                'flex-1 min-w-0 text-center text-[0.8rem] font-normal text-muted-foreground select-none',
+              week: 'mt-1 flex w-full',
+              day: 'group/day relative flex min-w-0 flex-1 basis-0 flex-col items-stretch p-0 text-center select-none',
+              outside:
+                'text-muted-foreground aria-selected:text-muted-foreground rdp-outside',
+            }}
+            components={{
+              DayButton: ({ day, modifiers, className, ...props }) => {
+                const dotData = mockDots.find((d) =>
+                  isSameDay(parseISO(d.date), day.date)
+                );
 
-              return (
-                <div className="group relative flex aspect-square flex-col items-center justify-center p-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
+                return (
+                  <CalendarDayButton
+                    day={day}
+                    modifiers={modifiers}
                     className={cn(
-                      'hover:bg-muted focus:ring-ring h-8 w-8 p-0 font-normal focus:ring-2 focus:ring-offset-1',
-                      modifiers.selected &&
-                        'bg-foreground text-background hover:bg-foreground hover:text-background',
+                      'hover:bg-primary/20 dark:hover:bg-primary/20 text-muted-foreground data-[selected-single=true]:text-primary-foreground data-[selected-single=true]:bg-primary! size-auto! h-auto! w-full min-w-0 justify-between gap-0.5 rounded-xl px-0 py-2 group-data-[focused=true]/day:ring-0 [&>span]:opacity-100',
                       className
                     )}
                     {...props}
                   >
-                    {day.date.getDate()}
-                  </Button>
-
-                  {/* Dots Indicator */}
-                  {dotData && (
-                    <div className="pointer-events-none absolute bottom-0.5 flex w-full justify-center gap-0.5">
-                      {dotData.colors.map((color, index) => (
-                        <div
+                    <span className="text-xs leading-none">
+                      {day.date.getDate()}
+                    </span>
+                    <span className="mt-0.5 flex min-h-2 w-full max-w-full items-center justify-center gap-px overflow-hidden">
+                      {dotData?.colors.map((color, index) => (
+                        <span
                           key={index}
-                          className={cn('h-1 w-1 rounded-full', color)}
+                          className={cn('size-1 shrink-0 rounded-full', color)}
+                          aria-hidden="true"
                         />
                       ))}
-                      {dotData.moreCount > 0 && (
-                        <span className="text-muted-foreground ml-0.5 text-[0.5rem] leading-none font-medium">
+                      {dotData?.moreCount > 0 && (
+                        <span className="text-[9px] leading-none font-medium">
                           +{dotData.moreCount}
                         </span>
                       )}
-                    </div>
-                  )}
-                </div>
-              );
-            },
-          }}
-        />
-      </div>
-      <Separator />
-      {/* UP NEXT Section */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <div className="flex items-end justify-between p-3">
-          <div>
-            <h3 className="text-foreground font-semibold">A SEGUIR</h3>
-            <p className="text-muted-foreground text-xs">Setembro 2026</p>
-          </div>
-          <span className="text-foreground text-sm font-medium">
+                    </span>
+                  </CalendarDayButton>
+                );
+              },
+            }}
+          />
+        </div>
+
+        {/* UP NEXT Header */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-0.5">
+          <span className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+            A seguir
+          </span>
+          <span className="bg-secondary text-secondary-foreground inline-flex w-fit shrink-0 items-center justify-center overflow-hidden rounded-full px-2 text-xs font-medium whitespace-nowrap">
             {mockEvents.length}
           </span>
         </div>
+        <p className="text-muted-foreground/70 px-4 pb-2 text-[11px]">
+          Setembro 2026
+        </p>
 
-        <ScrollArea className="max-h-60 w-full flex-1">
-          <div className="mx-2 flex flex-col gap-2 px-2 pb-4">
+        {/* UP NEXT List */}
+        <ScrollArea className="relative min-h-0 flex-1 px-4">
+          <div className="flex flex-col gap-2 pb-4">
             {mockEvents.map((event) => (
-              <div
+              <button
                 key={event.id}
-                className="group bg-card text-card-foreground hover:bg-accent hover:text-accent-foreground flex cursor-pointer items-center justify-between rounded-lg border px-3 py-3 shadow-sm transition-colors"
+                type="button"
+                className="bg-background hover:border-primary/40 hover:bg-accent/40 flex w-full items-stretch gap-3 rounded-lg border p-3 text-left transition"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn('h-8 w-1 rounded-full', event.categoryColor)}
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{event.title}</span>
-                    <span className="text-muted-foreground text-xs">
-                      {event.time}
-                    </span>
-                  </div>
+                <span
+                  className={cn(
+                    'w-1 shrink-0 rounded-full',
+                    event.categoryColor
+                  )}
+                  aria-hidden="true"
+                />
+                <div className="min-w-0 flex-1 py-0.5">
+                  <p className="truncate text-sm font-medium">{event.title}</p>
+                  <p className="text-muted-foreground text-xs">{event.time}</p>
                 </div>
-                <Avatar className="h-6 w-6">
+                <Avatar className="my-auto size-6 shrink-0">
                   <AvatarImage src={event.avatar} alt={event.title} />
                   <AvatarFallback>{event.title.charAt(0)}</AvatarFallback>
                 </Avatar>
-              </div>
+              </button>
             ))}
           </div>
         </ScrollArea>
-      </div>
-      <Separator />
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-2 p-3">
-        <Button className="w-full" size="default">
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Novo Evento
-        </Button>
-        <Button variant="outline" className="w-full" size="default">
-          <ShareIcon className="mr-2 h-4 w-4" />
-          Compartilhar Disponibilidade
-        </Button>
-      </div>
-      <Separator />
-      {/* Timezone Footer */}
-      <div className="flex items-center gap-3 p-3">
-        <GlobeIcon className="h-3.5 w-3.5" />
-        <div className="flex flex-col justify-center gap-0.5">
-          <div className="text-muted-foreground flex items-center gap-1.5 text-[8px] font-semibold">
-            <span>SEU FUSO HORÁRIO</span>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-2 border-t p-4">
+          <Button className="w-full" size="default">
+            <PlusIcon className="mr-2 size-4" />
+            Novo Evento
+          </Button>
+          <Button variant="outline" className="w-full" size="default">
+            <ShareIcon className="mr-2 size-4" />
+            Compartilhar Disponibilidade
+          </Button>
+        </div>
+
+        {/* Timezone Footer */}
+        <div className="flex items-center gap-2 border-t p-4">
+          <GlobeIcon className="text-muted-foreground size-3.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-muted-foreground text-[10px] tracking-wide uppercase">
+              Seu fuso horário
+            </p>
+            <p className="truncate text-xs font-medium">
+              GMT-3 (-03:00) · America/Sao_Paulo
+            </p>
           </div>
-          <p className="text-foreground text-xs font-bold">
-            GMT-3 (-03:00) · America/Sao_Paulo
-          </p>
         </div>
       </div>
     </div>
