@@ -54,7 +54,7 @@ const NavMain = ({ items = [], LinkComponent = 'a' }) => {
                   <ChevronRightIcon />
                   <span className="sr-only">Alternar</span>
                 </SidebarMenuAction>
-                <CollapsibleContent className="mt-0.5">
+                <CollapsibleContent className="mt-1.5">
                   <SidebarMenuSub>
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
