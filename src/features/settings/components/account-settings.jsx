@@ -11,6 +11,7 @@ const AccountSettings = () => {
         <EmailPasswordForm />
         <Separator className="my-10" />
         <ConnectedAccountsCard />
+
         <Separator className="my-10" />
         <DangerZoneCard />
       </div>

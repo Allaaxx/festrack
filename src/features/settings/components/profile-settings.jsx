@@ -1,5 +1,6 @@
 import { Separator } from '@/components/ui/separator';
 
+import { ModeToggle } from './mode-toggle';
 import PersonalInfoForm from './personal-info-form';
 import SocialUrlsCard from './social-urls-card';
 
@@ -10,6 +11,8 @@ const ProfileSettings = () => {
         <PersonalInfoForm />
         <Separator className="my-10" />
         <SocialUrlsCard />
+        <Separator className="my-10" />
+        <ModeToggle />
       </div>
     </section>
   );
