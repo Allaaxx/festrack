@@ -26,7 +26,12 @@ export function EventsSidebarContent({
     handleDateSelect,
     handleEventClick,
     getEventInitials,
-  } = useEventsSidebar({ events, onDateChange, sidebarDate });
+  } = useEventsSidebar({
+    events,
+    onDateChange,
+    sidebarDate,
+    onSidebarDateChange,
+  });
 
   return (
     <div className="flex h-full flex-col">

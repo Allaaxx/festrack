@@ -9,7 +9,12 @@ const getEventInitials = (title) => {
   return title.charAt(0).toUpperCase();
 };
 
-export function useEventsSidebar({ events = [], onDateChange, sidebarDate }) {
+export function useEventsSidebar({
+  events = [],
+  onDateChange,
+  sidebarDate,
+  onSidebarDateChange,
+}) {
   const dotsByDate = useMemo(() => {
     const map = new Map();
     events.forEach((event) => {
@@ -57,7 +62,11 @@ export function useEventsSidebar({ events = [], onDateChange, sidebarDate }) {
   };
 
   const handleEventClick = (event) => {
-    onDateChange(startOfDay(event.start));
+    if (onSidebarDateChange) {
+      onSidebarDateChange(event.start);
+    } else {
+      onDateChange?.(startOfDay(event.start));
+    }
   };
 
   return {
