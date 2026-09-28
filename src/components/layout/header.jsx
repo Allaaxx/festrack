@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
+import { ModeToggle } from '@/features/settings/components/mode-toggle';
 
 const Header = () => {
   const { toggleSidebar } = useSidebar();
@@ -46,6 +47,7 @@ const Header = () => {
           </BreadcrumbList>
         </Breadcrumb>
         <SearchForm className="w-full sm:ml-auto sm:w-auto" />
+        <ModeToggle />
       </div>
     </header>
   );
