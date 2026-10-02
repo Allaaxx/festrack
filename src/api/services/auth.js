@@ -1,6 +1,6 @@
 import { normalizeUser } from '@/helpers/user';
 import { authClient } from '@/lib/auth-client';
-import protectedApi, { publicApi } from '@/lib/axios';
+import protectedApi from '@/lib/axios';
 
 export const AuthService = {
   /**
@@ -34,25 +34,36 @@ export const AuthService = {
   },
 
   /**
-   * Loga o usuário.
+   * Loga o usuário via Better Auth.
    * @param {object} input - Usuário a ser autenticado.
    * @param {string} input.email - E-mail do usuário.
    * @param {string} input.password - Senha do usuário.
-   * @returns {Object} Usuário autenticado.
-   * @returns {string} response.tokens - Tokens de autenticação.
+   * @returns {Promise<object>} Usuário autenticado normalizado.
    */
   signin: async (input) => {
-    const response = await publicApi.post('/auth/login', {
+    const response = await authClient.signIn.email({
       email: input.email,
       password: input.password,
     });
-    return {
-      id: response.data.id,
-      email: response.data.email,
-      firstName: response.data.first_name,
-      lastName: response.data.last_name,
-      tokens: response.data.tokens,
-    };
+
+    if (response?.error) {
+      throw response.error;
+    }
+
+    const user = response?.data?.user || response?.data;
+    return normalizeUser(user);
+  },
+
+  /**
+   * Encerra a sessão ativa do usuário.
+   * @returns {Promise<void>}
+   */
+  signout: async () => {
+    const response = await authClient.signOut();
+    if (response?.error) {
+      throw response.error;
+    }
+    return response?.data;
   },
 
   /**
