@@ -50,3 +50,21 @@ A graphical profile image representing a user, hosted in cloud storage and refer
 - **Constraints:** Accepted MIME types are `image/jpeg`, `image/png`, and `image/webp`, with a maximum payload size of 5 MB.
 - **Lifecycle:** Uploaded via a multipart form data endpoint (`POST /api/users/me/avatar`). Upon successful processing, the user's profile URL is refreshed and reflected immediately across the user interface.
 
+---
+
+### Connected Account
+
+An external third-party identity and authorization provider (e.g., Google) linked to a user's Festrack profile.
+
+- **Capabilities:** Enables single sign-on (SSO), credential-less authentication, and authorized delegation of third-party API capabilities.
+- **Management:** Users can inspect linked accounts (`GET /api/users/me/accounts`), connect new providers, or revoke linkings (`POST /api/users/me/accounts/unlink`).
+
+---
+
+### Calendar Synchronization
+
+The automated service bridging Festrack events with an external calendar service (Google Calendar).
+
+- **Direction:** Export-oriented (Festrack ➡️ Google Calendar), pushing scheduled budget and occasion events to the user's external calendar.
+- **Trigger:** Automated synchronization on event lifecycle mutations (creation, modification, and removal).
+
