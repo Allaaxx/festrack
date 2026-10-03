@@ -7,6 +7,7 @@ import { AuthContextProvider, useAuthContext } from '@/contexts/auth';
 
 const mockUseSession = vi.fn();
 const mockSignOut = vi.fn();
+const mockGetSession = vi.fn();
 const mockSignInMutateAsync = vi.fn();
 const mockSignUpMutateAsync = vi.fn();
 
@@ -14,6 +15,7 @@ vi.mock('@/lib/auth-client', () => ({
   authClient: {
     useSession: () => mockUseSession(),
     signOut: () => mockSignOut(),
+    getSession: () => mockGetSession(),
   },
 }));
 
@@ -226,5 +228,37 @@ describe('AuthContext', () => {
     expect(mockSignOut).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
     expect(result.current.user).toBeNull();
+  });
+
+  it('updateUser updates normalized user immediately and triggers getSession', () => {
+    mockUseSession.mockReturnValue({
+      data: {
+        session: { id: 's1' },
+        user: { id: 'u1', name: 'User One', email: 'u1@example.com' },
+      },
+      isPending: false,
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.updateUser({
+        id: 'u1',
+        first_name: 'Jane',
+        last_name: 'Doe',
+        email: 'u1@example.com',
+      });
+    });
+
+    expect(result.current.user).toMatchObject({
+      id: 'u1',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      first_name: 'Jane',
+      last_name: 'Doe',
+    });
+    expect(mockGetSession).toHaveBeenCalled();
   });
 });

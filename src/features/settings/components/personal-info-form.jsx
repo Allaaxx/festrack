@@ -1,14 +1,26 @@
-import { ImageIcon, TrashIcon, UploadCloudIcon } from 'lucide-react';
+import {
+  ImageIcon,
+  Loader2Icon,
+  TrashIcon,
+  UploadCloudIcon,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { useUpdateProfile, useUploadAvatar } from '@/api/hooks/user';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
+import { cn } from '@/lib/utils';
+
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const PersonalInfoForm = () => {
-  const { user } = useAuthContext();
+  const { user, updateUser } = useAuthContext();
+  const updateProfileMutation = useUpdateProfile();
+  const uploadAvatarMutation = useUploadAvatar();
   const inputRef = useRef(null);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
@@ -39,47 +51,86 @@ const PersonalInfoForm = () => {
     };
   }, [file]);
 
-  const onSelect = (e) => {
+  const onSelect = async (e) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
-    if (!selectedFile.type.startsWith('image/')) {
+    if (!ALLOWED_MIME_TYPES.includes(selectedFile.type)) {
       toast.add({
         type: 'error',
         title: 'Formato inválido',
-        description: 'Por favor, selecione um arquivo de imagem.',
+        description:
+          'Por favor, selecione um arquivo de imagem válido (JPG, PNG ou WebP).',
       });
-      e.currentTarget.value = '';
+      if (inputRef.current) inputRef.current.value = '';
       return;
     }
 
-    if (selectedFile.size > 1024 * 1024) {
+    if (selectedFile.size > MAX_FILE_SIZE) {
       toast.add({
         type: 'error',
         title: 'Arquivo muito grande',
-        description: 'A imagem deve ter no máximo 1MB.',
+        description: 'A imagem deve ter no máximo 5MB.',
       });
-      e.currentTarget.value = '';
+      if (inputRef.current) inputRef.current.value = '';
       return;
     }
 
     setFile(selectedFile);
+
+    try {
+      const updatedUser = await uploadAvatarMutation.mutateAsync(selectedFile);
+      updateUser(updatedUser);
+      toast.add({
+        type: 'success',
+        title: 'Avatar atualizado com sucesso!',
+        description: 'Sua foto de perfil foi alterada.',
+      });
+      setFile(null);
+    } catch (error) {
+      console.error(error);
+      toast.add({
+        type: 'error',
+        title: 'Erro ao enviar avatar',
+        description: error?.message || 'Por favor, tente novamente mais tarde.',
+      });
+      setFile(null);
+    } finally {
+      if (inputRef.current) inputRef.current.value = '';
+    }
   };
 
-  const openPicker = () => inputRef.current?.click();
+  const openPicker = () => {
+    if (uploadAvatarMutation.isPending) return;
+    inputRef.current?.click();
+  };
 
   const removeAvatar = () => {
     setFile(null);
     if (inputRef.current) inputRef.current.value = '';
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.add({
-      type: 'success',
-      title: 'Informações salvas com sucesso!',
-      description: 'Seus dados pessoais foram atualizados.',
-    });
+    try {
+      const updatedUser = await updateProfileMutation.mutateAsync({
+        firstName,
+        lastName,
+      });
+      updateUser(updatedUser);
+      toast.add({
+        type: 'success',
+        title: 'Informações salvas com sucesso!',
+        description: 'Seus dados pessoais foram atualizados.',
+      });
+    } catch (error) {
+      console.error(error);
+      toast.add({
+        type: 'error',
+        title: 'Erro ao atualizar perfil',
+        description: error?.message || 'Por favor, tente novamente mais tarde.',
+      });
+    }
   };
 
   return (
@@ -100,6 +151,7 @@ const PersonalInfoForm = () => {
                 role="button"
                 tabIndex={0}
                 aria-label="Carregar foto de perfil"
+                aria-disabled={uploadAvatarMutation.isPending}
                 onClick={openPicker}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -107,7 +159,11 @@ const PersonalInfoForm = () => {
                     openPicker();
                   }
                 }}
-                className="flex size-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed hover:opacity-95"
+                className={cn(
+                  'relative flex size-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed hover:opacity-95',
+                  uploadAvatarMutation.isPending &&
+                    'pointer-events-none cursor-not-allowed opacity-80'
+                )}
               >
                 {preview ? (
                   <img
@@ -115,8 +171,23 @@ const PersonalInfoForm = () => {
                     alt="Pré-visualização do avatar"
                     className="size-full object-cover"
                   />
+                ) : user?.image ? (
+                  <img
+                    src={user.image}
+                    alt="Avatar do usuário"
+                    className="size-full object-cover"
+                  />
                 ) : (
                   <ImageIcon className="text-muted-foreground size-8" />
+                )}
+
+                {uploadAvatarMutation.isPending && (
+                  <div className="bg-background/70 absolute inset-0 flex items-center justify-center">
+                    <Loader2Icon
+                      data-testid="avatar-loading-spinner"
+                      className="text-foreground size-6 animate-spin"
+                    />
+                  </div>
                 )}
               </div>
 
@@ -124,7 +195,7 @@ const PersonalInfoForm = () => {
                 <input
                   ref={inputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="hidden"
                   onChange={onSelect}
                 />
@@ -132,16 +203,22 @@ const PersonalInfoForm = () => {
                   type="button"
                   variant="outline"
                   onClick={openPicker}
+                  disabled={uploadAvatarMutation.isPending}
                   className="flex items-center gap-2"
                 >
-                  <UploadCloudIcon className="size-4" />
+                  {uploadAvatarMutation.isPending ? (
+                    <Loader2Icon className="size-4 animate-spin" />
+                  ) : (
+                    <UploadCloudIcon className="size-4" />
+                  )}
                   Enviar avatar
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
+                  aria-label="Remover avatar"
                   onClick={removeAvatar}
-                  disabled={!file}
+                  disabled={!file || uploadAvatarMutation.isPending}
                   className="text-destructive!"
                 >
                   <TrashIcon className="size-4" />
@@ -149,7 +226,7 @@ const PersonalInfoForm = () => {
               </div>
             </div>
             <p className="text-muted-foreground text-sm">
-              Escolha uma foto de até 1MB nos formatos JPG ou PNG.
+              Escolha uma foto de até 5MB nos formatos JPG, PNG ou WebP.
             </p>
           </div>
 
@@ -176,8 +253,19 @@ const PersonalInfoForm = () => {
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" className="max-sm:w-full">
-              Salvar alterações
+            <Button
+              type="submit"
+              disabled={updateProfileMutation.isPending}
+              className="max-sm:w-full"
+            >
+              {updateProfileMutation.isPending ? (
+                <>
+                  <Loader2Icon className="mr-2 size-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar alterações'
+              )}
             </Button>
           </div>
         </form>

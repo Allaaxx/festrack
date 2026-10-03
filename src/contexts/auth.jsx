@@ -12,6 +12,7 @@ export const AuthContext = createContext({
   signin: () => {},
   signup: () => {},
   signout: () => {},
+  updateUser: () => {},
 });
 
 export const useAuthContext = () => useContext(AuthContext);
@@ -28,6 +29,22 @@ export const AuthContextProvider = ({ children }) => {
     overrideUser !== undefined
       ? overrideUser
       : normalizeUser(sessionData?.user);
+
+  const updateUser = (updatedUserData) => {
+    const normalized = normalizeUser(updatedUserData);
+    setOverrideUser(normalized);
+    try {
+      if (typeof authClient?.getSession === 'function') {
+        const sessionPromise = authClient.getSession();
+        if (sessionPromise && typeof sessionPromise.catch === 'function') {
+          sessionPromise.catch(() => {});
+        }
+      }
+    } catch {
+      // Ignora falhas de sincronização em segundo plano
+    }
+    return normalized;
+  };
 
   const signup = async (data) => {
     try {
@@ -94,6 +111,7 @@ export const AuthContextProvider = ({ children }) => {
         signin,
         signup,
         signout,
+        updateUser,
       }}
     >
       {children}

@@ -40,3 +40,13 @@ A single financial movement (earning, expense, or investment) associated with a 
 ### Event
 
 A scheduled occasion or budget bucket (e.g., travel, wedding, party) with start and end dates used to group related financial transactions.
+
+---
+
+### Avatar
+
+A graphical profile image representing a user, hosted in cloud storage and referenced by a secure URL in the user's profile entity (`image`).
+
+- **Constraints:** Accepted MIME types are `image/jpeg`, `image/png`, and `image/webp`, with a maximum payload size of 5 MB.
+- **Lifecycle:** Uploaded via a multipart form data endpoint (`POST /api/users/me/avatar`). Upon successful processing, the user's profile URL is refreshed and reflected immediately across the user interface.
+
