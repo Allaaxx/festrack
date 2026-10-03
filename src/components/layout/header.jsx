@@ -1,6 +1,7 @@
 import { PanelLeftIcon } from 'lucide-react';
 
 import { LogoIcon } from '@/assets/images';
+import { ModeToggle } from '@/components/layout/mode-toggle';
 import SearchForm from '@/components/layout/search-form';
 import {
   Breadcrumb,
@@ -13,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
-import { ModeToggle } from '@/features/settings/components/mode-toggle';
 
 const Header = () => {
   const { toggleSidebar } = useSidebar();
