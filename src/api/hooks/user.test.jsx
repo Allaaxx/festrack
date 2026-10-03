@@ -2,13 +2,26 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useUpdateProfile, useUploadAvatar } from '@/api/hooks/user';
+import {
+  getAccountsQueryKey,
+  useGetAccounts,
+  useUnlinkAccount,
+  useUpdateProfile,
+  useUploadAvatar,
+} from '@/api/hooks/user';
 import { UserService } from '@/api/services/user';
+import { useAuthContext } from '@/contexts/auth';
+
+vi.mock('@/contexts/auth', () => ({
+  useAuthContext: vi.fn(),
+}));
 
 vi.mock('@/api/services/user', () => ({
   UserService: {
     updateProfile: vi.fn(),
     uploadAvatar: vi.fn(),
+    getAccounts: vi.fn(),
+    unlinkAccount: vi.fn(),
   },
 }));
 
@@ -96,5 +109,90 @@ describe('useUploadAvatar', () => {
 
     expect(UserService.uploadAvatar).toHaveBeenCalledWith(mockFile);
     expect(result.current.data).toEqual(mockUpdatedUser);
+  });
+});
+
+describe('useGetAccounts', () => {
+  let queryClient;
+
+  const createWrapper = () => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    return ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useAuthContext.mockReturnValue({
+      user: { id: 'u1', name: 'Ana' },
+    });
+  });
+
+  it('calls UserService.getAccounts and returns connected accounts', async () => {
+    const mockAccounts = [
+      { id: 'acc-1', providerId: 'google' },
+      { id: 'acc-2', providerId: 'credential' },
+    ];
+    UserService.getAccounts.mockResolvedValue(mockAccounts);
+
+    const { result } = renderHook(() => useGetAccounts(), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(UserService.getAccounts).toHaveBeenCalled();
+    expect(result.current.data).toEqual(mockAccounts);
+  });
+});
+
+describe('useUnlinkAccount', () => {
+  let queryClient;
+
+  const createWrapper = () => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        mutations: { retry: false },
+      },
+    });
+
+    return ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useAuthContext.mockReturnValue({
+      user: { id: 'u1', name: 'Ana' },
+    });
+  });
+
+  it('calls UserService.unlinkAccount and invalidates getAccounts query on success', async () => {
+    UserService.unlinkAccount.mockResolvedValue({ success: true });
+
+    const wrapper = createWrapper();
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useUnlinkAccount(), {
+      wrapper,
+    });
+
+    result.current.mutate({ providerId: 'google' });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(UserService.unlinkAccount).toHaveBeenCalledWith({
+      providerId: 'google',
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: getAccountsQueryKey({ userId: 'u1' }),
+    });
   });
 });

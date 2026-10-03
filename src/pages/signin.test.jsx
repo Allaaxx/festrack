@@ -122,4 +122,88 @@ describe('SignInPage', () => {
       expect(screen.getByText(/Credenciais inválidas/i)).toBeInTheDocument();
     });
   });
+
+  it('renders Google sign-in button and separator', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signin: mockSignin,
+      signInWithGoogle: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signin']}>
+        <Routes>
+          <Route path="/signin" element={<SignInPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByRole('button', { name: /continuar com google/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText('ou')).toBeInTheDocument();
+  });
+
+  it('initiates Google sign-in when Google button is clicked', async () => {
+    const mockSignInWithGoogle = vi
+      .fn()
+      .mockResolvedValueOnce({ url: 'https://accounts.google.com' });
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signin: mockSignin,
+      signInWithGoogle: mockSignInWithGoogle,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signin']}>
+        <Routes>
+          <Route path="/signin" element={<SignInPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const googleBtn = screen.getByRole('button', {
+      name: /continuar com google/i,
+    });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(mockSignInWithGoogle).toHaveBeenCalledWith({
+        callbackURL: '/',
+      });
+    });
+  });
+
+  it('displays form error when Google sign-in fails', async () => {
+    const mockSignInWithGoogle = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Falha no Google OAuth'));
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signin: mockSignin,
+      signInWithGoogle: mockSignInWithGoogle,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signin']}>
+        <Routes>
+          <Route path="/signin" element={<SignInPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const googleBtn = screen.getByRole('button', {
+      name: /continuar com google/i,
+    });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Falha no Google OAuth/i)).toBeInTheDocument();
+    });
+  });
 });

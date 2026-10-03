@@ -35,6 +35,27 @@ export const UserService = {
     const response = await protectedApi.post('/users/me/avatar', formData);
     return normalizeUser(response.data);
   },
+
+  /**
+   * Retorna a lista de contas conectadas do usuário autenticado.
+   * @returns {Promise<Array<{ id: string, providerId: string, createdAt: string }>>}
+   */
+  getAccounts: async () => {
+    const response = await protectedApi.get('/users/me/accounts');
+    return response.data;
+  },
+
+  /**
+   * Desvincula um provedor de autenticação externo.
+   * @param {{ providerId: string }} input
+   * @returns {Promise<{ success: boolean, message: string }>}
+   */
+  unlinkAccount: async ({ providerId }) => {
+    const response = await protectedApi.post('/users/me/accounts/unlink', {
+      providerId,
+    });
+    return response.data;
+  },
 };
 
 export default UserService;

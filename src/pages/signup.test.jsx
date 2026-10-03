@@ -169,4 +169,90 @@ describe('SignUpPage', () => {
       ).toBeInTheDocument();
     });
   });
+
+  it('renders Google sign-up button and separator', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+      signInWithGoogle: vi.fn(),
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(
+      screen.getByRole('button', { name: /continuar com google/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText('ou')).toBeInTheDocument();
+  });
+
+  it('initiates Google sign-in when Google button is clicked', async () => {
+    const mockSignInWithGoogle = vi
+      .fn()
+      .mockResolvedValueOnce({ url: 'https://accounts.google.com' });
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+      signInWithGoogle: mockSignInWithGoogle,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const googleBtn = screen.getByRole('button', {
+      name: /continuar com google/i,
+    });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(mockSignInWithGoogle).toHaveBeenCalledWith({
+        callbackURL: '/',
+      });
+    });
+  });
+
+  it('displays form error when Google sign-up fails', async () => {
+    const mockSignInWithGoogle = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Erro no cadastro via Google'));
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+      signInWithGoogle: mockSignInWithGoogle,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const googleBtn = screen.getByRole('button', {
+      name: /continuar com google/i,
+    });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Erro no cadastro via Google/i)
+      ).toBeInTheDocument();
+    });
+  });
 });

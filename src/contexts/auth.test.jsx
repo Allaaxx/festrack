@@ -19,6 +19,13 @@ vi.mock('@/lib/auth-client', () => ({
   },
 }));
 
+vi.mock('@/api/services/auth', () => ({
+  AuthService: {
+    signInWithGoogle: vi.fn(),
+    linkSocial: vi.fn(),
+  },
+}));
+
 vi.mock('@/api/hooks/auth', () => ({
   useSignIn: () => ({
     mutateAsync: mockSignInMutateAsync,
@@ -260,5 +267,97 @@ describe('AuthContext', () => {
       last_name: 'Doe',
     });
     expect(mockGetSession).toHaveBeenCalled();
+  });
+
+  it('signInWithGoogle calls AuthService.signInWithGoogle and returns its result', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.signInWithGoogle.mockResolvedValueOnce({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    let res;
+    await act(async () => {
+      res = await result.current.signInWithGoogle({
+        callbackURL: '/dashboard',
+      });
+    });
+
+    expect(AuthService.signInWithGoogle).toHaveBeenCalledWith({
+      callbackURL: '/dashboard',
+    });
+    expect(res).toEqual({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+  });
+
+  it('signInWithGoogle shows error toast and throws when it fails', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.signInWithGoogle.mockRejectedValueOnce(
+      new Error('Popup blocked')
+    );
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    await expect(result.current.signInWithGoogle()).rejects.toThrow(
+      'Popup blocked'
+    );
+
+    expect(toast.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        title: 'Erro ao autenticar com Google!',
+      })
+    );
+  });
+
+  it('linkSocial calls AuthService.linkSocial and returns its result', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.linkSocial.mockResolvedValueOnce({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    let res;
+    await act(async () => {
+      res = await result.current.linkSocial({ provider: 'google' });
+    });
+
+    expect(AuthService.linkSocial).toHaveBeenCalledWith({
+      provider: 'google',
+    });
+    expect(res).toEqual({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+  });
+
+  it('linkSocial shows error toast and throws when it fails', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.linkSocial.mockRejectedValueOnce(
+      new Error('Failed to link account')
+    );
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    await expect(
+      result.current.linkSocial({ provider: 'google' })
+    ).rejects.toThrow('Failed to link account');
+
+    expect(toast.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        title: 'Erro ao conectar conta!',
+      })
+    );
   });
 });

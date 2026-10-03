@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext, useState } from 'react';
 
 import { useSignIn, useSignUp } from '@/api/hooks/auth';
+import { AuthService } from '@/api/services/auth';
 import { toast } from '@/components/ui/toast';
 import { normalizeUser } from '@/helpers/user';
 import { authClient } from '@/lib/auth-client';
@@ -12,6 +13,8 @@ export const AuthContext = createContext({
   signin: () => {},
   signup: () => {},
   signout: () => {},
+  signInWithGoogle: () => {},
+  linkSocial: () => {},
   updateUser: () => {},
 });
 
@@ -90,6 +93,34 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  const signInWithGoogle = async (options = {}) => {
+    try {
+      return await AuthService.signInWithGoogle(options);
+    } catch (error) {
+      console.error(error);
+      toast.add({
+        type: 'error',
+        title: 'Erro ao autenticar com Google!',
+        description: error?.message || 'Por favor, tente novamente.',
+      });
+      throw error;
+    }
+  };
+
+  const linkSocial = async (options = {}) => {
+    try {
+      return await AuthService.linkSocial(options);
+    } catch (error) {
+      console.error(error);
+      toast.add({
+        type: 'error',
+        title: 'Erro ao conectar conta!',
+        description: error?.message || 'Por favor, tente novamente.',
+      });
+      throw error;
+    }
+  };
+
   const signout = async () => {
     try {
       await authClient.signOut();
@@ -111,6 +142,8 @@ export const AuthContextProvider = ({ children }) => {
         signin,
         signup,
         signout,
+        signInWithGoogle,
+        linkSocial,
         updateUser,
       }}
     >

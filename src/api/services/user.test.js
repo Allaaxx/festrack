@@ -115,4 +115,71 @@ describe('UserService', () => {
       );
     });
   });
+
+  describe('getAccounts', () => {
+    it('sends GET to /users/me/accounts and returns list of connected accounts', async () => {
+      const mockAccounts = [
+        {
+          id: 'acc-1',
+          providerId: 'credential',
+          createdAt: '2026-10-01T00:00:00.000Z',
+        },
+        {
+          id: 'acc-2',
+          providerId: 'google',
+          createdAt: '2026-10-02T00:00:00.000Z',
+        },
+      ];
+
+      protectedApi.get.mockResolvedValue({
+        data: mockAccounts,
+      });
+
+      const result = await UserService.getAccounts();
+
+      expect(protectedApi.get).toHaveBeenCalledWith('/users/me/accounts');
+      expect(result).toEqual(mockAccounts);
+    });
+
+    it('propagates errors when fetching accounts fails', async () => {
+      protectedApi.get.mockRejectedValue(new Error('Erro ao buscar contas'));
+
+      await expect(UserService.getAccounts()).rejects.toThrow(
+        'Erro ao buscar contas'
+      );
+    });
+  });
+
+  describe('unlinkAccount', () => {
+    it('sends POST to /users/me/accounts/unlink with providerId and returns response', async () => {
+      const mockResponse = {
+        success: true,
+        message: 'Provider google unlinked successfully.',
+      };
+
+      protectedApi.post.mockResolvedValue({
+        data: mockResponse,
+      });
+
+      const result = await UserService.unlinkAccount({ providerId: 'google' });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/users/me/accounts/unlink',
+        {
+          providerId: 'google',
+        }
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('propagates errors when unlinking fails', async () => {
+      protectedApi.post.mockRejectedValue(
+        new Error('Cannot unlink your only login method.')
+      );
+
+      await expect(
+        UserService.unlinkAccount({ providerId: 'google' })
+      ).rejects.toThrow('Cannot unlink your only login method.');
+    });
+  });
 });

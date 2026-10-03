@@ -3,9 +3,11 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Loader2Icon,
   PlusIcon,
 } from 'lucide-react';
 
+import GoogleIcon from '@/components/shared/google-icon';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +16,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calendar-sync';
 
 import { EventStatusFilters } from './event-status-filters';
 import { EventsSidebarSheet } from './events-sidebar-sheet';
@@ -35,6 +38,8 @@ export function CalendarHeader({
   selectedStatuses,
   onToggleStatus,
 }) {
+  const { isSyncEnabled, isConnecting, toggleSync } = useGoogleCalendarSync();
+
   return (
     <div className="flex flex-col">
       <div className="sm:p-4h-14 sticky flex flex-wrap items-center justify-between gap-2 border-b p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
@@ -90,6 +95,29 @@ export function CalendarHeader({
 
         {/* Right Side: View & New Event */}
         <div className="flex w-full flex-row items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSync}
+            disabled={isConnecting}
+            className="w-fit gap-1.5 px-2.5 text-xs max-sm:h-8!"
+            aria-label={
+              isSyncEnabled
+                ? 'Sincronização Google Agenda ativa'
+                : 'Sincronizar com Google Agenda'
+            }
+          >
+            {isConnecting ? (
+              <Loader2Icon className="size-3.5 animate-spin" />
+            ) : isSyncEnabled ? (
+              <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
+            ) : null}
+            <GoogleIcon className="size-3.5" />
+            <span className="max-md:hidden">
+              {isSyncEnabled ? 'Google Agenda' : 'Sincronizar'}
+            </span>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
