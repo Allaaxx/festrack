@@ -1,12 +1,10 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { createContext, useContext, useState } from 'react';
 
 import { useSignIn, useSignUp } from '@/api/hooks/auth';
-import { AuthService } from '@/api/services/auth';
 import { toast } from '@/components/ui/toast';
-import {
-  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-  LOCAL_STORAGE_REFRESH_TOKEN_KEY,
-} from '@/constants/local-storage';
+import { normalizeUser } from '@/helpers/user';
+import { authClient } from '@/lib/auth-client';
 
 export const AuthContext = createContext({
   user: null,
@@ -18,90 +16,76 @@ export const AuthContext = createContext({
 
 export const useAuthContext = () => useContext(AuthContext);
 
-const setTokens = (tokens) => {
-  localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, tokens.accessToken);
-  localStorage.setItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY, tokens.refreshToken);
-};
-
-const removeTokens = () => {
-  localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
-  localStorage.removeItem(LOCAL_STORAGE_REFRESH_TOKEN_KEY);
-};
-
 export const AuthContextProvider = ({ children }) => {
-  const [user, setUser] = useState();
-  const [isInitializing, setIsInitializing] = useState(true);
-  const signUpMutation = useSignUp();
+  const { data: sessionData, isPending } = authClient.useSession();
+  const [overrideUser, setOverrideUser] = useState(undefined);
+  const queryClient = useQueryClient();
 
+  const signUpMutation = useSignUp();
   const signInMutation = useSignIn();
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        setIsInitializing(true);
-        const accessToken = localStorage.getItem(
-          LOCAL_STORAGE_ACCESS_TOKEN_KEY
-        );
-        const refreshToken = localStorage.getItem(
-          LOCAL_STORAGE_REFRESH_TOKEN_KEY
-        );
-        if (!accessToken && !refreshToken) return;
-        const response = await AuthService.me();
-        setUser(response);
-      } catch (error) {
-        setUser(null);
-        console.error(error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    init();
-  }, []);
+  const user =
+    overrideUser !== undefined
+      ? overrideUser
+      : normalizeUser(sessionData?.user);
 
   const signup = async (data) => {
     try {
       const createdUser = await signUpMutation.mutateAsync(data);
-      setUser(createdUser);
-      setTokens(createdUser.tokens);
+      const normalized = normalizeUser(createdUser);
+      setOverrideUser(normalized);
       toast.add({
         type: 'success',
         title: 'Conta criada com sucesso!',
         description: 'Seja bem vindo.',
       });
+      return createdUser;
     } catch (error) {
       console.error(error);
       toast.add({
         type: 'error',
         title: 'Erro ao criar conta!',
-        description: 'Por favor, tente mais tarde.',
+        description: error?.message || 'Por favor, tente mais tarde.',
       });
+      throw error;
     }
   };
 
   const signin = async (data) => {
     try {
       const loggedUser = await signInMutation.mutateAsync(data);
-      setUser(loggedUser);
-      setTokens(loggedUser.tokens);
+      const normalized = normalizeUser(loggedUser);
+      setOverrideUser(normalized);
       toast.add({
         type: 'success',
         title: 'Logado com sucesso!',
         description: 'É bom vê-lo novamente.',
       });
+      return loggedUser;
     } catch (error) {
+      console.error(error);
       toast.add({
         type: 'error',
         title: 'Erro ao realizar o login!',
-        description: 'Por favor, verifique suas credenciais.',
+        description: error?.message || 'Por favor, verifique suas credenciais.',
       });
-      console.error(error);
+      throw error;
     }
   };
 
-  const signout = () => {
-    setUser(null);
-    removeTokens();
+  const signout = async () => {
+    try {
+      await authClient.signOut();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setOverrideUser(null);
+      queryClient.clear();
+    }
   };
+
+  const isInitializing = isPending && !user;
+
   return (
     <AuthContext.Provider
       value={{

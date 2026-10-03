@@ -26,12 +26,22 @@ const SignInPage = () => {
   const { user, signin, isInitializing } = useAuthContext();
   const { form } = useSignInForm();
 
-  const handleSubmit = (data) => signin(data);
+  const handleSubmit = async (data) => {
+    try {
+      await signin(data);
+    } catch (error) {
+      form.setError('root', {
+        message:
+          error?.message ||
+          'E-mail ou senha incorretos. Verifique suas credenciais.',
+      });
+    }
+  };
 
   if (isInitializing) return null;
 
   if (user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-3">
@@ -41,6 +51,9 @@ const SignInPage = () => {
           <CardDescription>Insira seus dados abaixo.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {form.formState.errors.root && (
+            <FieldError errors={[form.formState.errors.root]} />
+          )}
           <form id="form-sign-in" onSubmit={form.handleSubmit(handleSubmit)}>
             <FieldGroup>
               <Controller

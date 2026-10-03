@@ -27,12 +27,30 @@ const SignUpPage = () => {
   const { user, signup, isInitializing } = useAuthContext();
   const { form } = useSignUpForm();
 
-  const handleSubmit = (data) => signup(data);
+  const handleSubmit = async (data) => {
+    try {
+      await signup(data);
+    } catch (error) {
+      const message = error?.message || 'Erro ao criar conta.';
+      if (
+        message.toLowerCase().includes('email') ||
+        error?.code === 'USER_ALREADY_EXISTS'
+      ) {
+        form.setError('email', {
+          message: 'Este e-mail já está em uso.',
+        });
+      } else {
+        form.setError('root', {
+          message,
+        });
+      }
+    }
+  };
 
   if (isInitializing) return null;
 
   if (user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
   }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-3">
@@ -44,6 +62,9 @@ const SignUpPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {form.formState.errors.root && (
+            <FieldError errors={[form.formState.errors.root]} />
+          )}
           <form id="form-sign-up" onSubmit={form.handleSubmit(handleSubmit)}>
             <FieldGroup>
               <Controller

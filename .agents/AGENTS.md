@@ -12,25 +12,25 @@ and user-facing strings in Portuguese (BR).
 
 ## Tech Stack
 
-| Category | Library / Tool | Version |
-|---|---|---|
-| Framework | React | 19 |
-| Build | Vite | 8 |
-| Language | JavaScript (JSX) | — no TypeScript |
-| Styling | Tailwind CSS | v4 |
-| UI Primitives | shadcn/ui (`base-nova` style, `neutral` base, cssVariables) | — |
-| Icons | lucide-react | — |
-| Server State | TanStack Query | v5 |
-| HTTP Client | Axios (configured instance at `@/lib/axios`) | — |
-| Forms | react-hook-form + Zod v4 + `@hookform/resolvers` | — |
-| Routing | React Router | v8 |
-| Charts | Recharts | v3 |
-| Tables | TanStack Table | v9 |
-| Date utilities | date-fns + react-day-picker | v4 / v10 |
-| Number formatting | react-number-format | v5 |
-| Linting | ESLint 10 + `eslint-plugin-simple-import-sort` + `eslint-config-prettier` | — |
-| Formatting | Prettier (`singleQuote`, `semi`, `tabWidth: 2`, `prettier-plugin-tailwindcss`) | — |
-| Git Hooks | Husky + lint-staged + git-commit-msg-linter | — |
+| Category          | Library / Tool                                                                 | Version         |
+| ----------------- | ------------------------------------------------------------------------------ | --------------- |
+| Framework         | React                                                                          | 19              |
+| Build             | Vite                                                                           | 8               |
+| Language          | JavaScript (JSX)                                                               | — no TypeScript |
+| Styling           | Tailwind CSS                                                                   | v4              |
+| UI Primitives     | shadcn/ui (`base-nova` style, `neutral` base, cssVariables)                    | —               |
+| Icons             | lucide-react                                                                   | —               |
+| Server State      | TanStack Query                                                                 | v5              |
+| HTTP Client       | Axios (configured instance at `@/lib/axios`)                                   | —               |
+| Forms             | react-hook-form + Zod v4 + `@hookform/resolvers`                               | —               |
+| Routing           | React Router                                                                   | v8              |
+| Charts            | Recharts                                                                       | v3              |
+| Tables            | TanStack Table                                                                 | v9              |
+| Date utilities    | date-fns + react-day-picker                                                    | v4 / v10        |
+| Number formatting | react-number-format                                                            | v5              |
+| Linting           | ESLint 10 + `eslint-plugin-simple-import-sort` + `eslint-config-prettier`      | —               |
+| Formatting        | Prettier (`singleQuote`, `semi`, `tabWidth: 2`, `prettier-plugin-tailwindcss`) | —               |
+| Git Hooks         | Husky + lint-staged + git-commit-msg-linter                                    | —               |
 
 ---
 
@@ -60,6 +60,7 @@ src/
 ### Feature Module Structure (`src/features/<feature>/`)
 
 Each feature module is encapsulated:
+
 ```
 src/features/<feature>/
 ├── api/             # Domain TanStack Query hooks & Axios services
@@ -78,6 +79,7 @@ src/features/<feature>/
 ### 1. API Layer
 
 **Service** (`src/api/services/<domain>.js`)
+
 - Plain object with `async` methods.
 - Each method calls `protectedApi` (the configured Axios instance from `@/lib/axios`) and returns `response.data`.
 - Include JSDoc comments on every method documenting the expected `input` shape.
@@ -96,6 +98,7 @@ export default FooService;
 ```
 
 **Hook** (`src/api/hooks/<domain>.js`)
+
 - Wraps TanStack Query `useQuery` / `useMutation`.
 - Export a `get*QueryKey({ userId, ...params })` function for cache key management.
 - Mutations invalidate related queries in `onSuccess`.
@@ -150,7 +153,9 @@ export const useGetFoo = () => {
 ```jsx
 export const FooContext = createContext({ value: null });
 export const useFooContext = () => useContext(FooContext);
-export const FooContextProvider = ({ children }) => { /* ... */ };
+export const FooContextProvider = ({ children }) => {
+  /* ... */
+};
 ```
 
 ---
@@ -210,7 +215,23 @@ test:      Adding or updating tests
 ## Key Path Alias
 
 | Alias | Resolves to |
-|---|---|
-| `@/` | `src/` |
+| ----- | ----------- |
+| `@/`  | `src/`      |
 
 Example: `import { cn } from '@/lib/utils'`
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues via `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical five-role triage labels (`needs-triage`, `needs-info`, etc.). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context (`GLOSSARY.md` and `docs/adr/` at repo root). See `docs/agents/domain.md`.
