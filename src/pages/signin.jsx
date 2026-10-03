@@ -51,9 +51,6 @@ const SignInPage = () => {
           <CardDescription>Insira seus dados abaixo.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {form.formState.errors.root && (
-            <FieldError errors={[form.formState.errors.root]} />
-          )}
           <form id="form-sign-in" onSubmit={form.handleSubmit(handleSubmit)}>
             <FieldGroup>
               <Controller
@@ -96,6 +93,9 @@ const SignInPage = () => {
               />
             </FieldGroup>
           </form>
+          {form.formState.errors.root && (
+            <FieldError errors={[form.formState.errors.root]} />
+          )}
         </CardContent>
         <CardFooter>
           <Button

@@ -62,9 +62,6 @@ const SignUpPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {form.formState.errors.root && (
-            <FieldError errors={[form.formState.errors.root]} />
-          )}
           <form id="form-sign-up" onSubmit={form.handleSubmit(handleSubmit)}>
             <FieldGroup>
               <Controller
@@ -210,6 +207,9 @@ const SignUpPage = () => {
               />
             </FieldGroup>
           </form>
+          {form.formState.errors.root && (
+            <FieldError errors={[form.formState.errors.root]} />
+          )}
         </CardContent>
         <CardFooter>
           <Button
