@@ -183,11 +183,28 @@ describe('AuthService', () => {
 
       expect(authClient.signIn.social).toHaveBeenCalledWith({
         provider: 'google',
-        callbackURL: '/',
+        callbackURL: `${window.location.origin}/`,
         scopes: ['openid', 'profile', 'email'],
       });
       expect(result).toEqual({
         url: 'https://accounts.google.com/o/oauth2/v2/auth',
+      });
+    });
+
+    it('preserves absolute callbackURL in signInWithGoogle', async () => {
+      authClient.signIn.social = vi.fn().mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+        error: null,
+      });
+
+      await AuthService.signInWithGoogle({
+        callbackURL: 'https://festrack.app/dashboard',
+      });
+
+      expect(authClient.signIn.social).toHaveBeenCalledWith({
+        provider: 'google',
+        callbackURL: 'https://festrack.app/dashboard',
+        scopes: ['openid', 'profile', 'email'],
       });
     });
 
@@ -219,7 +236,7 @@ describe('AuthService', () => {
 
       expect(authClient.linkSocial).toHaveBeenCalledWith({
         provider: 'google',
-        callbackURL: '/settings',
+        callbackURL: `${window.location.origin}/settings`,
         scopes: ['https://www.googleapis.com/auth/calendar.events'],
         additionalParams: { access_type: 'offline', prompt: 'consent' },
       });

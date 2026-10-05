@@ -36,7 +36,7 @@ const NavUser = ({ user, signout }) => {
             }
           >
             <Avatar>
-              <AvatarImage />
+              <AvatarImage src={user?.image} />
               <AvatarFallback>
                 {firstName[0]}
                 {lastName[0]}
@@ -58,7 +58,7 @@ const NavUser = ({ user, signout }) => {
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                   <Avatar>
-                    <AvatarImage />
+                    <AvatarImage src={user?.image} />
                     <AvatarFallback>
                       {firstName[0]}
                       {lastName[0]}

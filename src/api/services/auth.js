@@ -1,3 +1,4 @@
+import { resolveCallbackUrl } from '@/helpers/url';
 import { normalizeUser } from '@/helpers/user';
 import { authClient } from '@/lib/auth-client';
 import protectedApi from '@/lib/axios';
@@ -77,18 +78,30 @@ export const AuthService = {
 
   /**
    * Inicia o fluxo de autenticação social com Google via Better Auth.
-   * @param {{ callbackURL?: string, scopes?: string[] }} [options]
+   * @param {{ callbackURL?: string, scopes?: string[], [key: string]: any }} [options]
    * @returns {Promise<object>}
    */
   signInWithGoogle: async ({
     callbackURL = '/',
     scopes = ['openid', 'profile', 'email'],
+    ...rest
   } = {}) => {
-    const response = await authClient.signIn.social({
+    const payload = {
       provider: 'google',
-      callbackURL,
+      callbackURL: resolveCallbackUrl(callbackURL),
       scopes,
-    });
+      ...rest,
+    };
+
+    if (rest.newUserCallbackURL) {
+      payload.newUserCallbackURL = resolveCallbackUrl(rest.newUserCallbackURL);
+    }
+
+    if (rest.errorCallbackURL) {
+      payload.errorCallbackURL = resolveCallbackUrl(rest.errorCallbackURL);
+    }
+
+    const response = await authClient.signIn.social(payload);
 
     if (response?.error) {
       throw response.error;
@@ -103,8 +116,9 @@ export const AuthService = {
    *   provider?: string,
    *   callbackURL?: string,
    *   scopes?: string[],
-   *   additionalParams?: Record<string, string>
-   * }} options
+   *   additionalParams?: Record<string, string>,
+   *   [key: string]: any
+   * }} [options]
    * @returns {Promise<object>}
    */
   linkSocial: async ({
@@ -112,11 +126,17 @@ export const AuthService = {
     callbackURL = '/settings',
     scopes,
     additionalParams,
+    ...rest
   } = {}) => {
     const payload = {
       provider,
-      callbackURL,
+      callbackURL: resolveCallbackUrl(callbackURL),
+      ...rest,
     };
+
+    if (rest.errorCallbackURL) {
+      payload.errorCallbackURL = resolveCallbackUrl(rest.errorCallbackURL);
+    }
 
     if (scopes) {
       payload.scopes = scopes;
