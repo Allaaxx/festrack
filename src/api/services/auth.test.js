@@ -171,4 +171,72 @@ describe('AuthService', () => {
       });
     });
   });
+
+  describe('signInWithGoogle', () => {
+    it('calls authClient.signIn.social with google provider and default scopes', async () => {
+      authClient.signIn.social = vi.fn().mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+        error: null,
+      });
+
+      const result = await AuthService.signInWithGoogle();
+
+      expect(authClient.signIn.social).toHaveBeenCalledWith({
+        provider: 'google',
+        callbackURL: '/',
+        scopes: ['openid', 'profile', 'email'],
+      });
+      expect(result).toEqual({
+        url: 'https://accounts.google.com/o/oauth2/v2/auth',
+      });
+    });
+
+    it('throws error when authClient.signIn.social returns an error', async () => {
+      authClient.signIn.social = vi.fn().mockResolvedValue({
+        data: null,
+        error: new Error('Falha na autenticação social'),
+      });
+
+      await expect(AuthService.signInWithGoogle()).rejects.toThrow(
+        'Falha na autenticação social'
+      );
+    });
+  });
+
+  describe('linkSocial', () => {
+    it('calls authClient.linkSocial with specified parameters', async () => {
+      authClient.linkSocial = vi.fn().mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+        error: null,
+      });
+
+      const result = await AuthService.linkSocial({
+        provider: 'google',
+        callbackURL: '/settings',
+        scopes: ['https://www.googleapis.com/auth/calendar.events'],
+        additionalParams: { access_type: 'offline', prompt: 'consent' },
+      });
+
+      expect(authClient.linkSocial).toHaveBeenCalledWith({
+        provider: 'google',
+        callbackURL: '/settings',
+        scopes: ['https://www.googleapis.com/auth/calendar.events'],
+        additionalParams: { access_type: 'offline', prompt: 'consent' },
+      });
+      expect(result).toEqual({
+        url: 'https://accounts.google.com/o/oauth2/v2/auth',
+      });
+    });
+
+    it('throws error when authClient.linkSocial returns an error', async () => {
+      authClient.linkSocial = vi.fn().mockResolvedValue({
+        data: null,
+        error: new Error('Falha ao vincular conta'),
+      });
+
+      await expect(
+        AuthService.linkSocial({ provider: 'google' })
+      ).rejects.toThrow('Falha ao vincular conta');
+    });
+  });
 });

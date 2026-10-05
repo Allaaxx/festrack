@@ -1,7 +1,9 @@
 import { Loader2Icon } from 'lucide-react';
+import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { Link, Navigate } from 'react-router';
 
+import GoogleIcon from '@/components/shared/google-icon';
 import PasswordInput from '@/components/shared/password-input';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,12 +22,14 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/contexts/auth';
 import { useSignUpForm } from '@/forms/hooks/auth';
 
 const SignUpPage = () => {
-  const { user, signup, isInitializing } = useAuthContext();
+  const { user, signup, signInWithGoogle, isInitializing } = useAuthContext();
   const { form } = useSignUpForm();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleSubmit = async (data) => {
     try {
@@ -47,6 +51,20 @@ const SignUpPage = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      await signInWithGoogle({ callbackURL: '/' });
+    } catch (error) {
+      form.setError('root', {
+        message:
+          error?.message ||
+          'Erro ao criar conta com Google. Tente novamente mais tarde.',
+      });
+      setIsGoogleLoading(false);
+    }
+  };
+
   if (isInitializing) return null;
 
   if (user) {
@@ -62,9 +80,28 @@ const SignUpPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {form.formState.errors.root && (
-            <FieldError errors={[form.formState.errors.root]} />
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleGoogleSignIn}
+            disabled={isGoogleLoading || form.formState.isSubmitting}
+          >
+            {isGoogleLoading ? (
+              <Loader2Icon className="animate-spin" />
+            ) : (
+              <GoogleIcon />
+            )}
+            Continuar com Google
+          </Button>
+
+          <div className="relative flex items-center justify-center text-xs">
+            <Separator className="w-full" />
+            <span className="bg-card text-muted-foreground absolute px-2">
+              ou
+            </span>
+          </div>
+
           <form id="form-sign-up" onSubmit={form.handleSubmit(handleSubmit)}>
             <FieldGroup>
               <Controller
@@ -210,13 +247,16 @@ const SignUpPage = () => {
               />
             </FieldGroup>
           </form>
+          {form.formState.errors.root && (
+            <FieldError errors={[form.formState.errors.root]} />
+          )}
         </CardContent>
         <CardFooter>
           <Button
             className="w-full"
             type="submit"
             form="form-sign-up"
-            disabled={form.formState.isSubmitting}
+            disabled={form.formState.isSubmitting || isGoogleLoading}
           >
             {form.formState.isSubmitting && (
               <Loader2Icon className="animate-spin" />

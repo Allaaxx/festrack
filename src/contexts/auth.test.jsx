@@ -7,6 +7,7 @@ import { AuthContextProvider, useAuthContext } from '@/contexts/auth';
 
 const mockUseSession = vi.fn();
 const mockSignOut = vi.fn();
+const mockGetSession = vi.fn();
 const mockSignInMutateAsync = vi.fn();
 const mockSignUpMutateAsync = vi.fn();
 
@@ -14,6 +15,14 @@ vi.mock('@/lib/auth-client', () => ({
   authClient: {
     useSession: () => mockUseSession(),
     signOut: () => mockSignOut(),
+    getSession: () => mockGetSession(),
+  },
+}));
+
+vi.mock('@/api/services/auth', () => ({
+  AuthService: {
+    signInWithGoogle: vi.fn(),
+    linkSocial: vi.fn(),
   },
 }));
 
@@ -226,5 +235,129 @@ describe('AuthContext', () => {
     expect(mockSignOut).toHaveBeenCalled();
     expect(queryClient.clear).toHaveBeenCalled();
     expect(result.current.user).toBeNull();
+  });
+
+  it('updateUser updates normalized user immediately and triggers getSession', () => {
+    mockUseSession.mockReturnValue({
+      data: {
+        session: { id: 's1' },
+        user: { id: 'u1', name: 'User One', email: 'u1@example.com' },
+      },
+      isPending: false,
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    act(() => {
+      result.current.updateUser({
+        id: 'u1',
+        first_name: 'Jane',
+        last_name: 'Doe',
+        email: 'u1@example.com',
+      });
+    });
+
+    expect(result.current.user).toMatchObject({
+      id: 'u1',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      first_name: 'Jane',
+      last_name: 'Doe',
+    });
+    expect(mockGetSession).toHaveBeenCalled();
+  });
+
+  it('signInWithGoogle calls AuthService.signInWithGoogle and returns its result', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.signInWithGoogle.mockResolvedValueOnce({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    let res;
+    await act(async () => {
+      res = await result.current.signInWithGoogle({
+        callbackURL: '/dashboard',
+      });
+    });
+
+    expect(AuthService.signInWithGoogle).toHaveBeenCalledWith({
+      callbackURL: '/dashboard',
+    });
+    expect(res).toEqual({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+  });
+
+  it('signInWithGoogle shows error toast and throws when it fails', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.signInWithGoogle.mockRejectedValueOnce(
+      new Error('Popup blocked')
+    );
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    await expect(result.current.signInWithGoogle()).rejects.toThrow(
+      'Popup blocked'
+    );
+
+    expect(toast.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        title: 'Erro ao autenticar com Google!',
+      })
+    );
+  });
+
+  it('linkSocial calls AuthService.linkSocial and returns its result', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.linkSocial.mockResolvedValueOnce({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    let res;
+    await act(async () => {
+      res = await result.current.linkSocial({ provider: 'google' });
+    });
+
+    expect(AuthService.linkSocial).toHaveBeenCalledWith({
+      provider: 'google',
+    });
+    expect(res).toEqual({
+      url: 'https://accounts.google.com/o/oauth2/v2/auth',
+    });
+  });
+
+  it('linkSocial shows error toast and throws when it fails', async () => {
+    const { AuthService } = await import('@/api/services/auth');
+    AuthService.linkSocial.mockRejectedValueOnce(
+      new Error('Failed to link account')
+    );
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    await expect(
+      result.current.linkSocial({ provider: 'google' })
+    ).rejects.toThrow('Failed to link account');
+
+    expect(toast.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'error',
+        title: 'Erro ao conectar conta!',
+      })
+    );
   });
 });

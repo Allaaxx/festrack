@@ -74,6 +74,66 @@ export const AuthService = {
     const response = await protectedApi.get('/users/me');
     return normalizeUser(response.data);
   },
+
+  /**
+   * Inicia o fluxo de autenticação social com Google via Better Auth.
+   * @param {{ callbackURL?: string, scopes?: string[] }} [options]
+   * @returns {Promise<object>}
+   */
+  signInWithGoogle: async ({
+    callbackURL = '/',
+    scopes = ['openid', 'profile', 'email'],
+  } = {}) => {
+    const response = await authClient.signIn.social({
+      provider: 'google',
+      callbackURL,
+      scopes,
+    });
+
+    if (response?.error) {
+      throw response.error;
+    }
+
+    return response?.data;
+  },
+
+  /**
+   * Inicia o vínculo de uma conta social externa via Better Auth.
+   * @param {{
+   *   provider?: string,
+   *   callbackURL?: string,
+   *   scopes?: string[],
+   *   additionalParams?: Record<string, string>
+   * }} options
+   * @returns {Promise<object>}
+   */
+  linkSocial: async ({
+    provider = 'google',
+    callbackURL = '/settings',
+    scopes,
+    additionalParams,
+  } = {}) => {
+    const payload = {
+      provider,
+      callbackURL,
+    };
+
+    if (scopes) {
+      payload.scopes = scopes;
+    }
+
+    if (additionalParams) {
+      payload.additionalParams = additionalParams;
+    }
+
+    const response = await authClient.linkSocial(payload);
+
+    if (response?.error) {
+      throw response.error;
+    }
+
+    return response?.data;
+  },
 };
 
 export default AuthService;
