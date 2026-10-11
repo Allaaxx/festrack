@@ -16,10 +16,10 @@ export const getUserBalanceQueryKey = ({ userId, from, to }) => {
 export const useGetUserBalance = ({ from, to }) => {
   const { user } = useAuthContext();
   return useQuery({
-    queryKey: getUserBalanceQueryKey({ userId: user.id, from, to }),
+    queryKey: getUserBalanceQueryKey({ userId: user?.id, from, to }),
     queryFn: () => BalanceService.getBalance({ from, to }),
     staleTime: 1000 * 60 * 5,
-    enabled: Boolean(from) && Boolean(to) && Boolean(user.id),
+    enabled: Boolean(from) && Boolean(to) && Boolean(user?.id),
   });
 };
 
@@ -33,9 +33,9 @@ export const getTransactionsQueryKey = ({ userId, from, to }) => {
 export const useGetTransactions = ({ from, to }) => {
   const { user } = useAuthContext();
   return useQuery({
-    queryKey: getTransactionsQueryKey({ userId: user.id, from, to }),
+    queryKey: getTransactionsQueryKey({ userId: user?.id, from, to }),
     queryFn: () => TransactionService.getAll({ from, to }),
-    enabled: Boolean(from) && Boolean(to) && Boolean(user.id),
+    enabled: Boolean(from) && Boolean(to) && Boolean(user?.id),
   });
 };
 
@@ -50,11 +50,11 @@ export const useCreateTransaction = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserBalanceQueryKey({
-          userId: user.id,
+          userId: user?.id,
         }),
       });
       queryClient.invalidateQueries({
-        queryKey: getTransactionsQueryKey({ userId: user.id }),
+        queryKey: getTransactionsQueryKey({ userId: user?.id }),
       });
     },
   });
@@ -71,11 +71,11 @@ export const useEditTransaction = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserBalanceQueryKey({
-          userId: user.id,
+          userId: user?.id,
         }),
       });
       queryClient.invalidateQueries({
-        queryKey: getTransactionsQueryKey({ userId: user.id }),
+        queryKey: getTransactionsQueryKey({ userId: user?.id }),
       });
     },
   });
@@ -92,11 +92,11 @@ export const useDeleteTransaction = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserBalanceQueryKey({
-          userId: user.id,
+          userId: user?.id,
         }),
       });
       queryClient.invalidateQueries({
-        queryKey: getTransactionsQueryKey({ userId: user.id }),
+        queryKey: getTransactionsQueryKey({ userId: user?.id }),
       });
     },
   });

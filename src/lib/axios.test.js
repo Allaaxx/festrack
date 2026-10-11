@@ -1,11 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import protectedApi, { publicApi } from '@/lib/axios';
+import protectedApi, {
+  notifyUnauthorized,
+  onUnauthorized,
+  publicApi,
+  resetUnauthorizedNotification,
+} from '@/lib/axios';
 
 describe('Axios HTTP Client', () => {
   const originalLocation = window.location;
 
   beforeEach(() => {
+    resetUnauthorizedNotification();
     delete window.location;
     window.location = {
       href: 'http://localhost:3000/dashboard',
@@ -23,7 +29,10 @@ describe('Axios HTTP Client', () => {
     expect(publicApi.defaults.withCredentials).toBe(true);
   });
 
-  it('redirects to /signin on 401 error when not already on auth routes', async () => {
+  it('invokes onUnauthorized listener and does not perform hard browser redirect on 401', async () => {
+    const mockListener = vi.fn();
+    const unsubscribe = onUnauthorized(mockListener);
+
     const error401 = {
       response: { status: 401, data: { message: 'Unauthorized' } },
       config: {},
@@ -33,35 +42,16 @@ describe('Axios HTTP Client', () => {
       protectedApi.interceptors.response.handlers[0].rejected(error401)
     ).rejects.toEqual(error401);
 
-    expect(window.location.href).toBe('/signin');
+    expect(mockListener).toHaveBeenCalledWith(error401);
+    expect(window.location.href).toBe('http://localhost:3000/dashboard');
+
+    unsubscribe();
   });
 
-  it('does not redirect to /signin on 401 if already on /signin or /signup', async () => {
-    window.location.pathname = '/signin';
-    window.location.href = 'http://localhost:3000/signin';
+  it('does not invoke onUnauthorized on non-401 errors', async () => {
+    const mockListener = vi.fn();
+    const unsubscribe = onUnauthorized(mockListener);
 
-    const error401 = {
-      response: { status: 401, data: { message: 'Invalid credentials' } },
-      config: {},
-    };
-
-    await expect(
-      protectedApi.interceptors.response.handlers[0].rejected(error401)
-    ).rejects.toEqual(error401);
-
-    expect(window.location.href).toBe('http://localhost:3000/signin');
-
-    window.location.pathname = '/signup';
-    window.location.href = 'http://localhost:3000/signup';
-
-    await expect(
-      protectedApi.interceptors.response.handlers[0].rejected(error401)
-    ).rejects.toEqual(error401);
-
-    expect(window.location.href).toBe('http://localhost:3000/signup');
-  });
-
-  it('does not redirect on non-401 errors', async () => {
     const error500 = {
       response: { status: 500, data: { message: 'Internal Server Error' } },
       config: {},
@@ -71,6 +61,45 @@ describe('Axios HTTP Client', () => {
       protectedApi.interceptors.response.handlers[0].rejected(error500)
     ).rejects.toEqual(error500);
 
+    expect(mockListener).not.toHaveBeenCalled();
     expect(window.location.href).toBe('http://localhost:3000/dashboard');
+
+    unsubscribe();
+  });
+
+  it('unsubscribing removes the listener from notification', () => {
+    const mockListener = vi.fn();
+    const unsubscribe = onUnauthorized(mockListener);
+
+    unsubscribe();
+
+    notifyUnauthorized({ response: { status: 401 } });
+    expect(mockListener).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates concurrent 401 dispatches within the debounce window', async () => {
+    const mockListener = vi.fn();
+    const unsubscribe = onUnauthorized(mockListener);
+
+    const error401 = {
+      response: { status: 401, data: { message: 'Unauthorized' } },
+      config: {},
+    };
+
+    // Simulate 3 concurrent 401 failures
+    await Promise.all([
+      expect(
+        protectedApi.interceptors.response.handlers[0].rejected(error401)
+      ).rejects.toEqual(error401),
+      expect(
+        protectedApi.interceptors.response.handlers[0].rejected(error401)
+      ).rejects.toEqual(error401),
+      expect(
+        protectedApi.interceptors.response.handlers[0].rejected(error401)
+      ).rejects.toEqual(error401),
+    ]);
+
+    expect(mockListener).toHaveBeenCalledTimes(1);
+    unsubscribe();
   });
 });

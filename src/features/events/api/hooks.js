@@ -8,9 +8,9 @@ export const getEventsQueryKey = ({ userId }) => ['getEvents', userId];
 export const useGetEvents = () => {
   const { user } = useAuthContext();
   return useQuery({
-    queryKey: getEventsQueryKey({ userId: user.id }),
+    queryKey: getEventsQueryKey({ userId: user?.id }),
     queryFn: () => EventService.getAll(),
-    enabled: Boolean(user.id),
+    enabled: Boolean(user?.id),
   });
 };
 
@@ -24,7 +24,7 @@ export const useCreateEvent = () => {
     mutationFn: (input) => EventService.create(input),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getEventsQueryKey({ userId: user.id }),
+        queryKey: getEventsQueryKey({ userId: user?.id }),
       });
     },
   });
@@ -40,7 +40,7 @@ export const useEditEvent = () => {
     mutationFn: (input) => EventService.update(input),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getEventsQueryKey({ userId: user.id }),
+        queryKey: getEventsQueryKey({ userId: user?.id }),
       });
     },
   });
@@ -56,7 +56,7 @@ export const useDeleteEvent = () => {
     mutationFn: (input) => EventService.delete(input),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: getEventsQueryKey({ userId: user.id }),
+        queryKey: getEventsQueryKey({ userId: user?.id }),
       });
     },
   });

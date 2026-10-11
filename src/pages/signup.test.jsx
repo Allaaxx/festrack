@@ -16,6 +16,24 @@ describe('SignUpPage', () => {
     vi.clearAllMocks();
   });
 
+  it('renders loading indicator while auth state is initializing', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: true,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
+  });
+
   it('renders sign-up form when unauthenticated', () => {
     useAuthContext.mockReturnValue({
       user: null,
@@ -46,7 +64,7 @@ describe('SignUpPage', () => {
     ).toBeInTheDocument();
   });
 
-  it('redirects to / when user is already authenticated', () => {
+  it('redirects to / when user is already authenticated without location state', () => {
     useAuthContext.mockReturnValue({
       user: { id: 'u1', name: 'John Doe' },
       isInitializing: false,
@@ -63,6 +81,32 @@ describe('SignUpPage', () => {
     );
 
     expect(screen.getByText('Dashboard Home')).toBeInTheDocument();
+  });
+
+  it('redirects to preserved destination when user is already authenticated with location state', () => {
+    useAuthContext.mockReturnValue({
+      user: { id: 'u1', name: 'John Doe' },
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/signup',
+            state: { from: { pathname: '/event', search: '?view=week' } },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/event" element={<div>Event Calendar Page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Event Calendar Page')).toBeInTheDocument();
   });
 
   it('submits registration form with terms accepted and calls signup', async () => {
@@ -220,6 +264,45 @@ describe('SignUpPage', () => {
     await waitFor(() => {
       expect(mockSignInWithGoogle).toHaveBeenCalledWith({
         callbackURL: '/',
+      });
+    });
+  });
+
+  it('initiates Google sign-in passing preserved location state to callbackURL', async () => {
+    const mockSignInWithGoogle = vi
+      .fn()
+      .mockResolvedValueOnce({ url: 'https://accounts.google.com' });
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+      signInWithGoogle: mockSignInWithGoogle,
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/signup',
+            state: { from: { pathname: '/event', search: '?view=calendar' } },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const googleBtn = screen.getByRole('button', {
+      name: /continuar com google/i,
+    });
+    fireEvent.click(googleBtn);
+
+    await waitFor(() => {
+      expect(mockSignInWithGoogle).toHaveBeenCalledWith({
+        callbackURL: '/event?view=calendar',
       });
     });
   });
