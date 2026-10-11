@@ -25,6 +25,16 @@ export const resolveCallbackUrl = (callbackURL = '/') => {
   return urlToResolve;
 };
 
+const isSafePath = (path) => {
+  return (
+    typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !path.startsWith('/signin') &&
+    !path.startsWith('/signup')
+  );
+};
+
 /**
  * Safely extracts and formats the intended return path from a navigation location object or string.
  * Prevents open redirects or redirect loops onto authentication routes.
@@ -36,24 +46,11 @@ export const getRedirectDestination = (from) => {
   if (!from) return '/';
 
   if (typeof from === 'string') {
-    if (
-      from.startsWith('/signin') ||
-      from.startsWith('/signup') ||
-      !from.startsWith('/')
-    ) {
-      return '/';
-    }
-    return from;
+    return isSafePath(from) ? from : '/';
   }
 
   const pathname = from.pathname;
-  if (
-    !pathname ||
-    typeof pathname !== 'string' ||
-    pathname.startsWith('/signin') ||
-    pathname.startsWith('/signup') ||
-    !pathname.startsWith('/')
-  ) {
+  if (!isSafePath(pathname)) {
     return '/';
   }
 

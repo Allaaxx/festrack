@@ -84,8 +84,10 @@ describe('getRedirectDestination', () => {
     expect(getRedirectDestination('/signup')).toBe('/');
   });
 
-  it('falls back to "/" when destination is not a relative path', () => {
+  it('falls back to "/" when destination is not a relative path or is protocol-relative', () => {
     expect(getRedirectDestination('https://external-site.com')).toBe('/');
+    expect(getRedirectDestination('//evil.com')).toBe('/');
+    expect(getRedirectDestination({ pathname: '//evil.com' })).toBe('/');
     expect(getRedirectDestination('javascript:alert(1)')).toBe('/');
   });
 });

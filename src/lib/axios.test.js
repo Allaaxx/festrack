@@ -4,12 +4,14 @@ import protectedApi, {
   notifyUnauthorized,
   onUnauthorized,
   publicApi,
+  resetUnauthorizedNotification,
 } from '@/lib/axios';
 
 describe('Axios HTTP Client', () => {
   const originalLocation = window.location;
 
   beforeEach(() => {
+    resetUnauthorizedNotification();
     delete window.location;
     window.location = {
       href: 'http://localhost:3000/dashboard',
@@ -73,5 +75,31 @@ describe('Axios HTTP Client', () => {
 
     notifyUnauthorized({ response: { status: 401 } });
     expect(mockListener).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates concurrent 401 dispatches within the debounce window', async () => {
+    const mockListener = vi.fn();
+    const unsubscribe = onUnauthorized(mockListener);
+
+    const error401 = {
+      response: { status: 401, data: { message: 'Unauthorized' } },
+      config: {},
+    };
+
+    // Simulate 3 concurrent 401 failures
+    await Promise.all([
+      expect(
+        protectedApi.interceptors.response.handlers[0].rejected(error401)
+      ).rejects.toEqual(error401),
+      expect(
+        protectedApi.interceptors.response.handlers[0].rejected(error401)
+      ).rejects.toEqual(error401),
+      expect(
+        protectedApi.interceptors.response.handlers[0].rejected(error401)
+      ).rejects.toEqual(error401),
+    ]);
+
+    expect(mockListener).toHaveBeenCalledTimes(1);
+    unsubscribe();
   });
 });

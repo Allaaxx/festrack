@@ -26,11 +26,24 @@ export const onUnauthorized = (listener) => {
   };
 };
 
+let lastNotificationTime = 0;
+const NOTIFICATION_DEBOUNCE_MS = 500;
+
+export const resetUnauthorizedNotification = () => {
+  lastNotificationTime = 0;
+};
+
 /**
- * Dispatches notification to all registered unauthorized listeners.
+ * Dispatches notification to all registered unauthorized listeners with concurrent deduplication.
  * @param {any} error
  */
 export const notifyUnauthorized = (error) => {
+  const now = Date.now();
+  if (now - lastNotificationTime < NOTIFICATION_DEBOUNCE_MS) {
+    return;
+  }
+  lastNotificationTime = now;
+
   unauthorizedListeners.forEach((listener) => {
     try {
       listener(error);
