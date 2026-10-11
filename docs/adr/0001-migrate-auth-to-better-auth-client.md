@@ -23,7 +23,7 @@ We have migrated the authentication architecture of Festrack to the official Bet
    Installed `better-auth` and initialized an authentication client singleton (`src/lib/auth-client.js`) using `createAuthClient` from `better-auth/react`, pointing to the API URL (`/api/auth` path prefix).
 
 2. **HTTP Transport & Cookie-Based Credentials:**
-   Configured Axios instances (`protectedApi` and `publicApi`) with `withCredentials: true`. Removed legacy `localStorage` token reading and refresh token retry logic. Added a 401 response interceptor that redirects unauthenticated users to `/signin` while avoiding redirect loops on auth pages.
+   Configured Axios instances (`protectedApi` and `publicApi`) with `withCredentials: true`. Removed legacy `localStorage` token reading and refresh token retry logic. (Note: 401 response redirect superseded by ADR 0002 with reactive session invalidation).
 
 3. **Reactive Session Lifecycle:**
    Connected `AuthContext` to Better Auth's reactive session state via `authClient.useSession()`. Synchronized user state automatically across tabs and components.
