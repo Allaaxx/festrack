@@ -1,8 +1,9 @@
 import { Loader2Icon } from 'lucide-react';
 import { useState } from 'react';
 import { Controller } from 'react-hook-form';
-import { Link, Navigate } from 'react-router';
+import { Link, Navigate, useLocation } from 'react-router';
 
+import AuthLoading from '@/components/shared/auth-loading';
 import GoogleIcon from '@/components/shared/google-icon';
 import PasswordInput from '@/components/shared/password-input';
 import { Button } from '@/components/ui/button';
@@ -25,11 +26,14 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/contexts/auth';
 import { useSignUpForm } from '@/forms/hooks/auth';
+import { getRedirectDestination } from '@/helpers/url';
 
 const SignUpPage = () => {
   const { user, signup, signInWithGoogle, isInitializing } = useAuthContext();
   const { form } = useSignUpForm();
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const location = useLocation();
+  const redirectTo = getRedirectDestination(location.state?.from);
 
   const handleSubmit = async (data) => {
     try {
@@ -54,7 +58,7 @@ const SignUpPage = () => {
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-      await signInWithGoogle({ callbackURL: '/' });
+      await signInWithGoogle({ callbackURL: redirectTo });
     } catch (error) {
       form.setError('root', {
         message:
@@ -65,10 +69,12 @@ const SignUpPage = () => {
     }
   };
 
-  if (isInitializing) return null;
+  if (isInitializing) {
+    return <AuthLoading />;
+  }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center gap-3">
@@ -269,7 +275,9 @@ const SignUpPage = () => {
       <div className="flex items-center justify-center">
         <p className="text-center opacity-50">Já possui uma conta? </p>
         <Button variant="link">
-          <Link to="/signin">Faça login</Link>
+          <Link to="/signin" state={location.state}>
+            Faça login
+          </Link>
         </Button>
       </div>
     </div>

@@ -1,7 +1,8 @@
-import { Navigate, Outlet } from 'react-router';
+import { Navigate, Outlet, useLocation } from 'react-router';
 
 import AppSidebar from '@/components/layout/app-sidebar';
 import Header from '@/components/layout/header';
+import AuthLoading from '@/components/shared/auth-loading';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
 
@@ -9,11 +10,14 @@ import { ThemeProvider } from './theme-provider';
 
 const DashboardLayout = () => {
   const { user, isInitializing } = useAuthContext();
+  const location = useLocation();
 
-  if (isInitializing) return null;
+  if (isInitializing) {
+    return <AuthLoading />;
+  }
 
   if (!user) {
-    return <Navigate to="/signin" replace />;
+    return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   return (

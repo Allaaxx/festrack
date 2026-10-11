@@ -24,3 +24,37 @@ export const resolveCallbackUrl = (callbackURL = '/') => {
 
   return urlToResolve;
 };
+
+const isSafePath = (path) => {
+  return (
+    typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !path.startsWith('/signin') &&
+    !path.startsWith('/signup')
+  );
+};
+
+/**
+ * Safely extracts and formats the intended return path from a navigation location object or string.
+ * Prevents open redirects or redirect loops onto authentication routes.
+ *
+ * @param {object|string} [from] - React Router location object or path string.
+ * @returns {string} Sanitized relative destination path (defaults to '/').
+ */
+export const getRedirectDestination = (from) => {
+  if (!from) return '/';
+
+  if (typeof from === 'string') {
+    return isSafePath(from) ? from : '/';
+  }
+
+  const pathname = from.pathname;
+  if (!isSafePath(pathname)) {
+    return '/';
+  }
+
+  const search = from.search || '';
+  const hash = from.hash || '';
+  return `${pathname}${search}${hash}`;
+};

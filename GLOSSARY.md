@@ -68,3 +68,22 @@ The automated service bridging Festrack events with an external calendar service
 - **Direction:** Export-oriented (Festrack ➡️ Google Calendar), pushing scheduled budget and occasion events to the user's external calendar.
 - **Trigger:** Automated synchronization on event lifecycle mutations (creation, modification, and removal).
 
+---
+
+### Unauthenticated Visitor
+
+An individual accessing application routes without an established active Session.
+
+- **Routing:** Unauthenticated visitors accessing protected application routes are redirected to the sign-in screen with their requested destination recorded in navigation state.
+- **Data Protection:** Feature queries remain disabled when evaluating unauthenticated contexts, preventing unauthorized network dispatches and protecting private endpoints.
+
+---
+
+### Expired Session
+
+A previously valid Session that has been terminated, revoked, or timed out on the authentication server.
+
+- **Handling:** When protected API endpoints return HTTP 401 Unauthorized due to an expired session, the client invalidates local user state, clears sensitive financial records from the query cache, and smoothly transitions the user to re-authenticate without hard browser reloads.
+- **Recovery:** Preserves the user's active page as the post-authentication redirect destination, allowing uninterrupted continuation of their workflow upon re-signing in.
+
+

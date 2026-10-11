@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveCallbackUrl } from '@/helpers/url';
+import { getRedirectDestination, resolveCallbackUrl } from '@/helpers/url';
 
 describe('resolveCallbackUrl', () => {
   const originalLocation = window.location;
@@ -50,5 +50,44 @@ describe('resolveCallbackUrl', () => {
     vi.stubEnv('VITE_APP_URL', 'http://localhost:5174');
 
     expect(resolveCallbackUrl('/home')).toBe('http://localhost:5174/home');
+  });
+});
+
+describe('getRedirectDestination', () => {
+  it('returns "/" when from is omitted or null', () => {
+    expect(getRedirectDestination()).toBe('/');
+    expect(getRedirectDestination(null)).toBe('/');
+  });
+
+  it('returns formatted destination when from is a location object', () => {
+    expect(
+      getRedirectDestination({
+        pathname: '/settings',
+        search: '?tab=conta',
+        hash: '#password',
+      })
+    ).toBe('/settings?tab=conta#password');
+  });
+
+  it('returns pathname when search and hash are empty', () => {
+    expect(getRedirectDestination({ pathname: '/event' })).toBe('/event');
+  });
+
+  it('returns sanitized path when from is a string', () => {
+    expect(getRedirectDestination('/event/calendar')).toBe('/event/calendar');
+  });
+
+  it('falls back to "/" when destination points to /signin or /signup', () => {
+    expect(getRedirectDestination({ pathname: '/signin' })).toBe('/');
+    expect(getRedirectDestination({ pathname: '/signup' })).toBe('/');
+    expect(getRedirectDestination('/signin?error=1')).toBe('/');
+    expect(getRedirectDestination('/signup')).toBe('/');
+  });
+
+  it('falls back to "/" when destination is not a relative path or is protocol-relative', () => {
+    expect(getRedirectDestination('https://external-site.com')).toBe('/');
+    expect(getRedirectDestination('//evil.com')).toBe('/');
+    expect(getRedirectDestination({ pathname: '//evil.com' })).toBe('/');
+    expect(getRedirectDestination('javascript:alert(1)')).toBe('/');
   });
 });
