@@ -23,13 +23,13 @@ describe('DashboardLayout Route Protection', () => {
     vi.clearAllMocks();
   });
 
-  it('renders null while auth state is initializing', () => {
+  it('renders loading indicator while auth state is initializing', () => {
     useAuthContext.mockReturnValue({
       user: null,
       isInitializing: true,
     });
 
-    const { container } = render(
+    render(
       <MemoryRouter initialEntries={['/']}>
         <Routes>
           <Route element={<DashboardLayout />}>
@@ -39,7 +39,7 @@ describe('DashboardLayout Route Protection', () => {
       </MemoryRouter>
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
   });
 
   it('redirects unauthenticated user to /signin', () => {

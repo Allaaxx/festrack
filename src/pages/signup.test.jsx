@@ -16,6 +16,24 @@ describe('SignUpPage', () => {
     vi.clearAllMocks();
   });
 
+  it('renders loading indicator while auth state is initializing', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: true,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
+  });
+
   it('renders sign-up form when unauthenticated', () => {
     useAuthContext.mockReturnValue({
       user: null,

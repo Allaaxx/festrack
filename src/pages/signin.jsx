@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { Link, Navigate } from 'react-router';
 
+import AuthLoading from '@/components/shared/auth-loading';
 import GoogleIcon from '@/components/shared/google-icon';
 import PasswordInput from '@/components/shared/password-input';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,9 @@ const SignInPage = () => {
     }
   };
 
-  if (isInitializing) return null;
+  if (isInitializing) {
+    return <AuthLoading />;
+  }
 
   if (user) {
     return <Navigate to="/" replace />;

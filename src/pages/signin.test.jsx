@@ -16,6 +16,24 @@ describe('SignInPage', () => {
     vi.clearAllMocks();
   });
 
+  it('renders loading indicator while auth state is initializing', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: true,
+      signin: mockSignin,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signin']}>
+        <Routes>
+          <Route path="/signin" element={<SignInPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
+  });
+
   it('renders sign-in form when unauthenticated', () => {
     useAuthContext.mockReturnValue({
       user: null,
