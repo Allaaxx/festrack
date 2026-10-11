@@ -1,13 +1,18 @@
-import { formatEventDateToApi, parseEventTime } from '@/features/events/helpers/event';
+import {
+  formatEventDateToApi,
+  parseEventTime,
+} from '@/features/events/helpers/event';
 import protectedApi from '@/lib/axios';
 
 const mapEventFromApi = (event) => {
   const startTime = parseEventTime(event.start_date);
   const endTime = parseEventTime(event.end_date);
-  
+
   // Se a hora for exata meia-noite e fim do dia (23:59), consideramos o dia todo.
   const allDay = startTime === '00:00' && endTime === '23:59';
-  
+  const googleEventId = event.google_event_id ?? event.googleEventId ?? null;
+  const syncError = Boolean(event.sync_error ?? event.syncError);
+
   return {
     id: event.id,
     name: event.name,
@@ -15,6 +20,9 @@ const mapEventFromApi = (event) => {
     startDate: event.start_date,
     endDate: event.end_date,
     allDay,
+    google_event_id: googleEventId,
+    googleEventId,
+    syncError,
   };
 };
 
@@ -44,8 +52,18 @@ const EventService = {
     const response = await protectedApi.post('/events/me', {
       name: input.name,
       description: input.description || null,
-      start_date: formatEventDateToApi(input.startDate, 'start', input.allDay, input.startTime),
-      end_date: formatEventDateToApi(input.endDate, 'end', input.allDay, input.endTime),
+      start_date: formatEventDateToApi(
+        input.startDate,
+        'start',
+        input.allDay,
+        input.startTime
+      ),
+      end_date: formatEventDateToApi(
+        input.endDate,
+        'end',
+        input.allDay,
+        input.endTime
+      ),
     });
 
     return mapEventFromApi(response.data);
@@ -68,8 +86,18 @@ const EventService = {
     const response = await protectedApi.patch(`/events/me/${input.id}`, {
       name: input.name,
       description: input.description || null,
-      start_date: formatEventDateToApi(input.startDate, 'start', input.allDay, input.startTime),
-      end_date: formatEventDateToApi(input.endDate, 'end', input.allDay, input.endTime),
+      start_date: formatEventDateToApi(
+        input.startDate,
+        'start',
+        input.allDay,
+        input.startTime
+      ),
+      end_date: formatEventDateToApi(
+        input.endDate,
+        'end',
+        input.allDay,
+        input.endTime
+      ),
     });
 
     return mapEventFromApi(response.data);

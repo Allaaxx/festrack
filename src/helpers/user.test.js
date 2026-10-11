@@ -29,6 +29,8 @@ describe('normalizeUser', () => {
       lastName: 'Doe',
       email: 'john@example.com',
       image: 'https://example.com/avatar.png',
+      google_calendar_sync_enabled: false,
+      googleCalendarSyncEnabled: false,
     });
   });
 
@@ -79,5 +81,38 @@ describe('normalizeUser', () => {
     expect(normalized.name).toBe('Ada Lovelace');
     expect(normalized.firstName).toBe('Ada');
     expect(normalized.lastName).toBe('Lovelace');
+  });
+
+  it('normalizes google_calendar_sync_enabled from snake_case and defaults to false', () => {
+    const userWithoutSync = {
+      id: '1',
+      name: 'Test User',
+      email: 'test@example.com',
+    };
+    const normalizedDefault = normalizeUser(userWithoutSync);
+    expect(normalizedDefault.google_calendar_sync_enabled).toBe(false);
+    expect(normalizedDefault.googleCalendarSyncEnabled).toBe(false);
+
+    const userWithSync = {
+      id: '2',
+      name: 'Test User',
+      email: 'test@example.com',
+      google_calendar_sync_enabled: true,
+    };
+    const normalizedSync = normalizeUser(userWithSync);
+    expect(normalizedSync.google_calendar_sync_enabled).toBe(true);
+    expect(normalizedSync.googleCalendarSyncEnabled).toBe(true);
+  });
+
+  it('normalizes googleCalendarSyncEnabled from camelCase', () => {
+    const userWithCamel = {
+      id: '3',
+      name: 'Test User',
+      email: 'test@example.com',
+      googleCalendarSyncEnabled: true,
+    };
+    const normalized = normalizeUser(userWithCamel);
+    expect(normalized.google_calendar_sync_enabled).toBe(true);
+    expect(normalized.googleCalendarSyncEnabled).toBe(true);
   });
 });

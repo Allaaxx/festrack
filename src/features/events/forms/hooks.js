@@ -30,11 +30,11 @@ export const useCreateEventForm = ({ onSuccess, onError }) => {
 
   const onSubmit = async (data) => {
     try {
-      await createEvent(data);
-      onSuccess();
+      const created = await createEvent(data);
+      onSuccess?.(created);
     } catch (error) {
       console.error(error);
-      onError();
+      onError?.(error);
     }
   };
 
@@ -74,11 +74,11 @@ export const useEditEventForm = ({ event, onSuccess, onError }) => {
 
   const onSubmit = async (data) => {
     try {
-      await updateEvent(data);
-      onSuccess();
+      const updated = await updateEvent(data);
+      onSuccess?.(updated);
     } catch (error) {
       console.error(error);
-      onError();
+      onError?.(error);
     }
   };
 

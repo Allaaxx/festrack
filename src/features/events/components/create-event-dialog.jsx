@@ -16,6 +16,7 @@ import {
 import { toast } from '@/components/ui/toast';
 import EventForm from '@/features/events/components/event-form';
 import { useCreateEventForm } from '@/features/events/forms/hooks';
+import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calendar-sync';
 
 const FORM_ID = 'createEvent';
 
@@ -23,11 +24,24 @@ const CreateEventDialog = ({ trigger, open, onOpenChange, initialDate }) => {
   const isControlled = open !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const dialogOpen = isControlled ? open : internalOpen;
+  const { isSyncEnabled } = useGoogleCalendarSync();
 
   const { form, onSubmit } = useCreateEventForm({
-    onSuccess: () => {
+    onSuccess: (createdEvent) => {
       handleOpenChange(false);
-      toast.add({ type: 'success', title: 'Evento criado com sucesso!' });
+      if (
+        isSyncEnabled &&
+        (!createdEvent?.googleEventId || createdEvent?.syncError)
+      ) {
+        toast.add({
+          type: 'warning',
+          title: 'Evento criado com aviso',
+          description:
+            'Evento salvo localmente, mas não foi possível sincronizar com o Google Agenda.',
+        });
+      } else {
+        toast.add({ type: 'success', title: 'Evento criado com sucesso!' });
+      }
     },
     onError: () => {
       toast.add({

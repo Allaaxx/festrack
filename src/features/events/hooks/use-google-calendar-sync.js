@@ -1,11 +1,9 @@
 import { useState } from 'react';
 
-import { useGetAccounts } from '@/api/hooks/user';
+import { useGetAccounts, useUpdateUser } from '@/api/hooks/user';
 import { toast } from '@/components/ui/toast';
-import { getStoredFiltersKey } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
 
-export const GOOGLE_CALENDAR_SYNC_KEY = 'google_calendar_sync';
 export const GOOGLE_CALENDAR_SCOPE =
   'https://www.googleapis.com/auth/calendar.events';
 
@@ -13,35 +11,20 @@ export const useGoogleCalendarSync = () => {
   const { user, linkSocial } = useAuthContext();
   const { data: accounts = [], isLoading: isLoadingAccounts } =
     useGetAccounts();
+  const updateUserMutation = useUpdateUser();
 
   const isGoogleConnected = accounts.some((acc) => acc.providerId === 'google');
-  const storageKey = getStoredFiltersKey(user?.id, GOOGLE_CALENDAR_SYNC_KEY);
-
-  const [isSyncEnabled, setIsSyncEnabled] = useState(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      return stored !== null ? JSON.parse(stored) : false;
-    } catch {
-      return false;
-    }
-  });
+  const isSyncEnabled = Boolean(
+    isGoogleConnected &&
+    (user?.google_calendar_sync_enabled ?? user?.googleCalendarSyncEnabled)
+  );
 
   const [isConnecting, setIsConnecting] = useState(false);
-
-  const updateSyncEnabled = (enabled) => {
-    setIsSyncEnabled(enabled);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(enabled));
-    } catch {
-      // Ignora erro de gravação em storage
-    }
-  };
 
   const enableSync = async () => {
     if (!isGoogleConnected) {
       try {
         setIsConnecting(true);
-        updateSyncEnabled(true);
         await linkSocial({
           provider: 'google',
           callbackURL: window.location.href,
@@ -58,48 +41,81 @@ export const useGoogleCalendarSync = () => {
             'Sua conta Google foi conectada e a sincronização ativada.',
         });
       } catch (error) {
-        setIsConnecting(false);
-        updateSyncEnabled(false);
         toast.add({
           type: 'error',
           title: 'Erro na sincronização',
           description: error?.message || 'Falha ao autorizar o Google Agenda.',
         });
         throw error;
+      } finally {
+        setIsConnecting(false);
       }
     } else {
-      updateSyncEnabled(true);
-      toast.add({
-        type: 'success',
-        title: 'Sincronização ativada',
-        description:
-          'Os eventos do Festrack serão exportados para seu Google Agenda.',
-      });
+      try {
+        await updateUserMutation.mutateAsync({
+          google_calendar_sync_enabled: true,
+        });
+        toast.add({
+          type: 'success',
+          title: 'Sincronização ativada',
+          description:
+            'Os eventos do Festrack serão exportados para seu Google Agenda.',
+        });
+      } catch (error) {
+        toast.add({
+          type: 'error',
+          title: 'Erro na sincronização',
+          description:
+            error?.response?.data?.message ||
+            error?.message ||
+            'Falha ao ativar a sincronização com o Google Agenda.',
+        });
+        throw error;
+      }
     }
   };
 
-  const disableSync = () => {
-    updateSyncEnabled(false);
-    toast.add({
-      type: 'info',
-      title: 'Sincronização desativada',
-      description: 'A exportação de eventos para o Google Agenda foi pausada.',
-    });
+  const disableSync = async () => {
+    try {
+      await updateUserMutation.mutateAsync({
+        google_calendar_sync_enabled: false,
+      });
+      toast.add({
+        type: 'info',
+        title: 'Sincronização desativada',
+        description:
+          'A exportação de eventos para o Google Agenda foi pausada.',
+      });
+    } catch (error) {
+      toast.add({
+        type: 'error',
+        title: 'Erro na sincronização',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Falha ao desativar a sincronização com o Google Agenda.',
+      });
+      throw error;
+    }
   };
 
-  const toggleSync = () => {
-    if (isSyncEnabled && isGoogleConnected) {
-      disableSync();
-    } else {
-      enableSync();
+  const toggleSync = async () => {
+    try {
+      if (isSyncEnabled) {
+        await disableSync();
+      } else {
+        await enableSync();
+      }
+    } catch {
+      // Erro tratado e exibido via toast
     }
   };
 
   return {
     isGoogleConnected,
-    isSyncEnabled: isGoogleConnected && isSyncEnabled,
+    isSyncEnabled,
     isLoadingAccounts,
-    isConnecting,
+    isConnecting: isConnecting || updateUserMutation.isPending,
     enableSync,
     disableSync,
     toggleSync,

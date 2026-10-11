@@ -35,18 +35,43 @@ export const useGetAccounts = () => {
   });
 };
 
+export const useUpdateUser = () => {
+  const { updateUser } = useAuthContext();
+  return useMutation({
+    mutationKey: updateProfileMutationKey,
+    mutationFn: async (variables) => {
+      const updatedUser = await UserService.updateProfile(variables);
+      if (typeof updateUser === 'function') {
+        updateUser(updatedUser);
+      }
+      return updatedUser;
+    },
+  });
+};
+
 export const useUnlinkAccount = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuthContext();
+  const { user, updateUser } = useAuthContext();
   return useMutation({
     mutationKey: unlinkAccountMutationKey,
     mutationFn: async (variables) => {
       return await UserService.unlinkAccount(variables);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: getAccountsQueryKey({ userId: user?.id }),
       });
+      if (
+        variables?.providerId === 'google' &&
+        typeof updateUser === 'function' &&
+        user
+      ) {
+        updateUser({
+          ...user,
+          google_calendar_sync_enabled: false,
+          googleCalendarSyncEnabled: false,
+        });
+      }
     },
   });
 };

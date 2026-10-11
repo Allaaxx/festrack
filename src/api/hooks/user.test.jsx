@@ -7,6 +7,7 @@ import {
   useGetAccounts,
   useUnlinkAccount,
   useUpdateProfile,
+  useUpdateUser,
   useUploadAvatar,
 } from '@/api/hooks/user';
 import { UserService } from '@/api/services/user';
@@ -175,6 +176,11 @@ describe('useUnlinkAccount', () => {
   });
 
   it('calls UserService.unlinkAccount and invalidates getAccounts query on success', async () => {
+    const mockUpdateUser = vi.fn();
+    useAuthContext.mockReturnValue({
+      user: { id: 'u1', name: 'Ana', google_calendar_sync_enabled: true },
+      updateUser: mockUpdateUser,
+    });
     UserService.unlinkAccount.mockResolvedValue({ success: true });
 
     const wrapper = createWrapper();
@@ -194,5 +200,60 @@ describe('useUnlinkAccount', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: getAccountsQueryKey({ userId: 'u1' }),
     });
+    expect(mockUpdateUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        google_calendar_sync_enabled: false,
+      })
+    );
+  });
+});
+
+describe('useUpdateUser', () => {
+  let queryClient;
+
+  const createWrapper = () => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        mutations: { retry: false },
+      },
+    });
+
+    return ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('updates profile via UserService and updates AuthContext user', async () => {
+    const mockUpdateUser = vi.fn();
+    useAuthContext.mockReturnValue({
+      user: { id: 'u1', name: 'Ana' },
+      updateUser: mockUpdateUser,
+    });
+
+    const mockUpdated = {
+      id: 'u1',
+      name: 'Ana',
+      google_calendar_sync_enabled: true,
+      googleCalendarSyncEnabled: true,
+    };
+    UserService.updateProfile.mockResolvedValue(mockUpdated);
+
+    const { result } = renderHook(() => useUpdateUser(), {
+      wrapper: createWrapper(),
+    });
+
+    result.current.mutate({ google_calendar_sync_enabled: true });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(UserService.updateProfile).toHaveBeenCalledWith({
+      google_calendar_sync_enabled: true,
+    });
+    expect(mockUpdateUser).toHaveBeenCalledWith(mockUpdated);
+    expect(result.current.data).toEqual(mockUpdated);
   });
 });

@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useGetAccounts, useUnlinkAccount } from '@/api/hooks/user';
+import {
+  useGetAccounts,
+  useUnlinkAccount,
+  useUpdateUser,
+} from '@/api/hooks/user';
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import ConnectedAccountsCard from '@/features/settings/components/connected-accounts-card';
@@ -13,6 +17,7 @@ vi.mock('@/contexts/auth', () => ({
 vi.mock('@/api/hooks/user', () => ({
   useGetAccounts: vi.fn(),
   useUnlinkAccount: vi.fn(),
+  useUpdateUser: vi.fn(),
 }));
 
 vi.mock('@/components/ui/toast', () => ({
@@ -24,16 +29,21 @@ vi.mock('@/components/ui/toast', () => ({
 describe('ConnectedAccountsCard Component', () => {
   const mockLinkSocial = vi.fn();
   const mockUnlinkMutateAsync = vi.fn();
+  const mockUpdateUserMutateAsync = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     useAuthContext.mockReturnValue({
-      user: { id: 'u1', name: 'Allan' },
+      user: { id: 'u1', name: 'Allan', google_calendar_sync_enabled: false },
       linkSocial: mockLinkSocial,
     });
     useUnlinkAccount.mockReturnValue({
       mutateAsync: mockUnlinkMutateAsync,
+      isPending: false,
+    });
+    useUpdateUser.mockReturnValue({
+      mutateAsync: mockUpdateUserMutateAsync,
       isPending: false,
     });
   });
@@ -169,6 +179,43 @@ describe('ConnectedAccountsCard Component', () => {
         expect.objectContaining({
           type: 'error',
           title: expect.stringMatching(/erro ao desconectar/i),
+        })
+      );
+    });
+  });
+
+  it('reflects active synchronization state from user profile and persists change when toggled', async () => {
+    mockUpdateUserMutateAsync.mockResolvedValueOnce({
+      id: 'u1',
+      name: 'Allan',
+      google_calendar_sync_enabled: true,
+    });
+    useAuthContext.mockReturnValue({
+      user: { id: 'u1', name: 'Allan', google_calendar_sync_enabled: false },
+      linkSocial: mockLinkSocial,
+    });
+    useGetAccounts.mockReturnValue({
+      data: [{ id: 'acc-google', providerId: 'google' }],
+      isLoading: false,
+    });
+
+    render(<ConnectedAccountsCard />);
+
+    const syncSwitch = screen.getByRole('switch', {
+      name: /sincronizar com google agenda/i,
+    });
+    expect(syncSwitch).not.toBeChecked();
+
+    fireEvent.click(syncSwitch);
+
+    await waitFor(() => {
+      expect(mockUpdateUserMutateAsync).toHaveBeenCalledWith({
+        google_calendar_sync_enabled: true,
+      });
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'success',
+          title: expect.stringMatching(/sincronização ativada/i),
         })
       );
     });
