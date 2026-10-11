@@ -360,4 +360,29 @@ describe('AuthContext', () => {
       })
     );
   });
+
+  it('resets user and clears query cache on unauthorized event', async () => {
+    const { notifyUnauthorized } = await import('@/lib/axios');
+
+    mockUseSession.mockReturnValue({
+      data: {
+        session: { id: 's1' },
+        user: { id: 'u1', name: 'User One', email: 'u1@example.com' },
+      },
+      isPending: false,
+    });
+
+    const { result } = renderHook(() => useAuthContext(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.user).toBeTruthy();
+
+    act(() => {
+      notifyUnauthorized({ response: { status: 401 } });
+    });
+
+    expect(result.current.user).toBeNull();
+    expect(queryClient.clear).toHaveBeenCalled();
+  });
 });

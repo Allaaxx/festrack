@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 import { useSignIn, useSignUp } from '@/api/hooks/auth';
 import { AuthService } from '@/api/services/auth';
 import { toast } from '@/components/ui/toast';
 import { normalizeUser } from '@/helpers/user';
 import { authClient } from '@/lib/auth-client';
+import { onUnauthorized } from '@/lib/axios';
 
 export const AuthContext = createContext({
   user: null,
@@ -24,6 +25,14 @@ export const AuthContextProvider = ({ children }) => {
   const { data: sessionData, isPending } = authClient.useSession();
   const [overrideUser, setOverrideUser] = useState(undefined);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const unsubscribe = onUnauthorized(() => {
+      setOverrideUser(null);
+      queryClient.clear();
+    });
+    return unsubscribe;
+  }, [queryClient]);
 
   const signUpMutation = useSignUp();
   const signInMutation = useSignIn();
