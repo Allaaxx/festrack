@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import DashboardLayout from '@/components/layout/dashboard-layout';
@@ -42,25 +42,36 @@ describe('DashboardLayout Route Protection', () => {
     expect(screen.getByTestId('auth-loading')).toBeInTheDocument();
   });
 
-  it('redirects unauthenticated user to /signin', () => {
+  it('redirects unauthenticated user to /signin preserving location in state', () => {
     useAuthContext.mockReturnValue({
       user: null,
       isInitializing: false,
     });
 
+    let capturedLocation;
+    const SignInCapture = () => {
+      const location = useLocation();
+      capturedLocation = location;
+      return <div>Sign In Page</div>;
+    };
+
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/settings?tab=conta']}>
         <Routes>
           <Route element={<DashboardLayout />}>
-            <Route path="/" element={<div>Protected Content</div>} />
+            <Route path="/settings" element={<div>Settings Page</div>} />
           </Route>
-          <Route path="/signin" element={<div>Sign In Page</div>} />
+          <Route path="/signin" element={<SignInCapture />} />
         </Routes>
       </MemoryRouter>
     );
 
     expect(screen.getByText('Sign In Page')).toBeInTheDocument();
-    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+    expect(screen.queryByText('Settings Page')).not.toBeInTheDocument();
+    expect(capturedLocation.state?.from).toMatchObject({
+      pathname: '/settings',
+      search: '?tab=conta',
+    });
   });
 
   it('renders layout and protected outlet when user is authenticated', () => {

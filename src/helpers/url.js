@@ -24,3 +24,40 @@ export const resolveCallbackUrl = (callbackURL = '/') => {
 
   return urlToResolve;
 };
+
+/**
+ * Safely extracts and formats the intended return path from a navigation location object or string.
+ * Prevents open redirects or redirect loops onto authentication routes.
+ *
+ * @param {object|string} [from] - React Router location object or path string.
+ * @returns {string} Sanitized relative destination path (defaults to '/').
+ */
+export const getRedirectDestination = (from) => {
+  if (!from) return '/';
+
+  if (typeof from === 'string') {
+    if (
+      from.startsWith('/signin') ||
+      from.startsWith('/signup') ||
+      !from.startsWith('/')
+    ) {
+      return '/';
+    }
+    return from;
+  }
+
+  const pathname = from.pathname;
+  if (
+    !pathname ||
+    typeof pathname !== 'string' ||
+    pathname.startsWith('/signin') ||
+    pathname.startsWith('/signup') ||
+    !pathname.startsWith('/')
+  ) {
+    return '/';
+  }
+
+  const search = from.search || '';
+  const hash = from.hash || '';
+  return `${pathname}${search}${hash}`;
+};
