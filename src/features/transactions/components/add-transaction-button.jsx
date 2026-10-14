@@ -32,11 +32,19 @@ import { toast } from '@/components/ui/toast';
 import { EventCombobox } from '@/features/events';
 import { useCreateTransactionForm } from '@/features/transactions/forms/hooks';
 
-const AddTransactionButton = () => {
+const AddTransactionButton = ({ initialEventId, trigger }) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const { form, onSubmit } = useCreateTransactionForm({
+    initialEventId,
     onSuccess: () => {
       setDialogIsOpen(false);
+      form.reset({
+        name: '',
+        amount: 0,
+        date: new Date(),
+        type: 'EARNING',
+        eventId: initialEventId ?? null,
+      });
       toast.add({
         type: 'success',
         description: 'Transação criada com sucesso.',
@@ -56,12 +64,14 @@ const AddTransactionButton = () => {
       <Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
         <DialogTrigger
           render={
-            <Button>
-              <PlusIcon />
-              Nova transação
-            </Button>
+            trigger ?? (
+              <Button>
+                <PlusIcon />
+                Nova transação
+              </Button>
+            )
           }
-        ></DialogTrigger>
+        />
         <DialogContent className="sm:min-w-112.5">
           <DialogHeader>
             <DialogTitle>Adicionar Transação</DialogTitle>
@@ -209,7 +219,15 @@ const AddTransactionButton = () => {
                   variant="secondary"
                   disabled={form.formState.isSubmitting}
                   className="w-full sm:w-1/2"
-                  onClick={() => form.reset()}
+                  onClick={() =>
+                    form.reset({
+                      name: '',
+                      amount: 0,
+                      date: new Date(),
+                      type: 'EARNING',
+                      eventId: initialEventId ?? null,
+                    })
+                  }
                 >
                   Cancelar
                 </Button>

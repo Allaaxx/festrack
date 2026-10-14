@@ -11,7 +11,11 @@ import {
   editTransactionFormSchema,
 } from '@/features/transactions/forms/schemas';
 
-export const useCreateTransactionForm = ({ onSuccess, onError }) => {
+export const useCreateTransactionForm = ({
+  onSuccess,
+  onError,
+  initialEventId,
+} = {}) => {
   const { mutateAsync: createTransaction } = useCreateTransaction();
   const form = useForm({
     resolver: zodResolver(createTransactionFormSchema),
@@ -20,10 +24,16 @@ export const useCreateTransactionForm = ({ onSuccess, onError }) => {
       amount: 0,
       date: new Date(),
       type: 'EARNING',
-      eventId: null,
+      eventId: initialEventId ?? null,
     },
     shouldUnregister: true,
   });
+
+  useEffect(() => {
+    if (initialEventId) {
+      form.setValue('eventId', initialEventId);
+    }
+  }, [form, initialEventId]);
 
   const onSubmit = async (data) => {
     try {

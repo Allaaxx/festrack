@@ -20,7 +20,7 @@ import { useDeleteEvent } from '@/features/events/api/hooks';
  *
  * @param {{ event: { id: string, name: string } }} props
  */
-const DeleteEventButton = ({ event, onSuccess }) => {
+const DeleteEventButton = ({ event, onSuccess, trigger }) => {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const { mutateAsync: deleteEvent, isPending } = useDeleteEvent();
 
@@ -55,14 +55,16 @@ const DeleteEventButton = ({ event, onSuccess }) => {
     <Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
       <DialogTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Excluir evento"
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2Icon />
-          </Button>
+          trigger ?? (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Excluir evento"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2Icon />
+            </Button>
+          )
         }
       />
 

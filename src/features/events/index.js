@@ -4,6 +4,8 @@ export { default as DeleteEventButton } from './components/delete-event-button';
 export { default as EditEventSheet } from './components/edit-event-sheet';
 export { default as EventCalendar } from './components/event-calendar';
 export { default as EventCombobox } from './components/event-combobox';
+export { default as EventDetailHeader } from './components/event-detail-header';
+export { default as EventDetailSkeleton } from './components/event-detail-skeleton';
 export { default as EventForm } from './components/event-form';
 export { default as EventStatusBadge } from './components/event-status-badge';
 export { default as EventsSidebar } from './components/events-sidebar';

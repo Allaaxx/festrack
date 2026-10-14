@@ -11,6 +11,7 @@ import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthContextProvider } from '@/contexts/auth';
 import EventPage from '@/pages/event';
+import EventDetailPage from '@/pages/event-detail';
 import HomePage from '@/pages/home';
 import NotFoundPage from '@/pages/not-found';
 import SettingsPage from '@/pages/settings';
@@ -19,7 +20,7 @@ import SignUpPage from '@/pages/signup';
 
 const queryClient = new QueryClient();
 
-const AppRoutes = () => {
+export const AppRoutes = () => {
   return (
     <Routes>
       {/* Rotas sem sidebar */}
@@ -30,6 +31,7 @@ const AppRoutes = () => {
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/event" element={<EventPage />} />
+        <Route path="/event/:eventId" element={<EventDetailPage />} />
         <Route path="/event/card" element={<Navigate to="/event" replace />} />
         <Route
           path="/event/calendar"
@@ -43,21 +45,24 @@ const AppRoutes = () => {
   );
 };
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthContextProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </AuthContextProvider>
-      </TooltipProvider>
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  createRoot(rootElement).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthContextProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </AuthContextProvider>
+        </TooltipProvider>
 
-      <Toaster />
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
-  </StrictMode>
-);
+        <Toaster />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </StrictMode>
+  );
+}
 
 export default { AppRoutes };
