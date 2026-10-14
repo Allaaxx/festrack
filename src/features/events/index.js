@@ -14,10 +14,12 @@ export {
   createEventMutationKey,
   deleteEventMutationKey,
   editEventMutationKey,
+  getEventQueryKey,
   getEventsQueryKey,
   useCreateEvent,
   useDeleteEvent,
   useEditEvent,
+  useGetEvent,
   useGetEvents,
 } from './api/hooks';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';
