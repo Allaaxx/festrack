@@ -173,7 +173,7 @@ describe('AuthService', () => {
   });
 
   describe('signInWithGoogle', () => {
-    it('calls authClient.signIn.social with google provider and default scopes', async () => {
+    it('calls authClient.signIn.social with google provider, default scopes, and default errorCallbackURL', async () => {
       authClient.signIn.social = vi.fn().mockResolvedValue({
         data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
         error: null,
@@ -184,6 +184,7 @@ describe('AuthService', () => {
       expect(authClient.signIn.social).toHaveBeenCalledWith({
         provider: 'google',
         callbackURL: `${window.location.origin}/`,
+        errorCallbackURL: `${window.location.origin}/signin`,
         scopes: ['openid', 'profile', 'email'],
       });
       expect(result).toEqual({
@@ -191,7 +192,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('preserves absolute callbackURL in signInWithGoogle', async () => {
+    it('preserves absolute callbackURL and applies default errorCallbackURL in signInWithGoogle', async () => {
       authClient.signIn.social = vi.fn().mockResolvedValue({
         data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
         error: null,
@@ -204,6 +205,57 @@ describe('AuthService', () => {
       expect(authClient.signIn.social).toHaveBeenCalledWith({
         provider: 'google',
         callbackURL: 'https://festrack.app/dashboard',
+        errorCallbackURL: `${window.location.origin}/signin`,
+        scopes: ['openid', 'profile', 'email'],
+      });
+    });
+
+    it('allows overriding errorCallbackURL with relative path or absolute URL', async () => {
+      authClient.signIn.social = vi.fn().mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+        error: null,
+      });
+
+      await AuthService.signInWithGoogle({
+        callbackURL: '/dashboard',
+        errorCallbackURL: '/auth/custom-error',
+      });
+
+      expect(authClient.signIn.social).toHaveBeenCalledWith({
+        provider: 'google',
+        callbackURL: `${window.location.origin}/dashboard`,
+        errorCallbackURL: `${window.location.origin}/auth/custom-error`,
+        scopes: ['openid', 'profile', 'email'],
+      });
+
+      await AuthService.signInWithGoogle({
+        callbackURL: '/dashboard',
+        errorCallbackURL: 'https://festrack.app/custom-failure',
+      });
+
+      expect(authClient.signIn.social).toHaveBeenCalledWith({
+        provider: 'google',
+        callbackURL: `${window.location.origin}/dashboard`,
+        errorCallbackURL: 'https://festrack.app/custom-failure',
+        scopes: ['openid', 'profile', 'email'],
+      });
+    });
+
+    it('resolves newUserCallbackURL alongside errorCallbackURL when provided', async () => {
+      authClient.signIn.social = vi.fn().mockResolvedValue({
+        data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+        error: null,
+      });
+
+      await AuthService.signInWithGoogle({
+        newUserCallbackURL: '/onboarding',
+      });
+
+      expect(authClient.signIn.social).toHaveBeenCalledWith({
+        provider: 'google',
+        callbackURL: `${window.location.origin}/`,
+        errorCallbackURL: `${window.location.origin}/signin`,
+        newUserCallbackURL: `${window.location.origin}/onboarding`,
         scopes: ['openid', 'profile', 'email'],
       });
     });

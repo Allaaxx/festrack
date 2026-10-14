@@ -78,27 +78,25 @@ export const AuthService = {
 
   /**
    * Inicia o fluxo de autenticação social com Google via Better Auth.
-   * @param {{ callbackURL?: string, scopes?: string[], [key: string]: any }} [options]
+   * @param {{ callbackURL?: string, errorCallbackURL?: string, scopes?: string[], [key: string]: any }} [options]
    * @returns {Promise<object>}
    */
   signInWithGoogle: async ({
     callbackURL = '/',
+    errorCallbackURL = '/signin',
     scopes = ['openid', 'profile', 'email'],
     ...rest
   } = {}) => {
     const payload = {
       provider: 'google',
       callbackURL: resolveCallbackUrl(callbackURL),
+      errorCallbackURL: resolveCallbackUrl(errorCallbackURL || '/signin'),
       scopes,
       ...rest,
     };
 
     if (rest.newUserCallbackURL) {
       payload.newUserCallbackURL = resolveCallbackUrl(rest.newUserCallbackURL);
-    }
-
-    if (rest.errorCallbackURL) {
-      payload.errorCallbackURL = resolveCallbackUrl(rest.errorCallbackURL);
     }
 
     const response = await authClient.signIn.social(payload);

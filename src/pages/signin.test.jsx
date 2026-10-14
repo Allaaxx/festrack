@@ -289,4 +289,106 @@ describe('SignInPage', () => {
       expect(screen.getByText(/Falha no Google OAuth/i)).toBeInTheDocument();
     });
   });
+
+  describe('OAuth error search parameter feedback', () => {
+    it('displays localized error alert when redirected with ?error=state_mismatch', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signin: mockSignin,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/signin?error=state_mismatch']}>
+          <Routes>
+            <Route path="/signin" element={<SignInPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'A sessão de autenticação expirou ou é inválida. Por favor, tente novamente.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('displays localized error alert when redirected with ?error=access_denied', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signin: mockSignin,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/signin?error=access_denied']}>
+          <Routes>
+            <Route path="/signin" element={<SignInPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'O acesso foi negado ou cancelado. Por favor, tente novamente.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('displays localized error alert when redirected with ?error=oauth_link_error', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signin: mockSignin,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/signin?error=oauth_link_error']}>
+          <Routes>
+            <Route path="/signin" element={<SignInPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Não foi possível vincular a conta do Google. Verifique se o e-mail já está associado a outra conta.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('displays error_description when an unmapped error code is provided', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signin: mockSignin,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter
+          initialEntries={[
+            '/signin?error=server_error&error_description=Falha+no+servidor+Google',
+          ]}
+        >
+          <Routes>
+            <Route path="/signin" element={<SignInPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(screen.getByText('Falha no servidor Google')).toBeInTheDocument();
+    });
+  });
 });
