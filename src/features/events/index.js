@@ -4,8 +4,13 @@ export { default as DeleteEventButton } from './components/delete-event-button';
 export { default as EditEventSheet } from './components/edit-event-sheet';
 export { default as EventCalendar } from './components/event-calendar';
 export { default as EventCombobox } from './components/event-combobox';
+export { default as EventDetailHeader } from './components/event-detail-header';
+export { default as EventDetailSkeleton } from './components/event-detail-skeleton';
+export { default as EventDropdownMenu } from './components/event-dropdown-menu';
+export { default as EventFinancialCards } from './components/event-financial-cards';
 export { default as EventForm } from './components/event-form';
 export { default as EventStatusBadge } from './components/event-status-badge';
+export { default as EventTransactionsTable } from './components/event-transactions-table';
 export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
 
@@ -14,10 +19,12 @@ export {
   createEventMutationKey,
   deleteEventMutationKey,
   editEventMutationKey,
+  getEventQueryKey,
   getEventsQueryKey,
   useCreateEvent,
   useDeleteEvent,
   useEditEvent,
+  useGetEvent,
   useGetEvents,
 } from './api/hooks';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';
@@ -65,3 +72,4 @@ export {
   mapEventToCalendarItem,
   parseEventDate,
 } from './helpers/event';
+export { calculateEventFinancialTotals } from './helpers/event-financials';

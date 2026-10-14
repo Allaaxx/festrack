@@ -5,7 +5,7 @@ import {
   TrendingDownIcon,
   TrendingUpIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { NumericFormat } from 'react-number-format';
 
@@ -30,20 +30,40 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
 import { EventCombobox } from '@/features/events';
-import { useCreateTransactionForm } from '@/features/transactions/forms/hooks';
+import {
+  getDefaultTransactionValues,
+  useCreateTransactionForm,
+} from '@/features/transactions/forms/hooks';
 
-const AddTransactionButton = () => {
-  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+const AddTransactionButton = ({
+  initialEventId = null,
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
+}) => {
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const dialogIsOpen = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = (open) => {
+    if (!isControlled) {
+      setInternalOpen(open);
+    }
+    onOpenChange?.(open);
+  };
+
   const { form, onSubmit } = useCreateTransactionForm({
+    initialEventId,
     onSuccess: () => {
-      setDialogIsOpen(false);
+      handleOpenChange(false);
+      form.reset(getDefaultTransactionValues(initialEventId));
       toast.add({
         type: 'success',
         description: 'Transação criada com sucesso.',
       });
     },
     onError: () => {
-      setDialogIsOpen(false);
+      handleOpenChange(false);
       toast.add({
         type: 'error',
         description:
@@ -51,17 +71,28 @@ const AddTransactionButton = () => {
       });
     },
   });
+
+  useEffect(() => {
+    if (dialogIsOpen) {
+      form.reset(getDefaultTransactionValues(initialEventId));
+    }
+  }, [dialogIsOpen, initialEventId, form]);
+
   return (
     <>
-      <Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
-        <DialogTrigger
-          render={
-            <Button>
-              <PlusIcon />
-              Nova transação
-            </Button>
-          }
-        ></DialogTrigger>
+      <Dialog open={dialogIsOpen} onOpenChange={handleOpenChange}>
+        {trigger !== null && (!isControlled || trigger) && (
+          <DialogTrigger
+            render={
+              trigger ?? (
+                <Button>
+                  <PlusIcon />
+                  Nova transação
+                </Button>
+              )
+            }
+          />
+        )}
         <DialogContent className="sm:min-w-112.5">
           <DialogHeader>
             <DialogTitle>Adicionar Transação</DialogTitle>
@@ -149,7 +180,9 @@ const AddTransactionButton = () => {
                       id="eventId"
                       value={field.value}
                       onChange={field.onChange}
-                      disabled={form.formState.isSubmitting}
+                      disabled={
+                        Boolean(initialEventId) || form.formState.isSubmitting
+                      }
                       aria-invalid={fieldState.invalid}
                     />
                     {fieldState.invalid && (
@@ -209,7 +242,9 @@ const AddTransactionButton = () => {
                   variant="secondary"
                   disabled={form.formState.isSubmitting}
                   className="w-full sm:w-1/2"
-                  onClick={() => form.reset()}
+                  onClick={() =>
+                    form.reset(getDefaultTransactionValues(initialEventId))
+                  }
                 >
                   Cancelar
                 </Button>

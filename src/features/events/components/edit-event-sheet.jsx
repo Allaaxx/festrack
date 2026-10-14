@@ -18,7 +18,13 @@ import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calend
 
 import { DeleteEventButton } from '..';
 
-const EditEventSheet = ({ event, trigger, open, onOpenChange }) => {
+const EditEventSheet = ({
+  event,
+  trigger,
+  open,
+  onOpenChange,
+  onDeleteSuccess,
+}) => {
   const isControlled = open !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const sheetOpen = isControlled ? open : internalOpen;
@@ -74,7 +80,10 @@ const EditEventSheet = ({ event, trigger, open, onOpenChange }) => {
         <SheetFooter className="flex flex-row justify-between">
           <DeleteEventButton
             event={event}
-            onSuccess={() => handleOpenChange(false)}
+            onSuccess={() => {
+              handleOpenChange(false);
+              onDeleteSuccess?.();
+            }}
           />
 
           <div className="flex">

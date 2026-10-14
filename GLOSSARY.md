@@ -35,11 +35,16 @@ The confidential identity proofs supplied by a user to authenticate against the 
 
 A single financial movement (earning, expense, or investment) associated with a user and optionally tied to a specific calendar event.
 
+- **Types:** Categorized strictly as `EARNING` (Receita), `EXPENSE` (Despesa), or `INVESTMENT` (Investimento).
+- **Event Association:** When tied to an Event, the transaction belongs to that event's financial ledger unconditionally, regardless of whether the transaction date falls within the event's start and end dates (e.g., advance purchases or post-event expenses).
+
 ---
 
 ### Event
 
 A scheduled occasion or budget bucket (e.g., travel, wedding, party) with start and end dates used to group related financial transactions.
+
+- **Financial Scope:** Acts as an aggregate financial container. Transactions linked to an event are grouped by event identity rather than restricted to its active calendar timeframe.
 
 ---
 

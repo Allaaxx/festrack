@@ -20,14 +20,27 @@ import { useDeleteEvent } from '@/features/events/api/hooks';
  *
  * @param {{ event: { id: string, name: string } }} props
  */
-const DeleteEventButton = ({ event, onSuccess }) => {
-  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+const DeleteEventButton = ({
+  event,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
+}) => {
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const dialogIsOpen = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = (open) => {
+    if (!isControlled) setInternalOpen(open);
+    onOpenChange?.(open);
+  };
   const { mutateAsync: deleteEvent, isPending } = useDeleteEvent();
 
   const handleDelete = async () => {
     try {
       const deleted = await deleteEvent({ id: event.id });
-      setDialogIsOpen(false);
+      handleOpenChange(false);
       onSuccess?.();
       if (deleted?.syncError) {
         toast.add({
@@ -52,19 +65,23 @@ const DeleteEventButton = ({ event, onSuccess }) => {
   };
 
   return (
-    <Dialog open={dialogIsOpen} onOpenChange={setDialogIsOpen}>
-      <DialogTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Excluir evento"
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2Icon />
-          </Button>
-        }
-      />
+    <Dialog open={dialogIsOpen} onOpenChange={handleOpenChange}>
+      {trigger !== null && (!isControlled || trigger) && (
+        <DialogTrigger
+          render={
+            trigger ?? (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Excluir evento"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2Icon />
+              </Button>
+            )
+          }
+        />
+      )}
 
       <DialogContent className="sm:min-w-112.5">
         <DialogHeader>

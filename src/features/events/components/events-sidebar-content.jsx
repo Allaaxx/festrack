@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 import { EVENT_STATUSES } from '../helpers/event';
 import { useEventsSidebar } from '../hooks/use-events-sidebar';
+import EventDropdownMenu from './event-dropdown-menu';
 
 export function EventsSidebarContent({
   currentDate,
@@ -24,7 +25,6 @@ export function EventsSidebarContent({
     upcomingEvents,
     currentMonthYear,
     handleDateSelect,
-    handleEventClick,
     getEventInitials,
   } = useEventsSidebar({
     events,
@@ -118,26 +118,26 @@ export function EventsSidebarContent({
               : `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`;
 
             return (
-              <button
-                key={event.id}
-                type="button"
-                onClick={() => handleEventClick(event)}
-                className="bg-background hover:border-primary/40 hover:bg-accent/40 flex w-full items-stretch gap-3 rounded-lg border p-3 text-left transition"
-              >
-                <span
-                  className={cn('w-1 shrink-0 rounded-full', dotColor)}
-                  aria-hidden="true"
-                />
-                <div className="min-w-0 flex-1 py-0.5">
-                  <p className="truncate text-sm font-medium">{event.title}</p>
-                  <p className="text-muted-foreground text-xs">{eventTime}</p>
-                </div>
-                <Avatar className="my-auto size-6 shrink-0">
-                  <AvatarFallback className="text-[10px]">
-                    {getEventInitials(event.title)}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
+              <EventDropdownMenu key={event.id} event={event}>
+                <button
+                  type="button"
+                  className="bg-background hover:border-primary/40 hover:bg-accent/40 flex w-full items-stretch gap-3 rounded-lg border p-3 text-left transition"
+                >
+                  <span
+                    className={cn('w-1 shrink-0 rounded-full', dotColor)}
+                    aria-hidden="true"
+                  />
+                  <div className="min-w-0 flex-1 py-0.5">
+                    <p className="truncate text-sm font-medium">{event.title}</p>
+                    <p className="text-muted-foreground text-xs">{eventTime}</p>
+                  </div>
+                  <Avatar className="my-auto size-6 shrink-0">
+                    <AvatarFallback className="text-[10px]">
+                      {getEventInitials(event.title)}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </EventDropdownMenu>
             );
           })}
           {upcomingEvents.length === 0 && (
