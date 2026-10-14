@@ -35,7 +35,6 @@ const DeleteEventButton = ({
     if (!isControlled) setInternalOpen(open);
     onOpenChange?.(open);
   };
-
   const { mutateAsync: deleteEvent, isPending } = useDeleteEvent();
 
   const handleDelete = async () => {

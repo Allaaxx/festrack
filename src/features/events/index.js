@@ -4,6 +4,8 @@ export { default as DeleteEventButton } from './components/delete-event-button';
 export { default as EditEventSheet } from './components/edit-event-sheet';
 export { default as EventCalendar } from './components/event-calendar';
 export { default as EventCombobox } from './components/event-combobox';
+export { default as EventDetailHeader } from './components/event-detail-header';
+export { default as EventDetailSkeleton } from './components/event-detail-skeleton';
 export { default as EventDropdownMenu } from './components/event-dropdown-menu';
 export { default as EventForm } from './components/event-form';
 export { default as EventStatusBadge } from './components/event-status-badge';
@@ -15,10 +17,12 @@ export {
   createEventMutationKey,
   deleteEventMutationKey,
   editEventMutationKey,
+  getEventQueryKey,
   getEventsQueryKey,
   useCreateEvent,
   useDeleteEvent,
   useEditEvent,
+  useGetEvent,
   useGetEvents,
 } from './api/hooks';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';

@@ -14,6 +14,21 @@ export const useGetEvents = () => {
   });
 };
 
+export const getEventQueryKey = ({ userId, eventId }) => [
+  'getEvent',
+  userId,
+  eventId,
+];
+
+export const useGetEvent = ({ eventId } = {}) => {
+  const { user } = useAuthContext();
+  return useQuery({
+    queryKey: getEventQueryKey({ userId: user?.id, eventId }),
+    queryFn: () => EventService.getById(eventId),
+    enabled: Boolean(user?.id) && Boolean(eventId),
+  });
+};
+
 export const createEventMutationKey = ['createEvent'];
 
 export const useCreateEvent = () => {

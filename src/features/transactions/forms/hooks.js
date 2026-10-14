@@ -15,7 +15,7 @@ export const useCreateTransactionForm = ({
   onSuccess,
   onError,
   initialEventId = null,
-}) => {
+} = {}) => {
   const { mutateAsync: createTransaction } = useCreateTransaction();
   const form = useForm({
     resolver: zodResolver(createTransactionFormSchema),
@@ -24,10 +24,16 @@ export const useCreateTransactionForm = ({
       amount: 0,
       date: new Date(),
       type: 'EARNING',
-      eventId: initialEventId,
+      eventId: initialEventId ?? null,
     },
     shouldUnregister: true,
   });
+
+  useEffect(() => {
+    if (initialEventId) {
+      form.setValue('eventId', initialEventId);
+    }
+  }, [form, initialEventId]);
 
   const onSubmit = async (data) => {
     try {

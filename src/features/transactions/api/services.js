@@ -25,13 +25,20 @@ export const TransactionService = {
 
   /**
    * Retorna as transações do usuário autenticado.
-   * @param {object} input
-   * @param {string} input.from - Data inicial (YYYY-MM-DD).
-   * @param {string} input.to - Data final (YYYY-MM-DD).
+   * @param {object} [input]
+   * @param {string} [input.from] - Data inicial (YYYY-MM-DD).
+   * @param {string} [input.to] - Data final (YYYY-MM-DD).
+   * @param {string} [input.eventId] - ID do evento associado.
    */
-  getAll: async (input) => {
-    const query = queryString.stringify({ from: input.from, to: input.to });
-    const response = await protectedApi.get(`transactions/me?${query}`);
+  getAll: async (input = {}) => {
+    const params = {};
+    if (input?.from) params.from = input.from;
+    if (input?.to) params.to = input.to;
+    if (input?.eventId) params.event_id = input.eventId;
+
+    const query = queryString.stringify(params);
+    const endpoint = query ? `transactions/me?${query}` : 'transactions/me';
+    const response = await protectedApi.get(endpoint);
     return response.data;
   },
 

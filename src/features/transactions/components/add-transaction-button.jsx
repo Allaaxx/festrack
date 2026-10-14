@@ -53,6 +53,13 @@ const AddTransactionButton = ({
     initialEventId,
     onSuccess: () => {
       handleOpenChange(false);
+      form.reset({
+        name: '',
+        amount: 0,
+        date: new Date(),
+        type: 'EARNING',
+        eventId: initialEventId ?? null,
+      });
       toast.add({
         type: 'success',
         description: 'Transação criada com sucesso.',
@@ -242,7 +249,15 @@ const AddTransactionButton = ({
                   variant="secondary"
                   disabled={form.formState.isSubmitting}
                   className="w-full sm:w-1/2"
-                  onClick={() => form.reset()}
+                  onClick={() =>
+                    form.reset({
+                      name: '',
+                      amount: 0,
+                      date: new Date(),
+                      type: 'EARNING',
+                      eventId: initialEventId ?? null,
+                    })
+                  }
                 >
                   Cancelar
                 </Button>

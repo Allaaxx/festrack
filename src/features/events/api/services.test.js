@@ -148,4 +148,64 @@ describe('EventService', () => {
       expect(result.googleEventId).toBe('g-event-999');
     });
   });
+
+  describe('getById', () => {
+    it('fetches a single event by string id and maps attributes consistently', async () => {
+      const mockRawEvent = {
+        id: 'ev-10',
+        name: 'Conferência Tech',
+        description: 'Keynote e workshops',
+        start_date: '2026-11-20T09:00:00.000Z',
+        end_date: '2026-11-20T18:00:00.000Z',
+        google_event_id: 'g-event-conf',
+      };
+
+      protectedApi.get.mockResolvedValue({ data: mockRawEvent });
+
+      const result = await EventService.getById('ev-10');
+
+      expect(protectedApi.get).toHaveBeenCalledWith('/events/me/ev-10');
+      expect(result).toEqual({
+        id: 'ev-10',
+        name: 'Conferência Tech',
+        description: 'Keynote e workshops',
+        startDate: '2026-11-20T09:00:00.000Z',
+        endDate: '2026-11-20T18:00:00.000Z',
+        allDay: false,
+        google_event_id: 'g-event-conf',
+        googleEventId: 'g-event-conf',
+        syncError: false,
+      });
+    });
+
+    it('fetches a single event by object with id and maps attributes consistently', async () => {
+      const mockRawEvent = {
+        id: 'ev-20',
+        name: 'Festa de Fim de Ano',
+        description: null,
+        start_date: '2026-12-31T00:00:00.000Z',
+        end_date: '2026-12-31T23:59:00.000Z',
+        google_event_id: null,
+        sync_error: true,
+      };
+
+      protectedApi.get.mockResolvedValue({ data: mockRawEvent });
+
+      const result = await EventService.getById({ id: 'ev-20' });
+
+      expect(protectedApi.get).toHaveBeenCalledWith('/events/me/ev-20');
+      expect(result).toEqual({
+        id: 'ev-20',
+        name: 'Festa de Fim de Ano',
+        description: null,
+        startDate: '2026-12-31T00:00:00.000Z',
+        endDate: '2026-12-31T23:59:00.000Z',
+        allDay: true,
+        google_event_id: null,
+        googleEventId: null,
+        syncError: true,
+      });
+    });
+  });
 });
+
