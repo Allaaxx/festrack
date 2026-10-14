@@ -79,4 +79,20 @@ describe('CalendarHeader Component', () => {
 
     expect(mockToggle).toHaveBeenCalledTimes(1);
   });
+
+  it('disables sync button when synchronization is connecting or mutating', () => {
+    useGoogleCalendarSync.mockReturnValue({
+      isGoogleConnected: false,
+      isSyncEnabled: false,
+      isConnecting: true,
+      toggleSync: vi.fn(),
+    });
+
+    render(<CalendarHeader {...defaultProps} />);
+
+    const syncBtn = screen.getByRole('button', {
+      name: /sincronizar com google agenda/i,
+    });
+    expect(syncBtn).toBeDisabled();
+  });
 });

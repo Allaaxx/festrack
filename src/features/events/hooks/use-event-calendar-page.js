@@ -102,13 +102,24 @@ export function useEventCalendarPage() {
         endTime: format(updatedItem.end, 'HH:mm'),
       },
       {
-        onSuccess: () => {
-          toast.add({
-            type: 'success',
-            title: isResize
-              ? `Evento "${eventName}" redimensionado`
-              : `Evento "${eventName}" movido`,
-          });
+        onSuccess: (data) => {
+          if (data?.syncError) {
+            toast.add({
+              type: 'warning',
+              title: isResize
+                ? `Evento "${eventName}" redimensionado`
+                : `Evento "${eventName}" movido`,
+              description:
+                'Salvo no Festrack, mas não foi possível atualizar no Google Agenda.',
+            });
+          } else {
+            toast.add({
+              type: 'success',
+              title: isResize
+                ? `Evento "${eventName}" redimensionado`
+                : `Evento "${eventName}" movido`,
+            });
+          }
         },
         onError: () => {
           toast.add({

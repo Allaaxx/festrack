@@ -101,6 +101,8 @@ describe('AuthContext', () => {
         firstName: 'Maria',
         lastName: 'Silva',
         email: 'maria@example.com',
+        google_calendar_sync_enabled: false,
+        googleCalendarSyncEnabled: false,
       });
     });
   });
@@ -119,6 +121,8 @@ describe('AuthContext', () => {
       first_name: 'Carlos',
       last_name: 'Lima',
       email: 'carlos@example.com',
+      google_calendar_sync_enabled: false,
+      googleCalendarSyncEnabled: false,
     };
 
     mockSignInMutateAsync.mockResolvedValueOnce(mockLoggedUser);
@@ -187,6 +191,8 @@ describe('AuthContext', () => {
       first_name: 'Ana',
       last_name: 'Costa',
       email: 'ana@example.com',
+      google_calendar_sync_enabled: false,
+      googleCalendarSyncEnabled: false,
     };
 
     mockSignUpMutateAsync.mockResolvedValueOnce(mockNewUser);

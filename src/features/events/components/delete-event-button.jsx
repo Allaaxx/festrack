@@ -26,13 +26,22 @@ const DeleteEventButton = ({ event, onSuccess }) => {
 
   const handleDelete = async () => {
     try {
-      await deleteEvent({ id: event.id });
+      const deleted = await deleteEvent({ id: event.id });
       setDialogIsOpen(false);
       onSuccess?.();
-      toast.add({
-        type: 'success',
-        title: 'Evento excluído com sucesso!',
-      });
+      if (deleted?.syncError) {
+        toast.add({
+          type: 'warning',
+          title: 'Evento excluído com aviso',
+          description:
+            'Evento excluído no Festrack, mas não foi possível remover do Google Agenda.',
+        });
+      } else {
+        toast.add({
+          type: 'success',
+          title: 'Evento excluído com sucesso!',
+        });
+      }
     } catch {
       toast.add({
         type: 'error',
@@ -49,6 +58,7 @@ const DeleteEventButton = ({ event, onSuccess }) => {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Excluir evento"
             className="text-muted-foreground hover:text-destructive"
           >
             <Trash2Icon />

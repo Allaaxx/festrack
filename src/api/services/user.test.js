@@ -56,6 +56,29 @@ describe('UserService', () => {
       });
     });
 
+    it('sends PATCH to /users/me with google_calendar_sync_enabled', async () => {
+      const mockResponse = {
+        id: 'user-1',
+        name: 'Jane Smith',
+        google_calendar_sync_enabled: true,
+      };
+
+      protectedApi.patch.mockResolvedValue({
+        data: mockResponse,
+      });
+
+      const result = await UserService.updateProfile({
+        googleCalendarSyncEnabled: true,
+      });
+
+      expect(protectedApi.patch).toHaveBeenCalledWith('/users/me', {
+        google_calendar_sync_enabled: true,
+      });
+
+      expect(result.google_calendar_sync_enabled).toBe(true);
+      expect(result.googleCalendarSyncEnabled).toBe(true);
+    });
+
     it('propagates errors when API call fails', async () => {
       const mockError = new Error('Network error');
       protectedApi.patch.mockRejectedValue(mockError);

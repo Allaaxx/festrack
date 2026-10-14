@@ -20,6 +20,10 @@ export const normalizeUser = (user) => {
 
   const name = user.name || `${firstName} ${lastName}`.trim();
 
+  const googleCalendarSyncEnabled = Boolean(
+    user.googleCalendarSyncEnabled ?? user.google_calendar_sync_enabled
+  );
+
   return {
     ...user,
     id: user.id,
@@ -29,5 +33,7 @@ export const normalizeUser = (user) => {
     first_name: firstName,
     last_name: lastName,
     email: user.email,
+    google_calendar_sync_enabled: googleCalendarSyncEnabled,
+    googleCalendarSyncEnabled,
   };
 };

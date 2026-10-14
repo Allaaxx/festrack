@@ -14,6 +14,7 @@ import {
 import { toast } from '@/components/ui/toast';
 import EventForm from '@/features/events/components/event-form';
 import { useEditEventForm } from '@/features/events/forms/hooks';
+import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calendar-sync';
 
 import { DeleteEventButton } from '..';
 
@@ -21,6 +22,7 @@ const EditEventSheet = ({ event, trigger, open, onOpenChange }) => {
   const isControlled = open !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const sheetOpen = isControlled ? open : internalOpen;
+  const { isSyncEnabled } = useGoogleCalendarSync();
 
   const handleOpenChange = (value) => {
     if (!isControlled) setInternalOpen(value);
@@ -29,12 +31,21 @@ const EditEventSheet = ({ event, trigger, open, onOpenChange }) => {
 
   const { form, onSubmit } = useEditEventForm({
     event,
-    onSuccess: () => {
+    onSuccess: (updatedEvent) => {
       handleOpenChange(false);
-      toast.add({
-        type: 'success',
-        title: 'Evento editado com sucesso!',
-      });
+      if (isSyncEnabled && updatedEvent?.syncError) {
+        toast.add({
+          type: 'warning',
+          title: 'Evento editado com aviso',
+          description:
+            'Alterações salvas localmente, mas não foi possível atualizar no Google Agenda.',
+        });
+      } else {
+        toast.add({
+          type: 'success',
+          title: 'Evento editado com sucesso!',
+        });
+      }
     },
     onError: () => {
       toast.add({
