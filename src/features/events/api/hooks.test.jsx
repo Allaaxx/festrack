@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuthContext } from '@/contexts/auth';
 import {
+  getEventQueryKey,
   getEventsQueryKey,
   useCreateEvent,
   useDeleteEvent,
   useEditEvent,
+  useGetEvent,
   useGetEvents,
 } from '@/features/events/api/hooks';
 import EventService from '@/features/events/api/services';
@@ -19,6 +21,7 @@ vi.mock('@/contexts/auth', () => ({
 vi.mock('@/features/events/api/services', () => ({
   default: {
     getAll: vi.fn(),
+    getById: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -73,7 +76,70 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
     });
   });
 
-  describe('Events mutations with null safety', () => {
+  describe('getEventQueryKey', () => {
+    it('returns query key with userId and eventId', () => {
+      expect(getEventQueryKey({ userId: 'u1', eventId: 'ev-1' })).toEqual([
+        'getEvent',
+        'u1',
+        'ev-1',
+      ]);
+    });
+  });
+
+  describe('useGetEvent', () => {
+    it('does not throw when user is null and query remains disabled', () => {
+      useAuthContext.mockReturnValue({ user: null });
+
+      const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.status).toBe('pending');
+      expect(EventService.getById).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when eventId is null/undefined and query remains disabled', () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+
+      const { result } = renderHook(() => useGetEvent(), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.status).toBe('pending');
+      expect(EventService.getById).not.toHaveBeenCalled();
+    });
+
+    it('fetches single event when user and eventId are provided', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      const mockEvent = { id: 'ev-1', name: 'Aniversário' };
+      EventService.getById.mockResolvedValue(mockEvent);
+
+      const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
+        wrapper: createWrapper(),
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(EventService.getById).toHaveBeenCalledWith('ev-1');
+      expect(result.current.data).toEqual(mockEvent);
+    });
+
+    it('uses initialData from getEvents query cache if available', () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      const mockEvent = { id: 'ev-1', name: 'Aniversário' };
+      const wrapper = createWrapper();
+      queryClient.setQueryData(getEventsQueryKey({ userId: 'u1' }), [mockEvent]);
+
+      const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
+        wrapper,
+      });
+
+      expect(result.current.data).toEqual(mockEvent);
+    });
+  });
+
+  describe('Events mutations with null safety and cache invalidation', () => {
     it('useCreateEvent safely invalidates query when user is null', async () => {
       useAuthContext.mockReturnValue({ user: null });
       EventService.create.mockResolvedValue({ id: 'ev-1' });
@@ -110,6 +176,31 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: getEventsQueryKey({ userId: undefined }),
       });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventQueryKey({ userId: undefined, eventId: 'ev-1' }),
+      });
+    });
+
+    it('useEditEvent invalidates both events list and single event when authenticated', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      EventService.update.mockResolvedValue({ id: 'ev-1', title: 'Updated' });
+
+      const wrapper = createWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useEditEvent(), {
+        wrapper,
+      });
+
+      result.current.mutate({ id: 'ev-1', title: 'Updated' });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventsQueryKey({ userId: 'u1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventQueryKey({ userId: 'u1', eventId: 'ev-1' }),
+      });
     });
 
     it('useDeleteEvent safely invalidates query when user is null', async () => {
@@ -128,6 +219,31 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
 
       expect(invalidateSpy).toHaveBeenCalledWith({
         queryKey: getEventsQueryKey({ userId: undefined }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventQueryKey({ userId: undefined, eventId: 'ev-1' }),
+      });
+    });
+
+    it('useDeleteEvent invalidates both events list and single event when authenticated', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      EventService.delete.mockResolvedValue({ success: true });
+
+      const wrapper = createWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useDeleteEvent(), {
+        wrapper,
+      });
+
+      result.current.mutate({ id: 'ev-1' });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventsQueryKey({ userId: 'u1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventQueryKey({ userId: 'u1', eventId: 'ev-1' }),
       });
     });
   });

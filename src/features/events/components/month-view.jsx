@@ -17,6 +17,7 @@ import {
   sortEvents,
 } from '../helpers/calendar-layout';
 import { useMonthView } from '../hooks/use-month-view';
+import EventDropdownMenu from './event-dropdown-menu';
 import { EventItem } from './event-item';
 
 function MonthDayCell({ day, isCurrentMonth, isToday, children, onClick }) {
@@ -53,7 +54,6 @@ function DraggableMonthEvent({
   isLastDay,
   spansLeft,
   spansRight,
-  onClick,
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `month-event-${event.id}`,
@@ -72,15 +72,16 @@ function DraggableMonthEvent({
         isDragging && 'pointer-events-none opacity-0'
       )}
     >
-      <EventItem
-        event={event}
-        view="month"
-        onClick={onClick}
-        isFirstDay={isFirstDay}
-        isLastDay={isLastDay}
-        spansLeft={spansLeft}
-        spansRight={spansRight}
-      />
+      <EventDropdownMenu event={event} disabled={isDragging}>
+        <EventItem
+          event={event}
+          view="month"
+          isFirstDay={isFirstDay}
+          isLastDay={isLastDay}
+          spansLeft={spansLeft}
+          spansRight={spansRight}
+        />
+      </EventDropdownMenu>
     </div>
   );
 }
@@ -99,7 +100,6 @@ export function MonthView({
     isMounted,
     contentRef,
     getVisibleEventCount,
-    handleEventClick,
     handleCellClick,
   } = useMonthView({ currentDate, onEventSelect, onEventCreate });
 
@@ -178,7 +178,6 @@ export function MonthView({
                         >
                           <DraggableMonthEvent
                             event={event}
-                            onClick={(e) => handleEventClick(event, e)}
                             isFirstDay={isFirstDay}
                             isLastDay={isLastDay}
                             spansLeft={spansLeft}
@@ -217,14 +216,17 @@ export function MonthView({
                             </div>
                             <div className="space-y-1">
                               {sortEvents(allEvents).map((event) => (
-                                <EventItem
+                                <EventDropdownMenu
                                   key={event.id}
-                                  onClick={(e) => handleEventClick(event, e)}
                                   event={event}
-                                  view="month"
-                                  isFirstDay={isSameDay(day, event.start)}
-                                  isLastDay={isSameDay(day, event.end)}
-                                />
+                                >
+                                  <EventItem
+                                    event={event}
+                                    view="month"
+                                    isFirstDay={isSameDay(day, event.start)}
+                                    isLastDay={isSameDay(day, event.end)}
+                                  />
+                                </EventDropdownMenu>
                               ))}
                             </div>
                           </div>

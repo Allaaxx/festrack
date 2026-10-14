@@ -14,6 +14,28 @@ export const useGetEvents = () => {
   });
 };
 
+export const getEventQueryKey = ({ userId, eventId }) => [
+  'getEvent',
+  userId,
+  eventId,
+];
+
+export const useGetEvent = ({ eventId } = {}) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthContext();
+  return useQuery({
+    queryKey: getEventQueryKey({ userId: user?.id, eventId }),
+    queryFn: () => EventService.getById(eventId),
+    enabled: Boolean(user?.id) && Boolean(eventId),
+    initialData: () => {
+      const events = queryClient.getQueryData(
+        getEventsQueryKey({ userId: user?.id })
+      );
+      return events?.find((event) => event.id === eventId);
+    },
+  });
+};
+
 export const createEventMutationKey = ['createEvent'];
 
 export const useCreateEvent = () => {
@@ -38,9 +60,15 @@ export const useEditEvent = () => {
   return useMutation({
     mutationKey: editEventMutationKey,
     mutationFn: (input) => EventService.update(input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: getEventsQueryKey({ userId: user?.id }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getEventQueryKey({
+          userId: user?.id,
+          eventId: variables?.id,
+        }),
       });
     },
   });
@@ -54,9 +82,15 @@ export const useDeleteEvent = () => {
   return useMutation({
     mutationKey: deleteEventMutationKey,
     mutationFn: (input) => EventService.delete(input),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: getEventsQueryKey({ userId: user?.id }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getEventQueryKey({
+          userId: user?.id,
+          eventId: variables?.id,
+        }),
       });
     },
   });

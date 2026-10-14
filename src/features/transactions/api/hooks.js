@@ -23,19 +23,30 @@ export const useGetUserBalance = ({ from, to }) => {
   });
 };
 
-export const getTransactionsQueryKey = ({ userId, from, to }) => {
+export const getTransactionsQueryKey = ({ userId, from, to, eventId }) => {
+  if (eventId) {
+    return ['getTransactions', userId, { eventId }];
+  }
   if (!from || !to) {
     return ['getTransactions', userId];
   }
   return ['getTransactions', userId, from, to];
 };
 
-export const useGetTransactions = ({ from, to }) => {
+export const useGetTransactions = ({ from, to, eventId } = {}) => {
   const { user } = useAuthContext();
   return useQuery({
-    queryKey: getTransactionsQueryKey({ userId: user?.id, from, to }),
-    queryFn: () => TransactionService.getAll({ from, to }),
-    enabled: Boolean(from) && Boolean(to) && Boolean(user?.id),
+    queryKey: getTransactionsQueryKey({ userId: user?.id, from, to, eventId }),
+    queryFn: () => {
+      const input = {};
+      if (from) input.from = from;
+      if (to) input.to = to;
+      if (eventId) input.eventId = eventId;
+      return TransactionService.getAll(input);
+    },
+    enabled:
+      Boolean(user?.id) &&
+      (Boolean(eventId) || (Boolean(from) && Boolean(to))),
   });
 };
 

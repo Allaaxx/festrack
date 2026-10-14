@@ -37,6 +37,17 @@ const EventService = {
   },
 
   /**
+   * Busca um evento específico pelo ID para o usuário autenticado.
+   * @param {string | { id: string }} input - ID do evento ou objeto contendo o ID.
+   * @returns {Promise<{ id: string, name: string, description: string | null, startDate: string, endDate: string, allDay: boolean, googleEventId: string | null, syncError: boolean }>}
+   */
+  getById: async (input) => {
+    const id = typeof input === 'string' ? input : input?.id;
+    const response = await protectedApi.get(`/events/me/${id}`);
+    return mapEventFromApi(response.data);
+  },
+
+  /**
    * Cria um evento para o usuário autenticado.
    * @param {{
    *   name: string,
