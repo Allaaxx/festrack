@@ -89,22 +89,26 @@ const EventDropdownMenu = ({
     setIsOpen(true);
   };
 
-  const handleViewDetails = () => {
+  const handleViewDetails = (e) => {
+    e?.stopPropagation?.();
     setIsOpen(false);
     navigate(`/event/${eventId}`);
   };
 
-  const handleEditEvent = () => {
+  const handleEditEvent = (e) => {
+    e?.stopPropagation?.();
     setIsOpen(false);
     setIsEditOpen(true);
   };
 
-  const handleAddTransaction = () => {
+  const handleAddTransaction = (e) => {
+    e?.stopPropagation?.();
     setIsOpen(false);
     setIsAddTxOpen(true);
   };
 
-  const handleDeleteEvent = () => {
+  const handleDeleteEvent = (e) => {
+    e?.stopPropagation?.();
     setIsOpen(false);
     setIsDeleteOpen(true);
   };
@@ -122,6 +126,7 @@ const EventDropdownMenu = ({
           align={align}
           side={side}
           className={cn('min-w-52', className)}
+          onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={handleViewDetails}>
@@ -148,27 +153,42 @@ const EventDropdownMenu = ({
       </DropdownMenu>
 
       {isEditOpen && (
-        <EditEventSheet
-          event={rawEvent}
-          open={isEditOpen}
-          onOpenChange={setIsEditOpen}
-        />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <EditEventSheet
+            event={rawEvent}
+            open={isEditOpen}
+            onOpenChange={setIsEditOpen}
+          />
+        </div>
       )}
 
       {isAddTxOpen && (
-        <AddTransactionButton
-          initialEventId={eventId}
-          open={isAddTxOpen}
-          onOpenChange={setIsAddTxOpen}
-        />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <AddTransactionButton
+            initialEventId={eventId}
+            open={isAddTxOpen}
+            onOpenChange={setIsAddTxOpen}
+          />
+        </div>
       )}
 
       {isDeleteOpen && (
-        <DeleteEventButton
-          event={rawEvent}
-          open={isDeleteOpen}
-          onOpenChange={setIsDeleteOpen}
-        />
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <DeleteEventButton
+            event={rawEvent}
+            open={isDeleteOpen}
+            onOpenChange={setIsDeleteOpen}
+          />
+        </div>
       )}
     </>
   );

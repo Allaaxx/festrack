@@ -12,9 +12,26 @@ export function CalendarCell({ time, children, className, onClick }) {
           .padStart(2, '0')}`
       : undefined;
 
+  const handleClick = (e) => {
+    const target = e.target;
+    if (
+      !e.currentTarget.contains(target) ||
+      target.closest('[data-calendar-event]') ||
+      target.closest('[data-slot^="popover-"]') ||
+      target.closest('[data-slot^="dropdown-menu"]') ||
+      target.closest('[data-slot^="dialog"]') ||
+      target.closest('[data-slot^="sheet"]') ||
+      target.closest('[role="menu"]') ||
+      target.closest('[role="dialog"]')
+    ) {
+      return;
+    }
+    onClick?.(e);
+  };
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       className={cn(
         'flex h-full cursor-pointer flex-col overflow-hidden px-0.5 py-1 transition-colors sm:px-1',
         className
