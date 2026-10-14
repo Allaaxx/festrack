@@ -8,6 +8,7 @@ import { useWeekView } from '../hooks/use-week-view';
 import { CalendarCell } from './calendar-cell';
 import { CalendarDayColumn } from './calendar-day-column';
 import { CalendarEventBlock } from './calendar-event-block';
+import EventDropdownMenu from './event-dropdown-menu';
 import { EventItem } from './event-item';
 
 export function WeekView({
@@ -28,7 +29,6 @@ export function WeekView({
     showAllDaySection,
     currentTimePosition,
     currentTimeVisible,
-    handleEventClick,
   } = useWeekView({ currentDate, events, onEventSelect });
 
   return (
@@ -86,26 +86,29 @@ export function WeekView({
                     const shouldShowTitle = isFirstDay || isFirstVisibleDay;
 
                     return (
-                      <EventItem
+                      <EventDropdownMenu
                         key={`spanning-${event.id}`}
-                        onClick={(e) => handleEventClick(event, e)}
                         event={event}
-                        view="month"
-                        isFirstDay={isFirstDay}
-                        isLastDay={isLastDay}
-                        spansLeft={spansLeft}
-                        spansRight={spansRight}
                       >
-                        <div
-                          className={cn(
-                            'truncate',
-                            !shouldShowTitle && 'invisible'
-                          )}
-                          aria-hidden={!shouldShowTitle}
+                        <EventItem
+                          event={event}
+                          view="month"
+                          isFirstDay={isFirstDay}
+                          isLastDay={isLastDay}
+                          spansLeft={spansLeft}
+                          spansRight={spansRight}
                         >
-                          {event.title}
-                        </div>
-                      </EventItem>
+                          <div
+                            className={cn(
+                              'truncate',
+                              !shouldShowTitle && 'invisible'
+                            )}
+                            aria-hidden={!shouldShowTitle}
+                          >
+                            {event.title}
+                          </div>
+                        </EventItem>
+                      </EventDropdownMenu>
                     );
                   })}
                 </div>

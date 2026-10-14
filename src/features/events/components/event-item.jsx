@@ -13,15 +13,18 @@ import {
 const formatEventTime = (date) => format(date, 'HH:mm');
 
 function EventWrapper({
+  ref,
   event,
   isFirstDay = true,
   isLastDay = true,
   onClick,
   className,
   children,
+  ...props
 }) {
   return (
     <button
+      ref={ref}
       className={cn(
         'focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full text-left font-medium transition outline-none select-none focus-visible:ring-[3px] data-past-event:line-through',
         getEventColorClasses(event.color),
@@ -31,6 +34,7 @@ function EventWrapper({
       data-calendar-event
       data-past-event={isPast(event.end) || undefined}
       onClick={onClick}
+      {...props}
     >
       {children}
     </button>
@@ -38,6 +42,7 @@ function EventWrapper({
 }
 
 export function EventItem({
+  ref,
   event,
   view,
   onClick,
@@ -49,6 +54,7 @@ export function EventItem({
   isOverlay = false,
   children,
   className,
+  ...props
 }) {
   const durationMinutes = useMemo(
     () => differenceInMinutes(event.end, event.start),
@@ -78,6 +84,7 @@ export function EventItem({
 
     const eventWrapper = (
       <EventWrapper
+        ref={ref}
         event={event}
         isFirstDay={isFirstDay}
         isLastDay={isLastDay}
@@ -88,6 +95,7 @@ export function EventItem({
           getMonthViewEventPaddingClasses(spansLeft, spansRight),
           className
         )}
+        {...props}
       >
         {monthContent ? (
           <span className="relative z-10 block min-w-0 flex-1 truncate overflow-hidden">
@@ -110,6 +118,7 @@ export function EventItem({
 
   return (
     <EventWrapper
+      ref={ref}
       event={event}
       isFirstDay={isFirstDay}
       isLastDay={isLastDay}
@@ -120,6 +129,7 @@ export function EventItem({
         view === 'week' ? 'text-[10px] sm:text-xs' : 'text-xs',
         className
       )}
+      {...props}
     >
       {durationMinutes < 45 ? (
         <div className="truncate">
