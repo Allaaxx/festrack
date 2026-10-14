@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useDeleteEvent, useGetEvent } from '@/features/events/api/hooks';
+import { useGetTransactions } from '@/features/transactions';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';
 
@@ -19,6 +20,14 @@ vi.mock('@/features/events/api/hooks', async () => {
     ...actual,
     useGetEvent: vi.fn(),
     useDeleteEvent: vi.fn(),
+  };
+});
+
+vi.mock('@/features/transactions/api/hooks', async () => {
+  const actual = await vi.importActual('@/features/transactions/api/hooks');
+  return {
+    ...actual,
+    useGetTransactions: vi.fn(),
   };
 });
 
@@ -69,12 +78,17 @@ describe('EventDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAuthContext.mockReturnValue({
-      user: { id: 'user-1', name: 'Test User' },
+      user: { id: 'user-1', firstName: 'Test', name: 'Test User' },
       isInitializing: false,
     });
     useDeleteEvent.mockReturnValue({
       mutateAsync: mockDeleteMutateAsync,
       isPending: false,
+    });
+    useGetTransactions.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
     });
   });
 
@@ -271,5 +285,211 @@ describe('EventDetailPage', () => {
 
     expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
     expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
+  });
+
+  describe('Event Financial KPI Metrics Cards and Transactions Table (#42)', () => {
+    const mockTransactions = [
+      {
+        id: 'tx-1',
+        name: 'Passagem Aérea',
+        type: 'EXPENSE',
+        amount: 1500,
+        date: '2026-12-02T12:00:00.000Z',
+        eventId: 'ev-123',
+      },
+      {
+        id: 'tx-2',
+        name: 'Patrocínio Amigos',
+        type: 'EARNING',
+        amount: 3200,
+        date: '2026-12-03T12:00:00.000Z',
+        eventId: 'ev-123',
+      },
+      {
+        id: 'tx-3',
+        name: 'Reserva Hotel',
+        type: 'INVESTMENT',
+        amount: 700,
+        date: '2026-12-04T12:00:00.000Z',
+        eventId: 'ev-123',
+      },
+    ];
+
+    it('calculates and displays accurate totals for EARNING, EXPENSE, INVESTMENT, and Net Balance in BRL', () => {
+      useGetEvent.mockReturnValue({
+        data: mockEvent,
+        isLoading: false,
+        isError: false,
+      });
+      useGetTransactions.mockReturnValue({
+        data: mockTransactions,
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithProviders(
+        <Routes>
+          <Route path="/event/:eventId" element={<EventDetailPage />} />
+        </Routes>
+      );
+
+      // Total de Receitas: 3200
+      const earningsCard = screen.getByTestId('kpi-earnings');
+      expect(earningsCard).toHaveTextContent('Total de Receitas');
+      expect(earningsCard).toHaveTextContent(/R\$\s*3\.200,00/);
+
+      // Total de Despesas: 1500
+      const expensesCard = screen.getByTestId('kpi-expenses');
+      expect(expensesCard).toHaveTextContent('Total de Despesas');
+      expect(expensesCard).toHaveTextContent(/R\$\s*1\.500,00/);
+
+      // Total de Investimentos: 700
+      const investmentsCard = screen.getByTestId('kpi-investments');
+      expect(investmentsCard).toHaveTextContent('Total de Investimentos');
+      expect(investmentsCard).toHaveTextContent(/R\$\s*700,00/);
+
+      // Saldo Líquido: 3200 - (1500 + 700) = 1000
+      const netBalanceCard = screen.getByTestId('kpi-net-balance');
+      expect(netBalanceCard).toHaveTextContent('Saldo Líquido');
+      expect(netBalanceCard).toHaveTextContent(/R\$\s*1\.000,00/);
+    });
+
+    it('renders transactions table with proper columns, badges, dates, amounts, and row actions', () => {
+      useGetEvent.mockReturnValue({
+        data: mockEvent,
+        isLoading: false,
+        isError: false,
+      });
+      useGetTransactions.mockReturnValue({
+        data: mockTransactions,
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithProviders(
+        <Routes>
+          <Route path="/event/:eventId" element={<EventDetailPage />} />
+        </Routes>
+      );
+
+      // Check table column headers
+      const table = screen.getByRole('table');
+      const tableScope = within(table);
+
+      expect(tableScope.getByRole('button', { name: /título/i })).toBeInTheDocument();
+      expect(tableScope.getByRole('button', { name: /tipo/i })).toBeInTheDocument();
+      expect(tableScope.getByRole('button', { name: /data/i })).toBeInTheDocument();
+      expect(tableScope.getByRole('button', { name: /valor/i })).toBeInTheDocument();
+      expect(tableScope.getByText('Ações')).toBeInTheDocument();
+
+      // Check rows content
+      expect(tableScope.getByText('Passagem Aérea')).toBeInTheDocument();
+      expect(tableScope.getByText('Gasto')).toBeInTheDocument();
+      expect(tableScope.getByText(/02 de dezembro de 2026/)).toBeInTheDocument();
+      expect(tableScope.getByText(/R\$\s*1\.500,00/)).toBeInTheDocument();
+
+      expect(tableScope.getByText('Patrocínio Amigos')).toBeInTheDocument();
+      expect(tableScope.getByText('Ganho')).toBeInTheDocument();
+      expect(tableScope.getByText(/03 de dezembro de 2026/)).toBeInTheDocument();
+      expect(tableScope.getByText(/R\$\s*3\.200,00/)).toBeInTheDocument();
+
+      expect(tableScope.getByText('Reserva Hotel')).toBeInTheDocument();
+      expect(tableScope.getByText('Investimento')).toBeInTheDocument();
+      expect(tableScope.getByText(/04 de dezembro de 2026/)).toBeInTheDocument();
+      expect(tableScope.getByText(/R\$\s*700,00/)).toBeInTheDocument();
+
+      // Row action buttons
+      const editButtons = tableScope.getAllByRole('button', {
+        name: /editar transação/i,
+      });
+      expect(editButtons.length).toBe(3);
+
+      const deleteButtons = tableScope.getAllByRole('button', {
+        name: /excluir transação/i,
+      });
+      expect(deleteButtons.length).toBe(3);
+    });
+
+    it('renders empty state when transaction list is empty with an actionable CTA button', () => {
+      useGetEvent.mockReturnValue({
+        data: mockEvent,
+        isLoading: false,
+        isError: false,
+      });
+      useGetTransactions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+      });
+
+      renderWithProviders(
+        <Routes>
+          <Route path="/event/:eventId" element={<EventDetailPage />} />
+        </Routes>
+      );
+
+      expect(screen.getByTestId('event-transactions-empty')).toBeInTheDocument();
+      expect(screen.getByText('Nenhuma transação encontrada')).toBeInTheDocument();
+      expect(
+        screen.getByText('Nenhuma transação registrada para este evento.')
+      ).toBeInTheDocument();
+
+      const addBtn = screen.getByRole('button', {
+        name: /adicionar transação/i,
+      });
+      expect(addBtn).toBeInTheDocument();
+    });
+
+    it('reactively recomputes KPI cards when transactions are updated', () => {
+      useGetEvent.mockReturnValue({
+        data: mockEvent,
+        isLoading: false,
+        isError: false,
+      });
+
+      const { rerender } = renderWithProviders(
+        <Routes>
+          <Route path="/event/:eventId" element={<EventDetailPage />} />
+        </Routes>
+      );
+
+      // Initially empty
+      expect(screen.getByTestId('kpi-net-balance')).toHaveTextContent(
+        /R\$\s*0,00/
+      );
+
+      // Now transactions arrive/update
+      useGetTransactions.mockReturnValue({
+        data: [
+          {
+            id: 'tx-new',
+            name: 'Premiação',
+            type: 'EARNING',
+            amount: 4500,
+            date: '2026-12-05T12:00:00.000Z',
+            eventId: 'ev-123',
+          },
+        ],
+        isLoading: false,
+        isError: false,
+      });
+
+      rerender(
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/event/ev-123']}>
+            <Routes>
+              <Route path="/event/:eventId" element={<EventDetailPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByTestId('kpi-earnings')).toHaveTextContent(
+        /R\$\s*4\.500,00/
+      );
+      expect(screen.getByTestId('kpi-net-balance')).toHaveTextContent(
+        /R\$\s*4\.500,00/
+      );
+    });
   });
 });

@@ -1,6 +1,4 @@
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale/pt-BR';
-import { AlertCircleIcon, ArrowUpDown, ReceiptText } from 'lucide-react';
+import { AlertCircleIcon, ReceiptText } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 
 import { Button } from '@/components/ui/button';
@@ -9,138 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetTransactions } from '@/features/transactions/api/hooks';
 import AddTransactionButton from '@/features/transactions/components/add-transaction-button';
-import DeleteTransactionButton from '@/features/transactions/components/delete-transaction-button';
-import EditTransactionButton from '@/features/transactions/components/edit-transaction-button';
-import TransactionTypeBadge from '@/features/transactions/components/transaction-type-badge';
-import { formatCurrency } from '@/helpers/currency';
-
-const columns = [
-  {
-    accessorKey: 'name',
-
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Título
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-
-    sortFn: (rowA, rowB, columnId) => {
-      const nameA = String(rowA.getValue(columnId) ?? '');
-      const nameB = String(rowB.getValue(columnId) ?? '');
-
-      return nameA.localeCompare(nameB, 'pt-BR', {
-        sensitivity: 'base',
-        numeric: true,
-      });
-    },
-  },
-
-  {
-    accessorKey: 'type',
-
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Tipo
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-
-    sortFn: (rowA, rowB, columnId) => {
-      const typeA = String(rowA.getValue(columnId) ?? '');
-      const typeB = String(rowB.getValue(columnId) ?? '');
-
-      return typeA.localeCompare(typeB, 'pt-BR', {
-        sensitivity: 'base',
-      });
-    },
-
-    cell: ({ row: { original: transaction } }) => {
-      return <TransactionTypeBadge variant={transaction.type.toLowerCase()} />;
-    },
-  },
-
-  {
-    accessorKey: 'date',
-
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Data
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-
-    sortFn: (rowA, rowB, columnId) => {
-      const dateA = new Date(String(rowA.getValue(columnId) ?? '')).getTime();
-      const dateB = new Date(String(rowB.getValue(columnId) ?? '')).getTime();
-
-      return dateA - dateB;
-    },
-
-    cell: ({ row: { original: transaction } }) => {
-      return format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", {
-        locale: ptBR,
-      });
-    },
-  },
-
-  {
-    accessorKey: 'amount',
-
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Valor
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-
-    sortFn: (rowA, rowB, columnId) => {
-      const amountA = Number(rowA.getValue(columnId) ?? 0);
-      const amountB = Number(rowB.getValue(columnId) ?? 0);
-
-      return amountA - amountB;
-    },
-
-    cell: ({ row: { original: transaction } }) => {
-      return formatCurrency(transaction.amount);
-    },
-  },
-
-  {
-    id: 'actions',
-    header: 'Ações',
-    enableSorting: false,
-
-    cell: ({ row: { original: transaction } }) => {
-      return (
-        <div className="flex items-center gap-2">
-          <EditTransactionButton transaction={transaction} />
-          <DeleteTransactionButton transaction={transaction} />
-        </div>
-      );
-    },
-  },
-];
+import transactionColumns from '@/features/transactions/components/transaction-columns';
 
 const TransactionsTable = () => {
   const [searchParams] = useSearchParams();
@@ -215,7 +82,7 @@ const TransactionsTable = () => {
       <h2 className="mb-4 text-2xl font-bold">Transações</h2>
 
       <ScrollArea className="h-85 rounded-md border">
-        <DataTable columns={columns} data={transactions} />
+        <DataTable columns={transactionColumns} data={transactions} />
       </ScrollArea>
     </section>
   );

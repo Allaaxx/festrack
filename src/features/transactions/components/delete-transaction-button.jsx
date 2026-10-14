@@ -64,7 +64,11 @@ const DeleteTransactionButton = ({ transaction }) => {
     >
       <DialogTrigger
         render={
-          <Button variant="ghost" className="text-muted-foreground">
+          <Button
+            variant="ghost"
+            className="text-muted-foreground"
+            aria-label="Excluir transação"
+          >
             <Trash2Icon />
           </Button>
         }
