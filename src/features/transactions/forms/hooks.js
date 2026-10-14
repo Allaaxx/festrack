@@ -14,7 +14,7 @@ import {
 export const useCreateTransactionForm = ({
   onSuccess,
   onError,
-  initialEventId,
+  initialEventId = null,
 } = {}) => {
   const { mutateAsync: createTransaction } = useCreateTransaction();
   const form = useForm({

@@ -3,6 +3,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 
 import { useEventResizable } from '../hooks/use-event-resizable';
+import EventDropdownMenu from './event-dropdown-menu';
 import { EventItem } from './event-item';
 
 function ResizeHandle({
@@ -34,7 +35,6 @@ function ResizeHandle({
 export function CalendarEventBlock({
   positionedEvent,
   view,
-  onEventSelect,
   onEventResize,
   onEventResizeEnd,
 }) {
@@ -54,13 +54,6 @@ export function CalendarEventBlock({
     },
     disabled: isResizing,
   });
-
-  const handleClick = (e) => {
-    e.stopPropagation();
-    if (!isResizing && !isDragging) {
-      onEventSelect?.(event);
-    }
-  };
 
   return (
     <div
@@ -91,7 +84,12 @@ export function CalendarEventBlock({
         {...attributes}
         className="h-full w-full cursor-grab select-none active:cursor-grabbing"
       >
-        <EventItem event={event} view={view} onClick={handleClick} showTime />
+        <EventDropdownMenu
+          event={event}
+          disabled={isResizing || isDragging}
+        >
+          <EventItem event={event} view={view} showTime />
+        </EventDropdownMenu>
       </div>
 
       <ResizeHandle

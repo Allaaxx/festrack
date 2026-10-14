@@ -7,6 +7,7 @@ import { useDayView } from '../hooks/use-day-view';
 import { CalendarCell } from './calendar-cell';
 import { CalendarDayColumn } from './calendar-day-column';
 import { CalendarEventBlock } from './calendar-event-block';
+import EventDropdownMenu from './event-dropdown-menu';
 import { EventItem } from './event-item';
 
 export function DayView({
@@ -25,7 +26,6 @@ export function DayView({
     showAllDaySection,
     currentTimePosition,
     currentTimeVisible,
-    handleEventClick,
   } = useDayView({ currentDate, events, onEventSelect });
 
   return (
@@ -40,16 +40,19 @@ export function DayView({
             </div>
             <div className="border-border/70 relative border-r p-1 last:border-r-0">
               {allDayEvents.map((event) => (
-                <EventItem
+                <EventDropdownMenu
                   key={`spanning-${event.id}`}
-                  onClick={(e) => handleEventClick(event, e)}
                   event={event}
-                  view="month"
-                  isFirstDay={isSameDay(currentDate, event.start)}
-                  isLastDay={isSameDay(currentDate, event.end)}
                 >
-                  <div>{event.title}</div>
-                </EventItem>
+                  <EventItem
+                    event={event}
+                    view="month"
+                    isFirstDay={isSameDay(currentDate, event.start)}
+                    isLastDay={isSameDay(currentDate, event.end)}
+                  >
+                    <div>{event.title}</div>
+                  </EventItem>
+                </EventDropdownMenu>
               ))}
             </div>
           </div>
