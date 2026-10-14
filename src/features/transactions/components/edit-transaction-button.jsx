@@ -54,7 +54,11 @@ const EditTransactionButton = ({ transaction }) => {
     <Sheet open={sheetIsOpen} onOpenChange={setSheetIsOpen}>
       <SheetTrigger
         render={
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Editar transação"
+          >
             <ExternalLinkIcon className="text-muted-foreground" />
           </Button>
         }

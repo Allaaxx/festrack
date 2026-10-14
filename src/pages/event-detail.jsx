@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import {
   EventDetailHeader,
   EventDetailSkeleton,
+  EventFinancialCards,
+  EventTransactionsTable,
   useGetEvent,
 } from '@/features/events';
 
@@ -60,7 +62,8 @@ const EventDetailPage = () => {
       />
 
       <div data-testid="event-detail-content" className="space-y-6">
-        {/* Espaço reservado para métricas financeiras (KPIs) e tabela de transações (#42) */}
+        <EventFinancialCards eventId={event.id} />
+        <EventTransactionsTable eventId={event.id} />
       </div>
     </div>
   );
