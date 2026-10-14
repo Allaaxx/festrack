@@ -73,8 +73,14 @@ export function useMonthView({ currentDate, onEventSelect, onEventCreate }) {
     const target = event.target;
 
     if (
+      !event.currentTarget.contains(target) ||
       target.closest('[data-calendar-event]') ||
-      target.closest('[data-slot^="popover-"]')
+      target.closest('[data-slot^="popover-"]') ||
+      target.closest('[data-slot^="dropdown-menu"]') ||
+      target.closest('[data-slot^="dialog"]') ||
+      target.closest('[data-slot^="sheet"]') ||
+      target.closest('[role="menu"]') ||
+      target.closest('[role="dialog"]')
     ) {
       return;
     }
