@@ -86,4 +86,23 @@ A previously valid Session that has been terminated, revoked, or timed out on th
 - **Handling:** When protected API endpoints return HTTP 401 Unauthorized due to an expired session, the client invalidates local user state, clears sensitive financial records from the query cache, and smoothly transitions the user to re-authenticate without hard browser reloads.
 - **Recovery:** Preserves the user's active page as the post-authentication redirect destination, allowing uninterrupted continuation of their workflow upon re-signing in.
 
+---
+
+### OAuth State
+
+An ephemeral cryptographic token generated during social authentication handshakes (e.g., Google OAuth) to verify transaction authenticity and defend against Cross-Site Request Forgery (CSRF).
+
+- **Lifecycle:** Created when initiating social sign-in (`AuthService.signInWithGoogle`), serialized into a temporary verification cookie (`better-auth.state`), and validated by the backend authentication engine upon receiving the authorization callback.
+- **Security Constraints:** Must be single-use, time-bound, and preserved across cross-domain redirects between the frontend, the identity provider, and the API. If the state cookie is absent or mismatched upon callback, a `state_mismatch` error is triggered.
+
+---
+
+### Cross-Site Cookie
+
+An HTTP cookie transmitted in requests traversing distinct domain or origin boundaries (e.g., frontend on Vercel navigating to backend API on Render).
+
+- **Production Requirements:** Modern web browsers enforce strict third-party cookie restrictions. In cross-domain deployments, authentication and state verification cookies must configure `SameSite=None`, `Secure=true`, and `HttpOnly=true` so they are not rejected during cross-site redirects.
+- **Development Parity:** In local development environments running over unencrypted HTTP (`localhost`), cookies use `SameSite=Lax` and `Secure=false` to support local workflows without requiring TLS certificates.
+
+
 
