@@ -86,6 +86,37 @@ describe('Transactions API Hooks - Unauthenticated & Null Safety', () => {
     });
   });
 
+  describe('getTransactionsQueryKey', () => {
+    it('returns base key when no params are passed or dates incomplete', () => {
+      expect(getTransactionsQueryKey({ userId: 'u1' })).toEqual([
+        'getTransactions',
+        'u1',
+      ]);
+      expect(
+        getTransactionsQueryKey({ userId: 'u1', from: '2026-01-01' })
+      ).toEqual(['getTransactions', 'u1']);
+    });
+
+    it('returns date range key when from and to are provided', () => {
+      expect(
+        getTransactionsQueryKey({
+          userId: 'u1',
+          from: '2026-01-01',
+          to: '2026-01-31',
+        })
+      ).toEqual(['getTransactions', 'u1', '2026-01-01', '2026-01-31']);
+    });
+
+    it('returns isolated eventId key when eventId is provided', () => {
+      expect(
+        getTransactionsQueryKey({
+          userId: 'u1',
+          eventId: 'ev-123',
+        })
+      ).toEqual(['getTransactions', 'u1', { eventId: 'ev-123' }]);
+    });
+  });
+
   describe('useGetTransactions', () => {
     it('does not throw when user is null and query remains disabled', () => {
       useAuthContext.mockReturnValue({ user: null });
@@ -94,6 +125,31 @@ describe('Transactions API Hooks - Unauthenticated & Null Safety', () => {
         () => useGetTransactions({ from: '2026-01-01', to: '2026-01-31' }),
         { wrapper: createWrapper() }
       );
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.status).toBe('pending');
+      expect(TransactionService.getAll).not.toHaveBeenCalled();
+    });
+
+    it('does not throw when user is null even if eventId is provided', () => {
+      useAuthContext.mockReturnValue({ user: null });
+
+      const { result } = renderHook(
+        () => useGetTransactions({ eventId: 'ev-123' }),
+        { wrapper: createWrapper() }
+      );
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.status).toBe('pending');
+      expect(TransactionService.getAll).not.toHaveBeenCalled();
+    });
+
+    it('remains disabled when user is authenticated but neither eventId nor date ranges are provided', () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+
+      const { result } = renderHook(() => useGetTransactions(), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.fetchStatus).toBe('idle');
       expect(result.current.status).toBe('pending');
@@ -114,6 +170,23 @@ describe('Transactions API Hooks - Unauthenticated & Null Safety', () => {
       expect(TransactionService.getAll).toHaveBeenCalledWith({
         from: '2026-01-01',
         to: '2026-01-31',
+      });
+      expect(result.current.data).toEqual(mockTransactions);
+    });
+
+    it('fetches transactions when user and eventId are provided', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      const mockTransactions = [{ id: 'tx-event-1', amount: 250 }];
+      TransactionService.getAll.mockResolvedValue(mockTransactions);
+
+      const { result } = renderHook(
+        () => useGetTransactions({ eventId: 'ev-123' }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(TransactionService.getAll).toHaveBeenCalledWith({
+        eventId: 'ev-123',
       });
       expect(result.current.data).toEqual(mockTransactions);
     });
