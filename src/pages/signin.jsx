@@ -1,5 +1,5 @@
 import { Loader2Icon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { Link, Navigate, useLocation } from 'react-router';
 
@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/contexts/auth';
 import { useSignInForm } from '@/forms/hooks/auth';
+import { getOAuthErrorMessage } from '@/helpers/auth';
 import { getRedirectDestination } from '@/helpers/url';
 
 const SignInPage = () => {
@@ -33,6 +34,19 @@ const SignInPage = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const location = useLocation();
   const redirectTo = getRedirectDestination(location.state?.from);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const errorCode = params.get('error');
+    const errorDescription = params.get('error_description');
+
+    if (errorCode || errorDescription) {
+      const message = getOAuthErrorMessage(errorCode, errorDescription);
+      if (message) {
+        form.setError('root', { message });
+      }
+    }
+  }, [location.search, form]);
 
   const handleSubmit = async (data) => {
     try {
