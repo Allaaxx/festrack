@@ -30,7 +30,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
 import { EventCombobox } from '@/features/events';
-import { useCreateTransactionForm } from '@/features/transactions/forms/hooks';
+import {
+  getDefaultTransactionValues,
+  useCreateTransactionForm,
+} from '@/features/transactions/forms/hooks';
 
 const AddTransactionButton = ({
   initialEventId = null,
@@ -53,13 +56,7 @@ const AddTransactionButton = ({
     initialEventId,
     onSuccess: () => {
       handleOpenChange(false);
-      form.reset({
-        name: '',
-        amount: 0,
-        date: new Date(),
-        type: 'EARNING',
-        eventId: initialEventId ?? null,
-      });
+      form.reset(getDefaultTransactionValues(initialEventId));
       toast.add({
         type: 'success',
         description: 'Transação criada com sucesso.',
@@ -77,13 +74,7 @@ const AddTransactionButton = ({
 
   useEffect(() => {
     if (dialogIsOpen) {
-      form.reset({
-        name: '',
-        amount: 0,
-        date: new Date(),
-        type: 'EARNING',
-        eventId: initialEventId ?? null,
-      });
+      form.reset(getDefaultTransactionValues(initialEventId));
     }
   }, [dialogIsOpen, initialEventId, form]);
 
@@ -189,7 +180,9 @@ const AddTransactionButton = ({
                       id="eventId"
                       value={field.value}
                       onChange={field.onChange}
-                      disabled={form.formState.isSubmitting}
+                      disabled={
+                        Boolean(initialEventId) || form.formState.isSubmitting
+                      }
                       aria-invalid={fieldState.invalid}
                     />
                     {fieldState.invalid && (
@@ -250,13 +243,7 @@ const AddTransactionButton = ({
                   disabled={form.formState.isSubmitting}
                   className="w-full sm:w-1/2"
                   onClick={() =>
-                    form.reset({
-                      name: '',
-                      amount: 0,
-                      date: new Date(),
-                      type: 'EARNING',
-                      eventId: initialEventId ?? null,
-                    })
+                    form.reset(getDefaultTransactionValues(initialEventId))
                   }
                 >
                   Cancelar

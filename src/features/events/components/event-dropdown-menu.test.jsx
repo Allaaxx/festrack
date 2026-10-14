@@ -165,8 +165,10 @@ describe('EventDropdownMenu', () => {
       const dialog = screen.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
       expect(within(dialog).getByText('Adicionar Transação')).toBeInTheDocument();
-      // Should show the pre-selected event in the combobox button
-      expect(within(dialog).getByText(mockEvent.name)).toBeInTheDocument();
+      // Should show the pre-selected event in the combobox button and be disabled/locked
+      const combobox = within(dialog).getByRole('combobox');
+      expect(combobox).toHaveTextContent(mockEvent.name);
+      expect(combobox).toBeDisabled();
     });
   });
 

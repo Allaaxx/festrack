@@ -31,7 +31,6 @@ import { cn } from '@/lib/utils';
  *   align?: 'start' | 'center' | 'end',
  *   side?: 'top' | 'bottom' | 'left' | 'right',
  *   className?: string,
- *   onNavigate?: (path: string) => void,
  * }} props
  */
 const EventDropdownMenu = ({
@@ -42,7 +41,6 @@ const EventDropdownMenu = ({
   align = 'start',
   side = 'bottom',
   className,
-  onNavigate,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -93,11 +91,7 @@ const EventDropdownMenu = ({
 
   const handleViewDetails = () => {
     setIsOpen(false);
-    if (onNavigate) {
-      onNavigate(`/event/${eventId}`);
-    } else {
-      navigate(`/event/${eventId}`);
-    }
+    navigate(`/event/${eventId}`);
   };
 
   const handleEditEvent = () => {
