@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation } from 'react-router';
+import { Navigate, useLocation } from 'react-router';
 
-import { LogoIcon } from '@/assets/images';
-import LoginForm from '@/components/auth/login-form';
+import { LoginForm } from '@/components/auth';
+import { AuthSplitLayout } from '@/components/layout';
 import AuthLoading from '@/components/shared/auth-loading';
 import { useAuthContext } from '@/contexts/auth';
 import { useSignInForm } from '@/forms/hooks/auth';
@@ -64,40 +64,15 @@ const SignInPage = () => {
   }
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <Link to="/" className="flex items-center gap-2 font-medium">
-            <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md">
-              <LogoIcon className="size-4" />
-            </div>
-            <span className="text-lg font-semibold">Festrack</span>
-          </Link>
-        </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-sm">
-            <LoginForm
-              form={form}
-              onSubmit={handleSubmit}
-              isGoogleLoading={isGoogleLoading}
-              onGoogleSignIn={handleGoogleSignIn}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="bg-muted relative hidden lg:block">
-        <img
-          src="/auth-cover-white.jpg"
-          alt="Festrack"
-          className="absolute inset-0 h-full w-full object-cover dark:hidden"
-        />
-        <img
-          src="/auth-cover-black.jpg"
-          alt="Festrack"
-          className="absolute inset-0 hidden h-full w-full object-cover dark:block"
-        />
-      </div>
-    </div>
+    <AuthSplitLayout maxWidth="max-w-sm">
+      <LoginForm
+        form={form}
+        onSubmit={handleSubmit}
+        isGoogleLoading={isGoogleLoading}
+        onGoogleSignIn={handleGoogleSignIn}
+        redirectState={location.state}
+      />
+    </AuthSplitLayout>
   );
 };
 
