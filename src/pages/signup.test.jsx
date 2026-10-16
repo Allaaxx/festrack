@@ -64,6 +64,67 @@ describe('SignUpPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders brand header with logo and link to home', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const brandLink = screen.getByRole('link', { name: /festrack/i });
+    expect(brandLink).toBeInTheDocument();
+    expect(brandLink).toHaveAttribute('href', '/');
+  });
+
+  it('renders theme-adaptive cover images in right column', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const coverImages = screen.getAllByAltText('Festrack');
+    expect(coverImages).toHaveLength(2);
+    expect(coverImages[0]).toHaveAttribute('src', '/auth-cover-white.jpg');
+    expect(coverImages[1]).toHaveAttribute('src', '/auth-cover-black.jpg');
+  });
+
+  it('renders login link pointing to /signin', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const signinLink = screen.getByRole('link', { name: /faça login/i });
+    expect(signinLink).toBeInTheDocument();
+    expect(signinLink).toHaveAttribute('href', '/signin');
+  });
+
   it('redirects to / when user is already authenticated without location state', () => {
     useAuthContext.mockReturnValue({
       user: { id: 'u1', name: 'John Doe' },
