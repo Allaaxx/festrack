@@ -1,4 +1,5 @@
 export { default as AppSidebar } from './app-sidebar';
+export { default as AuthSplitLayout } from './auth-split-layout';
 export { default as DashboardLayout } from './dashboard-layout';
 export { default as Header } from './header';
 export { default as NavFooter } from './nav-footer';

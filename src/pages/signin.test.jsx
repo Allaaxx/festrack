@@ -118,6 +118,33 @@ describe('SignInPage', () => {
     expect(signupLink).toHaveAttribute('href', '/signup');
   });
 
+  it('preserves location state in registration link pointing to /signup', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signin: mockSignin,
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/signin',
+            state: { from: { pathname: '/event', search: '?view=month' } },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/signin" element={<SignInPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const signupLink = screen.getByRole('link', { name: /crie agora/i });
+    expect(signupLink).toBeInTheDocument();
+    expect(signupLink).toHaveAttribute('href', '/signup');
+  });
+
   it('redirects to / when user is already authenticated without location state', () => {
     useAuthContext.mockReturnValue({
       user: { id: 'u1', name: 'John Doe' },

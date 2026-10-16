@@ -1,6 +1,6 @@
 import { Loader2Icon } from 'lucide-react';
 import { Controller } from 'react-hook-form';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 
 import GoogleIcon from '@/components/shared/google-icon';
 import PasswordInput from '@/components/shared/password-input';
@@ -23,9 +23,17 @@ import { Separator } from '@/components/ui/separator';
  * @param {(data: { email: string, password: string }) => void | Promise<void>} props.onSubmit - Submission callback executed when credentials pass validation.
  * @param {boolean} props.isGoogleLoading - Flag indicating active Google OAuth redirect.
  * @param {() => void | Promise<void>} props.onGoogleSignIn - Callback to initiate Google OAuth handshake.
+ * @param {any} [props.redirectState] - Preserved router location state passed to the registration switch link.
+ * @param {{ state?: any }} [props.location] - Optional location object fallback for preserved router state.
  */
-const LoginForm = ({ form, onSubmit, isGoogleLoading, onGoogleSignIn }) => {
-  const location = useLocation();
+const LoginForm = ({
+  form,
+  onSubmit,
+  isGoogleLoading,
+  onGoogleSignIn,
+  redirectState,
+  location,
+}) => {
 
   return (
     <form
@@ -117,7 +125,7 @@ const LoginForm = ({ form, onSubmit, isGoogleLoading, onGoogleSignIn }) => {
         Ainda não possui uma conta?{' '}
         <Link
           to="/signup"
-          state={location.state}
+          state={redirectState ?? location?.state}
           className="hover:text-primary underline underline-offset-4"
         >
           Crie agora

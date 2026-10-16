@@ -1,6 +1,6 @@
 import { Loader2Icon } from 'lucide-react';
 import { Controller } from 'react-hook-form';
-import { Link, useLocation } from 'react-router';
+import { Link } from 'react-router';
 
 import GoogleIcon from '@/components/shared/google-icon';
 import PasswordInput from '@/components/shared/password-input';
@@ -24,9 +24,17 @@ import { Separator } from '@/components/ui/separator';
  * @param {(data: { firstName: string, lastName: string, email: string, password: string, passwordConfirmation: string, terms: boolean }) => void | Promise<void>} props.onSubmit - Submission callback executed when registration data passes validation.
  * @param {boolean} props.isGoogleLoading - Flag indicating active Google OAuth redirect.
  * @param {() => void | Promise<void>} props.onGoogleSignIn - Callback to initiate Google OAuth handshake.
+ * @param {any} [props.redirectState] - Preserved router location state passed to the sign-in switch link.
+ * @param {{ state?: any }} [props.location] - Optional location object fallback for preserved router state.
  */
-const SignupForm = ({ form, onSubmit, isGoogleLoading, onGoogleSignIn }) => {
-  const location = useLocation();
+const SignupForm = ({
+  form,
+  onSubmit,
+  isGoogleLoading,
+  onGoogleSignIn,
+  redirectState,
+  location,
+}) => {
 
   return (
     <form
@@ -212,7 +220,7 @@ const SignupForm = ({ form, onSubmit, isGoogleLoading, onGoogleSignIn }) => {
         Já possui uma conta?{' '}
         <Link
           to="/signin"
-          state={location.state}
+          state={redirectState ?? location?.state}
           className="hover:text-primary underline underline-offset-4"
         >
           Faça login
