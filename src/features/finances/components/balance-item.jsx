@@ -11,7 +11,9 @@ const BalanceItem = ({ label, icon, amount, ...props }) => {
           </div>
           <p className="text-muted-foreground text-sm">{label}</p>
         </div>
-        <h3 className="text-2xl font-semibold">{formatCurrency(amount ?? 0)}</h3>
+        <h3 className="text-2xl font-semibold">
+          {formatCurrency(amount ?? 0)}
+        </h3>
       </CardContent>
     </Card>
   );

@@ -8,7 +8,7 @@ import {
   AddTransactionButton,
   transactionColumns,
   useGetTransactions,
-} from '@/features/transactions';
+} from '@/features/finances';
 
 /**
  * Tabela de transações dedicada para a visualização detalhada de um evento.

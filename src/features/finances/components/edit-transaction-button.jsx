@@ -1,6 +1,6 @@
 import {
-  ExternalLinkIcon,
   Loader2Icon,
+  PenBoxIcon,
   PiggyBankIcon,
   TrendingDownIcon,
   TrendingUpIcon,
@@ -29,14 +29,36 @@ import {
 } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { EventCombobox } from '@/features/events';
-import { useEditTransactionForm } from '@/features/transactions/forms/hooks';
+import { useEditTransactionForm } from '@/features/finances/forms/hooks';
 
-const EditTransactionButton = ({ transaction }) => {
-  const [sheetIsOpen, setSheetIsOpen] = useState(false);
+const EditTransactionButton = ({
+  transaction,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
+  render,
+}) => {
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const sheetIsOpen = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = (open) => {
+    if (!isControlled) {
+      setInternalOpen(open);
+    }
+    onOpenChange?.(open);
+  };
+
+  const actionTrigger = trigger !== undefined ? trigger : render;
+  const hasTrigger =
+    actionTrigger !== null && (!isControlled || Boolean(actionTrigger));
+
   const { form, onSubmit } = useEditTransactionForm({
     transaction,
     onSuccess: () => {
-      setSheetIsOpen(false);
+      handleOpenChange(false);
+      onSuccess?.();
       toast.add({
         type: 'success',
         title: 'Transação editada com sucesso!',
@@ -51,18 +73,24 @@ const EditTransactionButton = ({ transaction }) => {
     },
   });
   return (
-    <Sheet open={sheetIsOpen} onOpenChange={setSheetIsOpen}>
-      <SheetTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Editar transação"
-          >
-            <ExternalLinkIcon className="text-muted-foreground" />
-          </Button>
-        }
-      />
+    <Sheet open={sheetIsOpen} onOpenChange={handleOpenChange}>
+      {hasTrigger && (
+        <SheetTrigger
+          className="h-6"
+          render={
+            actionTrigger ?? (
+              <Button
+                variant="ghost"
+                className="gap-2"
+                aria-label="Editar transação"
+              >
+                <PenBoxIcon />
+                Editar
+              </Button>
+            )
+          }
+        />
+      )}
 
       <SheetContent className="sm:min-w-112.5">
         <SheetHeader>

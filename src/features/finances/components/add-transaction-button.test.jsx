@@ -4,15 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useGetEvents } from '@/features/events/api/hooks';
-import { useCreateTransaction } from '@/features/transactions/api/hooks';
-import AddTransactionButton from '@/features/transactions/components/add-transaction-button';
-import { getDefaultTransactionValues } from '@/features/transactions/forms/hooks';
+import { useCreateTransaction } from '@/features/finances/api/hooks';
+import AddTransactionButton from '@/features/finances/components/add-transaction-button';
+import { getDefaultTransactionValues } from '@/features/finances/forms/hooks';
 
 vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: vi.fn(),
 }));
 
-vi.mock('@/features/transactions/api/hooks', () => ({
+vi.mock('@/features/finances/api/hooks', () => ({
   useCreateTransaction: vi.fn(),
   useEditTransaction: vi.fn(),
 }));

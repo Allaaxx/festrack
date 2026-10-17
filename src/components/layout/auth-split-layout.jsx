@@ -18,7 +18,7 @@ const AuthSplitLayout = ({ children, maxWidth = 'max-w-sm' }) => {
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <Link to="/" className="flex items-center gap-2 font-medium">
-            <div className="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-md">
+            <div className="text-primary flex h-6 w-6 items-center justify-center rounded-md">
               <LogoIcon className="size-4" />
             </div>
             <span className="text-lg font-semibold">Festrack</span>

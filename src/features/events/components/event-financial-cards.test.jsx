@@ -2,12 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useGetTransactions } from '@/features/transactions/api/hooks';
+import { useGetTransactions } from '@/features/finances/api/hooks';
 
 import EventFinancialCards from './event-financial-cards';
 
-vi.mock('@/features/transactions/api/hooks', async () => {
-  const actual = await vi.importActual('@/features/transactions/api/hooks');
+vi.mock('@/features/finances/api/hooks', async () => {
+  const actual = await vi.importActual('@/features/finances/api/hooks');
   return {
     ...actual,
     useGetTransactions: vi.fn(),

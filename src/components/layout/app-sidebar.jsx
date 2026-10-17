@@ -33,12 +33,12 @@ const data = {
   navMain: [
     {
       title: 'Financeiro',
-      url: '/',
+      url: '/finances',
       icon: <ChartSplineIcon />,
     },
     {
       title: 'Eventos',
-      url: '/event',
+      url: '/events',
       icon: <CalendarDaysIcon />,
     },
   ],

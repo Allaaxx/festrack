@@ -24,13 +24,15 @@ const EventDetailPage = () => {
       <div className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border py-16 text-center">
         <CalendarXIcon className="text-muted-foreground size-10" />
         <div className="space-y-1">
-          <p className="text-lg font-medium">Não foi possível carregar o evento.</p>
+          <p className="text-lg font-medium">
+            Não foi possível carregar o evento.
+          </p>
           <p className="text-muted-foreground text-sm">
             Verifique sua conexão e tente novamente.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/event')}>
+          <Button variant="outline" onClick={() => navigate('/events')}>
             Voltar ao calendário
           </Button>
           <Button onClick={() => refetch()}>Tentar novamente</Button>
@@ -49,7 +51,9 @@ const EventDetailPage = () => {
             O evento solicitado não foi encontrado ou foi excluído.
           </p>
         </div>
-        <Button onClick={() => navigate('/event')}>Voltar ao calendário</Button>
+        <Button onClick={() => navigate('/events')}>
+          Voltar ao calendário
+        </Button>
       </div>
     );
   }
@@ -58,7 +62,7 @@ const EventDetailPage = () => {
     <div className="space-y-6">
       <EventDetailHeader
         event={event}
-        onDeleteSuccess={() => navigate('/event')}
+        onDeleteSuccess={() => navigate('/events')}
       />
 
       <div data-testid="event-detail-content" className="space-y-6">
