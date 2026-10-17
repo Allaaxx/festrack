@@ -26,6 +26,7 @@ export {
   useGetTransactions,
   useGetUserBalance,
 } from './api/hooks';
+export { useFinancePage } from './hooks/use-finance-page';
 
 // Forms
 export {
