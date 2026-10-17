@@ -4,7 +4,7 @@ import { useAuthContext } from '@/contexts/auth';
 import {
   BalanceService,
   TransactionService,
-} from '@/features/transactions/api/services';
+} from '@/features/finances/api/services';
 
 export const getUserBalanceQueryKey = ({ userId, from, to }) => {
   if (!from || !to) {
@@ -45,8 +45,7 @@ export const useGetTransactions = ({ from, to, eventId } = {}) => {
       return TransactionService.getAll(input);
     },
     enabled:
-      Boolean(user?.id) &&
-      (Boolean(eventId) || (Boolean(from) && Boolean(to))),
+      Boolean(user?.id) && (Boolean(eventId) || (Boolean(from) && Boolean(to))),
   });
 };
 

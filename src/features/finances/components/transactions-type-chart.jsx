@@ -19,7 +19,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetTransactions } from '@/features/transactions/api/hooks';
+import { useGetTransactions } from '@/features/finances/api/hooks';
 
 export const description = 'A donut chart';
 

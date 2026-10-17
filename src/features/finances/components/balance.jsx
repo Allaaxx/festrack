@@ -7,8 +7,8 @@ import {
 import { useSearchParams } from 'react-router';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetUserBalance } from '@/features/transactions/api/hooks';
-import BalanceItem from '@/features/transactions/components/balance-item';
+import { useGetUserBalance } from '@/features/finances/api/hooks';
+import BalanceItem from '@/features/finances/components/balance-item';
 
 const Balance = () => {
   const [searchParams] = useSearchParams();

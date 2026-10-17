@@ -7,7 +7,7 @@ import {
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { calculateEventFinancialTotals } from '@/features/events/helpers/event-financials';
-import { BalanceItem, useGetTransactions } from '@/features/transactions';
+import { BalanceItem, useGetTransactions } from '@/features/finances';
 
 /**
  * Cards de métricas financeiras (KPIs) para a página de detalhes do evento.

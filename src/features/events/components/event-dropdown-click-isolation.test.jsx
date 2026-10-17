@@ -24,7 +24,7 @@ vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: () => ({ data: [], isLoading: false }),
 }));
 
-vi.mock('@/features/transactions/api/hooks', () => ({
+vi.mock('@/features/finances/api/hooks', () => ({
   useCreateTransaction: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 

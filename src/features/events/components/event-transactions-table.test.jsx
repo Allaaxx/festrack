@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuthContext } from '@/contexts/auth';
-import { useGetTransactions } from '@/features/transactions/api/hooks';
+import { useGetTransactions } from '@/features/finances/api/hooks';
 
 import EventTransactionsTable from './event-transactions-table';
 
@@ -11,8 +12,8 @@ vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
 }));
 
-vi.mock('@/features/transactions/api/hooks', async () => {
-  const actual = await vi.importActual('@/features/transactions/api/hooks');
+vi.mock('@/features/finances/api/hooks', async () => {
+  const actual = await vi.importActual('@/features/finances/api/hooks');
   return {
     ...actual,
     useGetTransactions: vi.fn(),
@@ -165,7 +166,8 @@ describe('EventTransactionsTable', () => {
     expect(screen.getByText(/R\$\s*500,00/)).toBeInTheDocument();
   });
 
-  it('renders row action buttons for editing and deleting each transaction', () => {
+  it('renders row action buttons for editing and deleting each transaction', async () => {
+    const user = userEvent.setup();
     useGetTransactions.mockReturnValue({
       data: mockTransactions,
       isLoading: false,
@@ -174,15 +176,20 @@ describe('EventTransactionsTable', () => {
 
     renderWithClient(<EventTransactionsTable eventId="ev-123" />);
 
-    // Each row has edit and delete action buttons
-    const editButtons = screen.getAllByRole('button', {
-      name: /editar transação/i,
+    // Each row has an action dropdown button
+    const actionButtons = screen.getAllByRole('button', {
+      name: /ações da transação/i,
     });
-    expect(editButtons.length).toBe(3);
+    expect(actionButtons.length).toBe(3);
 
-    const deleteButtons = screen.getAllByRole('button', {
-      name: /excluir transação/i,
-    });
-    expect(deleteButtons.length).toBe(3);
+    // Opening an action dropdown displays Edit and Delete menu options
+    await user.click(actionButtons[0]);
+
+    expect(
+      await screen.findByRole('menuitem', { name: /editar/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: /excluir/i })
+    ).toBeInTheDocument();
   });
 });

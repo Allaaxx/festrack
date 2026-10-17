@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,7 +15,7 @@ import {
   useGetEvents,
 } from '@/features/events/api/hooks';
 import EventDropdownMenu from '@/features/events/components/event-dropdown-menu';
-import { useCreateTransaction } from '@/features/transactions/api/hooks';
+import { useCreateTransaction } from '@/features/finances/api/hooks';
 
 vi.mock('@/components/ui/toast', () => ({
   toast: {
@@ -31,7 +37,7 @@ vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: vi.fn(),
 }));
 
-vi.mock('@/features/transactions/api/hooks', () => ({
+vi.mock('@/features/finances/api/hooks', () => ({
   useCreateTransaction: vi.fn(),
 }));
 
@@ -77,10 +83,10 @@ describe('EventDropdownMenu', () => {
 
   const renderDropdown = (props = {}) => {
     return render(
-      <MemoryRouter initialEntries={['/event']}>
+      <MemoryRouter initialEntries={['/events']}>
         <Routes>
           <Route
-            path="/event"
+            path="/events"
             element={
               <EventDropdownMenu event={mockEvent} {...props}>
                 <button type="button" data-testid="event-trigger">
@@ -90,8 +96,10 @@ describe('EventDropdownMenu', () => {
             }
           />
           <Route
-            path="/event/:eventId"
-            element={<div data-testid="event-detail-page">Página de Detalhes</div>}
+            path="/events/:eventId"
+            element={
+              <div data-testid="event-detail-page">Página de Detalhes</div>
+            }
           />
         </Routes>
       </MemoryRouter>
@@ -108,7 +116,9 @@ describe('EventDropdownMenu', () => {
     await user.click(trigger);
 
     expect(
-      await screen.findByRole('menuitem', { name: /ver detalhes e transações/i })
+      await screen.findByRole('menuitem', {
+        name: /ver detalhes e transações/i,
+      })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('menuitem', { name: /editar evento/i })
@@ -122,7 +132,7 @@ describe('EventDropdownMenu', () => {
     expect(screen.getByRole('separator')).toBeInTheDocument();
   });
 
-  it('navigates to /event/:eventId when clicking "Ver detalhes e transações"', async () => {
+  it('navigates to /events/:eventId when clicking "Ver detalhes e transações"', async () => {
     const user = userEvent.setup();
     renderDropdown();
 
@@ -142,7 +152,9 @@ describe('EventDropdownMenu', () => {
     renderDropdown();
 
     await user.click(screen.getByTestId('event-trigger'));
-    const item = await screen.findByRole('menuitem', { name: /editar evento/i });
+    const item = await screen.findByRole('menuitem', {
+      name: /editar evento/i,
+    });
     await user.click(item);
 
     await waitFor(() => {
@@ -164,7 +176,9 @@ describe('EventDropdownMenu', () => {
     await waitFor(() => {
       const dialog = screen.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
-      expect(within(dialog).getByText('Adicionar Transação')).toBeInTheDocument();
+      expect(
+        within(dialog).getByText('Adicionar Transação')
+      ).toBeInTheDocument();
       // Should show the pre-selected event in the combobox button and be disabled/locked
       const combobox = within(dialog).getByRole('combobox');
       expect(combobox).toHaveTextContent(mockEvent.name);

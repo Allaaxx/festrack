@@ -18,7 +18,59 @@ const getDefaultDateParams = () => ({
   to: formatDateToQueryParam(endOfMonth(new Date())),
 });
 
-const DateSelection = () => {
+const ControlledDateSelection = ({
+  from,
+  to,
+  onDateRangeChange,
+  onChange,
+}) => {
+  const selectedRange = useMemo(() => {
+    const parseParam = (val) => {
+      if (!val) return null;
+      if (val instanceof Date) return isValid(val) ? val : null;
+      if (typeof val === 'string' && val.length === 10) {
+        const d = new Date(val + 'T00:00:00');
+        return isValid(d) ? d : null;
+      }
+      const d = new Date(val);
+      return isValid(d) ? d : null;
+    };
+
+    return {
+      from: parseParam(from) ?? startOfMonth(new Date()),
+      to: parseParam(to) ?? endOfMonth(new Date()),
+    };
+  }, [from, to]);
+
+  const [partialDate, setPartialDate] = useState(null);
+  const activeDate = partialDate ?? selectedRange;
+
+  const handleDateChange = (newRange) => {
+    if (
+      newRange?.from &&
+      newRange?.to &&
+      isValid(newRange.from) &&
+      isValid(newRange.to)
+    ) {
+      setPartialDate(null);
+      const formattedRange = {
+        from: formatDateToQueryParam(newRange.from),
+        to: formatDateToQueryParam(newRange.to),
+      };
+      if (onDateRangeChange) {
+        onDateRangeChange(formattedRange);
+      } else if (onChange) {
+        onChange(formattedRange);
+      }
+    } else {
+      setPartialDate(newRange);
+    }
+  };
+
+  return <DatePickerWithRange value={activeDate} onChange={handleDateChange} />;
+};
+
+const UncontrolledDateSelection = () => {
   const [params, setParams] = useStoredSearchParams(
     LOCAL_STORAGE_FINANCE_FILTERS_KEY,
     getDefaultDateParams,
@@ -64,6 +116,18 @@ const DateSelection = () => {
   };
 
   return <DatePickerWithRange value={activeDate} onChange={handleDateChange} />;
+};
+
+const DateSelection = (props = {}) => {
+  if (
+    props.onDateRangeChange ||
+    props.onChange ||
+    props.from !== undefined ||
+    props.to !== undefined
+  ) {
+    return <ControlledDateSelection {...props} />;
+  }
+  return <UncontrolledDateSelection {...props} />;
 };
 
 export default DateSelection;

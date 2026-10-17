@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import DeleteEventButton from '@/features/events/components/delete-event-button';
 import EditEventSheet from '@/features/events/components/edit-event-sheet';
-import { AddTransactionButton } from '@/features/transactions';
+import { AddTransactionButton } from '@/features/finances';
 import { cn } from '@/lib/utils';
 
 /**
@@ -92,7 +92,7 @@ const EventDropdownMenu = ({
   const handleViewDetails = (e) => {
     e?.stopPropagation?.();
     setIsOpen(false);
-    navigate(`/event/${eventId}`);
+    navigate(`/events/${eventId}`);
   };
 
   const handleEditEvent = (e) => {

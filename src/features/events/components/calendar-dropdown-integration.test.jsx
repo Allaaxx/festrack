@@ -29,13 +29,15 @@ vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: () => ({ data: [], isLoading: false }),
 }));
 
-vi.mock('@/features/transactions/api/hooks', () => ({
+vi.mock('@/features/finances/api/hooks', () => ({
   useCreateTransaction: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/components/ui/calendar', () => ({
   Calendar: () => <div data-testid="mock-calendar" />,
-  CalendarDayButton: ({ children }) => <button type="button">{children}</button>,
+  CalendarDayButton: ({ children }) => (
+    <button type="button">{children}</button>
+  ),
 }));
 
 describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
@@ -88,7 +90,9 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
     await user.click(eventButton);
 
     expect(
-      await screen.findByRole('menuitem', { name: /ver detalhes e transações/i })
+      await screen.findByRole('menuitem', {
+        name: /ver detalhes e transações/i,
+      })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('menuitem', { name: /editar evento/i })
@@ -126,7 +130,9 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
     await user.click(timedEventButton);
 
     expect(
-      await screen.findByRole('menuitem', { name: /ver detalhes e transações/i })
+      await screen.findByRole('menuitem', {
+        name: /ver detalhes e transações/i,
+      })
     ).toBeInTheDocument();
   });
 
@@ -153,7 +159,9 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
     await user.click(dayEventButton);
 
     expect(
-      await screen.findByRole('menuitem', { name: /ver detalhes e transações/i })
+      await screen.findByRole('menuitem', {
+        name: /ver detalhes e transações/i,
+      })
     ).toBeInTheDocument();
   });
 
@@ -186,7 +194,9 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
     await user.click(sidebarEventButton);
 
     expect(
-      await screen.findByRole('menuitem', { name: /ver detalhes e transações/i })
+      await screen.findByRole('menuitem', {
+        name: /ver detalhes e transações/i,
+      })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('menuitem', { name: /editar evento/i })

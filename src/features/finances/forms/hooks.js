@@ -5,11 +5,11 @@ import { useForm } from 'react-hook-form';
 import {
   useCreateTransaction,
   useEditTransaction,
-} from '@/features/transactions/api/hooks';
+} from '@/features/finances/api/hooks';
 import {
   createTransactionFormSchema,
   editTransactionFormSchema,
-} from '@/features/transactions/forms/schemas';
+} from '@/features/finances/forms/schemas';
 
 export const getDefaultTransactionValues = (initialEventId = null) => ({
   name: '',

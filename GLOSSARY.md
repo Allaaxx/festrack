@@ -40,6 +40,15 @@ A single financial movement (earning, expense, or investment) associated with a 
 
 ---
 
+### Finances
+
+The aggregate financial management domain encompassing overall balance metrics, performance visualisations, and the ledger of transactions.
+
+- **Scope:** Represents the holistic financial cockpit of a user, aggregating income, expenses, and investments.
+- **Distinction from Transaction:** Represents the aggregate financial module and its indicators, whereas Transaction represents an atomic financial entry.
+
+---
+
 ### Event
 
 A scheduled occasion or budget bucket (e.g., travel, wedding, party) with start and end dates used to group related financial transactions.
