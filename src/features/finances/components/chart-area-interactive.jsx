@@ -16,6 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
+import DatePickerWithRange from '@/components/ui/date-picker-with-range';
 import {
   Select,
   SelectContent,
@@ -190,7 +191,8 @@ export const ChartAreaInteractive = () => {
                 : 'Últimos 3 meses'}
           </span>
         </CardDescription>
-        <CardAction>
+        <CardAction className="flex gap-2">
+          <DatePickerWithRange />
           <ToggleGroup
             type="single"
             value={timeRange}

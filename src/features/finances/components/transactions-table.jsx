@@ -6,6 +6,7 @@ import {
   createSortedRowModel,
   flexRender,
   rowPaginationFeature,
+  rowSelectionFeature,
   rowSortingFeature,
   tableFeatures,
   useTable,
@@ -14,12 +15,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale/pt-BR';
 import {
   AlertCircleIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
   Columns2Icon,
-  ReceiptText,
 } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -41,6 +42,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -57,15 +67,17 @@ import EditTransactionButton from '@/features/finances/components/edit-transacti
 import transactionColumns from '@/features/finances/components/transaction-columns';
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
 import { formatCurrency } from '@/helpers/currency';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const features = tableFeatures({
-  rowSortingFeature,
-  sortedRowModel: createSortedRowModel(),
   columnFilteringFeature,
-  filteredRowModel: createFilteredRowModel(),
   columnVisibilityFeature,
   rowPaginationFeature,
+  rowSelectionFeature,
+  rowSortingFeature,
+  filteredRowModel: createFilteredRowModel(),
   paginatedRowModel: createPaginatedRowModel(),
+  sortedRowModel: createSortedRowModel(),
 });
 
 const columnLabels = {
@@ -89,6 +101,7 @@ const parseDateSafely = (dateValue) => {
 
 export const TransactionsTable = ({ transactions: propTransactions }) => {
   const tableKey = useId();
+  const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
 
   const from = searchParams.get('from');
@@ -105,6 +118,7 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
     () => propTransactions ?? fetchedTransactions ?? [],
     [propTransactions, fetchedTransactions]
   );
+
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTransactions = useMemo(() => {
@@ -117,8 +131,10 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
     );
   }, [transactions, searchTerm]);
 
-  const [sorting, setSorting] = useState([]);
+  const [rowSelection, setRowSelection] = useState({});
   const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -130,21 +146,36 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
     features,
     data: filteredTransactions,
     columns: transactionColumns,
+    getRowId: (row, index) => row.id?.toString() ?? index.toString(),
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPagination,
     state: {
       sorting,
       columnVisibility,
+      rowSelection,
+      columnFilters,
       pagination,
     },
   });
 
   if (isLoading && !propTransactions) {
     return (
-      <section data-testid="transactions-loading" className="space-y-4">
-        <h2 className="text-2xl font-bold">Transações</h2>
-        <div className="rounded-md border p-4">
+      <section
+        data-testid="transactions-loading"
+        className="flex w-full flex-col justify-start gap-4"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-8 w-full sm:w-64" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-8 w-24 lg:w-44" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-lg border p-4">
           <div className="space-y-3">
             {Array.from({ length: 8 }).map((_, index) => (
               <Skeleton key={index} className="h-10 w-full rounded-md" />
@@ -157,9 +188,11 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
 
   if (isError && !propTransactions) {
     return (
-      <section data-testid="transactions-error" className="space-y-4">
-        <h2 className="text-2xl font-bold">Transações</h2>
-        <div className="flex flex-col items-center justify-center gap-4 rounded-md border py-16 text-center">
+      <section
+        data-testid="transactions-error"
+        className="flex w-full flex-col justify-start gap-4"
+      >
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border py-16 text-center">
           <AlertCircleIcon className="text-muted-foreground size-10" />
           <div className="space-y-1">
             <p className="font-medium">
@@ -169,27 +202,9 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
               Verifique sua conexão e tente novamente.
             </p>
           </div>
-          <Button variant="outline" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
             Tentar novamente
           </Button>
-        </div>
-      </section>
-    );
-  }
-
-  if (!transactions.length) {
-    return (
-      <section data-testid="transactions-empty" className="space-y-4">
-        <h2 className="text-2xl font-bold">Transações</h2>
-        <div className="flex flex-col items-center justify-center gap-4 rounded-md border py-16 text-center">
-          <ReceiptText className="text-muted-foreground size-10" />
-          <div className="space-y-1">
-            <p className="font-medium">Nenhuma transação encontrada</p>
-            <p className="text-muted-foreground text-sm">
-              Nenhuma transação registrada no período selecionado.
-            </p>
-          </div>
-          <AddTransactionButton />
         </div>
       </section>
     );
@@ -201,33 +216,54 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
   const currentPage = (table.state.pagination?.pageIndex ?? 0) + 1;
 
   return (
-    <section data-testid="transactions-table-section" className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold">Transações</h2>
+    <section
+      data-testid={
+        !transactions.length
+          ? 'transactions-empty'
+          : 'transactions-table-section'
+      }
+      className="flex w-full flex-col justify-start gap-4"
+    >
+      {/* Top Bar seguindo o layout exato do Template */}
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
+          <Label htmlFor="search-transactions" className="sr-only">
+            Buscar
+          </Label>
           <Input
+            id="search-transactions"
             placeholder="Buscar por título..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:w-64"
+            className="h-8 w-full sm:w-64"
           />
+        </div>
 
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Columns2Icon className="size-4" />
-                  <span className="hidden sm:inline">Colunas</span>
+                <Button variant="outline" size="sm">
+                  <Columns2Icon />
+                  <span className="hidden lg:inline">Personalizar Colunas</span>
+                  <span className="lg:hidden">Colunas</span>
+                  <ChevronDownIcon />
                 </Button>
               }
             />
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               {table
                 .getAllColumns()
-                .filter((column) => column.id !== 'actions')
+                .filter(
+                  (column) =>
+                    column.id !== 'actions' &&
+                    (typeof column.accessorFn !== 'undefined' ||
+                      column.getCanHide())
+                )
                 .map((column) => (
                   <DropdownMenuCheckboxItem
                     key={column.id}
+                    className="capitalize"
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
                       column.toggleVisibility(Boolean(value))
@@ -243,165 +279,211 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-lg border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-
-          <TableBody>
-            {rows.length > 0 ? (
-              rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-testid="transaction-row"
-                  className="cursor-pointer transition-colors"
-                  onClick={() => setSelectedTransaction(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      onClick={(e) => {
-                        if (cell.column.id === 'actions') {
-                          e.stopPropagation();
-                        }
-                      }}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+      {/* Container da Tabela e Paginação */}
+      <div className="relative flex flex-col gap-4 overflow-auto">
+        <div className="overflow-hidden rounded-lg border">
+          <Table>
+            <TableHeader className="bg-muted sticky top-0 z-10">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={transactionColumns.length}
-                  className="h-24 text-center"
-                >
-                  Nenhuma transação corresponde ao filtro.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
 
-        <div className="flex flex-col items-center justify-between gap-3 border-t px-4 py-3 sm:flex-row">
-          <div className="text-muted-foreground text-sm">
-            Exibindo {rows.length} de {filteredRowsCount} transações
+            <TableBody className="**:data-[slot=table-cell]:first:w-8">
+              {rows?.length ? (
+                rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-testid="transaction-row"
+                    data-state={row.getIsSelected() && 'selected'}
+                    className="relative z-0 cursor-pointer px-1"
+                    onClick={() => setSelectedTransaction(row.original)}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        onClick={(e) => {
+                          if (
+                            cell.column.id === 'actions' ||
+                            cell.column.id === 'select'
+                          ) {
+                            e.stopPropagation();
+                          }
+                        }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={transactionColumns.length}
+                    className="h-24 text-center"
+                  >
+                    {!transactions.length
+                      ? 'Nenhuma transação encontrada.'
+                      : 'Nenhuma transação corresponde ao filtro.'}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Rodapé de Paginação idêntico ao Template */}
+        <div className="flex items-center justify-between px-4">
+          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+            Exibindo {rows.length} de {filteredRowsCount} transação(ões).
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-              aria-label="Primeira página"
-            >
-              <ChevronsLeftIcon className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              aria-label="Página anterior"
-            >
-              <ChevronLeftIcon className="size-4" />
-            </Button>
-
-            <span className="px-2 text-sm font-medium">
+          <div className="flex w-full items-center gap-8 lg:w-fit">
+            <div className="hidden items-center gap-2 lg:flex">
+              <Label htmlFor="rows-per-page" className="text-sm font-medium">
+                Linhas por página
+              </Label>
+              <Select
+                value={`${table.state.pagination.pageSize}`}
+                disabled={!filteredRowsCount}
+                onValueChange={(value) => {
+                  table.setPageSize(Number(value));
+                }}
+              >
+                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+                  <SelectValue placeholder={table.state.pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex w-fit items-center justify-center text-sm font-medium">
               Página {currentPage} de {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              aria-label="Próxima página"
-            >
-              <ChevronRightIcon className="size-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => table.setPageIndex(totalPages - 1)}
-              disabled={!table.getCanNextPage()}
-              aria-label="Última página"
-            >
-              <ChevronsRightIcon className="size-4" />
-            </Button>
+            </div>
+            <div className="ml-auto flex items-center gap-2 lg:ml-0">
+              <Button
+                variant="outline"
+                className="hidden h-8 w-8 p-0 lg:flex"
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+                aria-label="Primeira página"
+              >
+                <span className="sr-only">Primeira página</span>
+                <ChevronsLeftIcon />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                aria-label="Página anterior"
+              >
+                <span className="sr-only">Página anterior</span>
+                <ChevronLeftIcon />
+              </Button>
+              <Button
+                variant="outline"
+                className="size-8"
+                size="icon"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                aria-label="Próxima página"
+              >
+                <span className="sr-only">Próxima página</span>
+                <ChevronRightIcon />
+              </Button>
+              <Button
+                variant="outline"
+                className="hidden size-8 lg:flex"
+                size="icon"
+                onClick={() => table.setPageIndex(totalPages - 1)}
+                disabled={!table.getCanNextPage()}
+                aria-label="Última página"
+              >
+                <span className="sr-only">Última página</span>
+                <ChevronsRightIcon />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Drawer lateral/inferior seguindo o padrão visual do TableCellViewer do Template */}
       <Drawer
+        direction={isMobile ? 'bottom' : 'right'}
         open={Boolean(selectedTransaction)}
         onOpenChange={(open) => !open && setSelectedTransaction(null)}
       >
-        <DrawerContent className="mx-auto max-w-md">
-          <DrawerHeader>
-            <DrawerTitle>Detalhes da Transação</DrawerTitle>
+        <DrawerContent>
+          <DrawerHeader className="gap-1">
+            <DrawerTitle>
+              {selectedTransaction?.name || 'Detalhes da Transação'}
+            </DrawerTitle>
             <DrawerDescription>
               Informações completas do registro financeiro selecionado.
             </DrawerDescription>
           </DrawerHeader>
 
           {selectedTransaction && (
-            <div className="space-y-3 px-4 py-2">
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-muted-foreground text-sm">Título</span>
-                <span className="font-semibold">
-                  {selectedTransaction.name}
-                </span>
+            <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+              <Separator />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Título</span>
+                  <span className="font-medium">
+                    {selectedTransaction.name}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Tipo</span>
+                  <TransactionTypeBadge
+                    variant={selectedTransaction.type.toLowerCase()}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Valor</span>
+                  <span className="font-semibold">
+                    {formatCurrency(selectedTransaction.amount)}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Data</span>
+                  <span>
+                    {format(
+                      parseDateSafely(selectedTransaction.date),
+                      "dd 'de' MMMM 'de' yyyy",
+                      { locale: ptBR }
+                    )}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-muted-foreground text-sm">Tipo</span>
-                <TransactionTypeBadge
-                  variant={selectedTransaction.type.toLowerCase()}
-                />
-              </div>
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-muted-foreground text-sm">Valor</span>
-                <span className="text-lg font-bold">
-                  {formatCurrency(selectedTransaction.amount)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-muted-foreground text-sm">Data</span>
-                <span className="text-sm">
-                  {format(
-                    parseDateSafely(selectedTransaction.date),
-                    "dd 'de' MMMM 'de' yyyy",
-                    { locale: ptBR }
-                  )}
-                </span>
-              </div>
+              <Separator />
             </div>
           )}
 
-          <DrawerFooter className="flex flex-row justify-end gap-2 pt-4">
+          <DrawerFooter>
             {selectedTransaction && (
               <>
                 <EditTransactionButton
