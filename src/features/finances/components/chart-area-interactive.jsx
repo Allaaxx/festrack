@@ -126,7 +126,7 @@ export const ChartAreaInteractive = ({
 
   return (
     <Card className="@container/card">
-      <CardHeader className="flex flex-col md:flex-row">
+      <CardHeader className="flex flex-col sm:grid md:flex-row">
         <CardTitle>Fluxo de Caixa</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">{descriptionLong}</span>

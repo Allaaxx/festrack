@@ -40,6 +40,7 @@ const AddTransactionButton = ({
   open: controlledOpen,
   onOpenChange,
   trigger,
+  className,
 }) => {
   const isControlled = controlledOpen !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
@@ -85,7 +86,7 @@ const AddTransactionButton = ({
           <DialogTrigger
             render={
               trigger ?? (
-                <Button>
+                <Button className={className}>
                   <PlusIcon />
                   Nova transação
                 </Button>

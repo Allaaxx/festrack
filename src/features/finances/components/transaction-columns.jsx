@@ -60,7 +60,7 @@ export const TransactionActionsCell = ({ transaction }) => {
 
   return (
     <div
-      className="flex items-center justify-end"
+      className="x flex items-center"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >

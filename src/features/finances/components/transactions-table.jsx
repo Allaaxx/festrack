@@ -353,11 +353,11 @@ export const TransactionsTable = ({
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col items-center gap-2 sm:w-fit sm:flex-row">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="w-full sm:w-fit">
                   <Columns2Icon />
                   <span className="hidden lg:inline">Personalizar Colunas</span>
                   <span className="lg:hidden">Colunas</span>
@@ -389,7 +389,7 @@ export const TransactionsTable = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <AddTransactionButton />
+          <AddTransactionButton className="w-full sm:w-fit" />
         </div>
       </div>
 
@@ -462,7 +462,7 @@ export const TransactionsTable = ({
           </Table>
         </div>
 
-        {/* Rodapé de Paginação idêntico ao Template */}
+        {/* Rodapé de Paginação  */}
         <div className="flex items-center justify-between px-4">
           <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
             Exibindo {rows.length} de {filteredRowsCount} transação(ões).
