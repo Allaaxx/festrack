@@ -20,8 +20,8 @@ const Header = () => {
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
-      <div className="flex h-(--header-height) w-full items-center gap-2 px-4">
-        <LogoIcon className="h-6 w-6" />
+      <div className="flex h-(--header-height) w-full items-center gap-3 px-4">
+        <LogoIcon className="h-5 w-5" />
         <Separator
           orientation="vertical"
           className="mr-2 data-vertical:h-5 data-vertical:self-auto"

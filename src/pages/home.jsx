@@ -8,7 +8,7 @@ import {
 
 const HomePage = () => {
   return (
-    <div className="space-y-4 p-4 py-2 sm:space-y-6 sm:p-8 sm:py-4">
+    <div className="space-y-4 px-1 py-2 sm:space-y-6 sm:py-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold">Financeiro</h2>
