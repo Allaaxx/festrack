@@ -19,9 +19,40 @@ function ToggleGroup({
   size,
   spacing = 2,
   orientation = 'horizontal',
+  type = 'single',
+  value,
+  defaultValue,
+  onValueChange,
   children,
   ...props
 }) {
+  const isSingle = type === 'single' && !props.multiple;
+
+  const normalizedValue = React.useMemo(() => {
+    if (value === undefined) return undefined;
+    if (Array.isArray(value)) return value;
+    return value ? [value] : [];
+  }, [value]);
+
+  const normalizedDefaultValue = React.useMemo(() => {
+    if (defaultValue === undefined) return undefined;
+    if (Array.isArray(defaultValue)) return defaultValue;
+    return defaultValue ? [defaultValue] : [];
+  }, [defaultValue]);
+
+  const handleValueChange = React.useCallback(
+    (newVal, details) => {
+      if (!onValueChange) return;
+      if (isSingle) {
+        const singleVal = newVal[0] ?? '';
+        onValueChange(singleVal, details);
+      } else {
+        onValueChange(newVal, details);
+      }
+    },
+    [isSingle, onValueChange]
+  );
+
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"
@@ -29,6 +60,10 @@ function ToggleGroup({
       data-size={size}
       data-spacing={spacing}
       data-orientation={orientation}
+      value={normalizedValue}
+      defaultValue={normalizedDefaultValue}
+      onValueChange={handleValueChange}
+      multiple={!isSingle}
       style={{
         '--gap': spacing,
       }}
