@@ -1,12 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useDeleteEvent, useGetEvent } from '@/features/events/api/hooks';
-import { useGetTransactions } from '@/features/transactions';
+import { useGetTransactions } from '@/features/finances';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';
 
@@ -23,8 +29,8 @@ vi.mock('@/features/events/api/hooks', async () => {
   };
 });
 
-vi.mock('@/features/transactions/api/hooks', async () => {
-  const actual = await vi.importActual('@/features/transactions/api/hooks');
+vi.mock('@/features/finances/api/hooks', async () => {
+  const actual = await vi.importActual('@/features/finances/api/hooks');
   return {
     ...actual,
     useGetTransactions: vi.fn(),
@@ -57,7 +63,7 @@ const mockEvent = {
   syncError: false,
 };
 
-const renderWithProviders = (ui, { route = '/event/ev-123' } = {}) => {
+const renderWithProviders = (ui, { route = '/events/ev-123' } = {}) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -101,7 +107,7 @@ describe('EventDetailPage', () => {
 
     renderWithProviders(
       <Routes>
-        <Route path="/event/:eventId" element={<EventDetailPage />} />
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
       </Routes>
     );
 
@@ -119,7 +125,7 @@ describe('EventDetailPage', () => {
 
     renderWithProviders(
       <Routes>
-        <Route path="/event/:eventId" element={<EventDetailPage />} />
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
       </Routes>
     );
 
@@ -142,7 +148,7 @@ describe('EventDetailPage', () => {
 
     renderWithProviders(
       <Routes>
-        <Route path="/event/:eventId" element={<EventDetailPage />} />
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
       </Routes>
     );
 
@@ -158,19 +164,21 @@ describe('EventDetailPage', () => {
 
     renderWithProviders(
       <Routes>
-        <Route path="/event/:eventId" element={<EventDetailPage />} />
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
       </Routes>
     );
 
     expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
+    expect(screen.getByText('Férias de verão com amigos')).toBeInTheDocument();
     expect(
-      screen.getByText('Férias de verão com amigos')
+      screen.getByText(/01\/12\/2026 até 10\/12\/2026/)
     ).toBeInTheDocument();
-    expect(screen.getByText(/01\/12\/2026 até 10\/12\/2026/)).toBeInTheDocument();
-    expect(screen.getByText(/agendado|em andamento|finalizado/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/agendado|em andamento|finalizado/i)
+    ).toBeInTheDocument();
   });
 
-  it('renders "Voltar ao calendário" button and navigates to /event on click', () => {
+  it('renders "Voltar ao calendário" button and navigates to /events on click', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -188,8 +196,8 @@ describe('EventDetailPage', () => {
       <>
         <LocationWatcher />
         <Routes>
-          <Route path="/event" element={<div>Calendar View Page</div>} />
-          <Route path="/event/:eventId" element={<EventDetailPage />} />
+          <Route path="/events" element={<div>Calendar View Page</div>} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Routes>
       </>
     );
@@ -200,7 +208,7 @@ describe('EventDetailPage', () => {
     expect(backButton).toBeInTheDocument();
     fireEvent.click(backButton);
 
-    expect(currentPathname).toBe('/event');
+    expect(currentPathname).toBe('/events');
     expect(screen.getByText('Calendar View Page')).toBeInTheDocument();
   });
 
@@ -213,22 +221,20 @@ describe('EventDetailPage', () => {
 
     renderWithProviders(
       <Routes>
-        <Route path="/event/:eventId" element={<EventDetailPage />} />
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
       </Routes>
     );
 
     expect(
       screen.getByRole('button', { name: /nova transação/i })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /editar/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /editar/i })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /excluir/i })
     ).toBeInTheDocument();
   });
 
-  it('smoothly redirects to /event with success toast upon deleting event', async () => {
+  it('smoothly redirects to /events with success toast upon deleting event', async () => {
     mockDeleteMutateAsync.mockResolvedValueOnce({ id: 'ev-123' });
 
     useGetEvent.mockReturnValue({
@@ -248,8 +254,8 @@ describe('EventDetailPage', () => {
       <>
         <LocationWatcher />
         <Routes>
-          <Route path="/event" element={<div>Calendar View Page</div>} />
-          <Route path="/event/:eventId" element={<EventDetailPage />} />
+          <Route path="/events" element={<div>Calendar View Page</div>} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Routes>
       </>
     );
@@ -270,11 +276,24 @@ describe('EventDetailPage', () => {
           title: 'Evento excluído com sucesso!',
         })
       );
-      expect(currentPathname).toBe('/event');
+      expect(currentPathname).toBe('/events');
     });
   });
 
-  it('mounts EventDetailPage via /event/:eventId within application AppRoutes', () => {
+  it('mounts EventDetailPage via /events/:eventId within application AppRoutes', () => {
+    useGetEvent.mockReturnValue({
+      data: mockEvent,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithProviders(<AppRoutes />, { route: '/events/ev-123' });
+
+    expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
+    expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
+  });
+
+  it('redirects legacy /event/:eventId to /events/:eventId within application AppRoutes', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -329,7 +348,7 @@ describe('EventDetailPage', () => {
 
       renderWithProviders(
         <Routes>
-          <Route path="/event/:eventId" element={<EventDetailPage />} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Routes>
       );
 
@@ -368,7 +387,7 @@ describe('EventDetailPage', () => {
 
       renderWithProviders(
         <Routes>
-          <Route path="/event/:eventId" element={<EventDetailPage />} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Routes>
       );
 
@@ -376,26 +395,40 @@ describe('EventDetailPage', () => {
       const table = screen.getByRole('table');
       const tableScope = within(table);
 
-      expect(tableScope.getByRole('button', { name: /título/i })).toBeInTheDocument();
-      expect(tableScope.getByRole('button', { name: /tipo/i })).toBeInTheDocument();
-      expect(tableScope.getByRole('button', { name: /data/i })).toBeInTheDocument();
-      expect(tableScope.getByRole('button', { name: /valor/i })).toBeInTheDocument();
+      expect(
+        tableScope.getByRole('button', { name: /título/i })
+      ).toBeInTheDocument();
+      expect(
+        tableScope.getByRole('button', { name: /tipo/i })
+      ).toBeInTheDocument();
+      expect(
+        tableScope.getByRole('button', { name: /data/i })
+      ).toBeInTheDocument();
+      expect(
+        tableScope.getByRole('button', { name: /valor/i })
+      ).toBeInTheDocument();
       expect(tableScope.getByText('Ações')).toBeInTheDocument();
 
       // Check rows content
       expect(tableScope.getByText('Passagem Aérea')).toBeInTheDocument();
       expect(tableScope.getByText('Gasto')).toBeInTheDocument();
-      expect(tableScope.getByText(/02 de dezembro de 2026/)).toBeInTheDocument();
+      expect(
+        tableScope.getByText(/02 de dezembro de 2026/)
+      ).toBeInTheDocument();
       expect(tableScope.getByText(/R\$\s*1\.500,00/)).toBeInTheDocument();
 
       expect(tableScope.getByText('Patrocínio Amigos')).toBeInTheDocument();
       expect(tableScope.getByText('Ganho')).toBeInTheDocument();
-      expect(tableScope.getByText(/03 de dezembro de 2026/)).toBeInTheDocument();
+      expect(
+        tableScope.getByText(/03 de dezembro de 2026/)
+      ).toBeInTheDocument();
       expect(tableScope.getByText(/R\$\s*3\.200,00/)).toBeInTheDocument();
 
       expect(tableScope.getByText('Reserva Hotel')).toBeInTheDocument();
       expect(tableScope.getByText('Investimento')).toBeInTheDocument();
-      expect(tableScope.getByText(/04 de dezembro de 2026/)).toBeInTheDocument();
+      expect(
+        tableScope.getByText(/04 de dezembro de 2026/)
+      ).toBeInTheDocument();
       expect(tableScope.getByText(/R\$\s*700,00/)).toBeInTheDocument();
 
       // Row action buttons
@@ -424,12 +457,16 @@ describe('EventDetailPage', () => {
 
       renderWithProviders(
         <Routes>
-          <Route path="/event/:eventId" element={<EventDetailPage />} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Routes>
       );
 
-      expect(screen.getByTestId('event-transactions-empty')).toBeInTheDocument();
-      expect(screen.getByText('Nenhuma transação encontrada')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('event-transactions-empty')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Nenhuma transação encontrada')
+      ).toBeInTheDocument();
       expect(
         screen.getByText('Nenhuma transação registrada para este evento.')
       ).toBeInTheDocument();
@@ -449,7 +486,7 @@ describe('EventDetailPage', () => {
 
       const { rerender } = renderWithProviders(
         <Routes>
-          <Route path="/event/:eventId" element={<EventDetailPage />} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
         </Routes>
       );
 
@@ -476,9 +513,9 @@ describe('EventDetailPage', () => {
 
       rerender(
         <QueryClientProvider client={new QueryClient()}>
-          <MemoryRouter initialEntries={['/event/ev-123']}>
+          <MemoryRouter initialEntries={['/events/ev-123']}>
             <Routes>
-              <Route path="/event/:eventId" element={<EventDetailPage />} />
+              <Route path="/events/:eventId" element={<EventDetailPage />} />
             </Routes>
           </MemoryRouter>
         </QueryClientProvider>

@@ -11,7 +11,7 @@ import DeleteEventButton from '@/features/events/components/delete-event-button'
 import EditEventSheet from '@/features/events/components/edit-event-sheet';
 import EventStatusBadge from '@/features/events/components/event-status-badge';
 import { formatEventDateRange } from '@/features/events/helpers/event';
-import { AddTransactionButton } from '@/features/transactions';
+import { AddTransactionButton } from '@/features/finances';
 
 /**
  * Cabeçalho detalhado do evento exibindo dados principais, navegação e botões de ação rápida.
@@ -37,7 +37,7 @@ const EventDetailHeader = ({ event, onDeleteSuccess }) => {
           variant="ghost"
           size="sm"
           nativeButton={false}
-          render={<Link to="/event" />}
+          render={<Link to="/events" />}
           className="text-muted-foreground hover:text-foreground -ml-2.5 gap-1.5"
         >
           <ArrowLeftIcon className="size-4" />
