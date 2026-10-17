@@ -72,6 +72,7 @@ const renderComponent = (props = {}) => {
 describe('TransactionsTable Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   it('renders loading skeleton when fetching transactions', () => {
@@ -423,5 +424,57 @@ describe('TransactionsTable Component', () => {
     expect(
       await screen.findByRole('button', { name: /tipo/i })
     ).toBeInTheDocument();
+  });
+
+  it('persists column visibility changes to localStorage per user', async () => {
+    const user = userEvent.setup();
+    useGetTransactions.mockReturnValue({
+      data: mockTransactions,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderComponent();
+
+    const customizeBtn = screen.getByRole('button', {
+      name: /personalizar colunas/i,
+    });
+    await user.click(customizeBtn);
+
+    const tipoOption = await screen.findByRole('menuitemcheckbox', {
+      name: /tipo/i,
+    });
+    await user.click(tipoOption);
+
+    const stored = JSON.parse(
+      localStorage.getItem('festrack:usr-1:finance_table_columns')
+    );
+    expect(stored).toEqual(expect.objectContaining({ type: false }));
+  });
+
+  it('restores saved column visibility preferences from localStorage on mount', () => {
+    localStorage.setItem(
+      'festrack:usr-1:finance_table_columns',
+      JSON.stringify({ type: false, amount: false })
+    );
+
+    useGetTransactions.mockReturnValue({
+      data: mockTransactions,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderComponent();
+
+    // "Tipo" and "Valor" headers should be hidden
+    expect(
+      screen.queryByRole('button', { name: /tipo/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /valor/i })
+    ).not.toBeInTheDocument();
+
+    // "Título" header should still be visible
+    expect(screen.getByRole('button', { name: /título/i })).toBeInTheDocument();
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildDailyChartData } from './chart';
+import { buildDailyChartData, calculateMatchingPreset } from './chart';
 
 describe('buildDailyChartData', () => {
   it('returns zero-filled daily records for an interval with no transactions', () => {
@@ -95,5 +95,36 @@ describe('buildDailyChartData', () => {
       { date: '2026-10-01', entradas: 0, saidas: 0 },
       { date: '2026-10-02', entradas: 0, saidas: 0 },
     ]);
+  });
+});
+
+describe('calculateMatchingPreset', () => {
+  it('returns 7d when interval is exactly 7 days', () => {
+    expect(calculateMatchingPreset('2026-10-01', '2026-10-07')).toBe('7d');
+  });
+
+  it('returns 30d when interval is exactly 30 days', () => {
+    expect(calculateMatchingPreset('2026-10-01', '2026-10-30')).toBe('30d');
+  });
+
+  it('returns 90d when interval is between 89 and 93 days (approx 3 months)', () => {
+    expect(calculateMatchingPreset('2026-07-01', '2026-09-29')).toBe('90d');
+    expect(calculateMatchingPreset('2026-07-01', '2026-09-28')).toBe('90d');
+    expect(calculateMatchingPreset('2026-07-01', '2026-09-30')).toBe('90d');
+  });
+
+  it('returns null when interval does not match standard presets', () => {
+    // Current month with 31 days
+    expect(calculateMatchingPreset('2026-10-01', '2026-10-31')).toBeNull();
+    // 15 days
+    expect(calculateMatchingPreset('2026-10-01', '2026-10-15')).toBeNull();
+    // 3 days
+    expect(calculateMatchingPreset('2026-10-01', '2026-10-03')).toBeNull();
+  });
+
+  it('returns null when dates are invalid or start is after end', () => {
+    expect(calculateMatchingPreset(null, null)).toBeNull();
+    expect(calculateMatchingPreset('invalid', '2026-10-01')).toBeNull();
+    expect(calculateMatchingPreset('2026-10-10', '2026-10-01')).toBeNull();
   });
 });

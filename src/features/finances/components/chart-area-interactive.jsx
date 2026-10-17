@@ -27,7 +27,10 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { buildDailyChartData } from '@/features/finances/helpers/chart';
+import {
+  buildDailyChartData,
+  calculateMatchingPreset,
+} from '@/features/finances/helpers/chart';
 import { formatCurrency } from '@/helpers/currency';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -74,14 +77,21 @@ export const ChartAreaInteractive = ({
   const [internalPreset, setInternalPreset] = useState('90d');
 
   React.useEffect(() => {
-    if (isMobile && activePreset === undefined) {
+    if (isMobile && activePreset === undefined && !from && !to) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setInternalPreset('7d');
     }
-  }, [isMobile, activePreset]);
+  }, [isMobile, activePreset, from, to]);
+
+  const calculatedPreset = useMemo(() => {
+    if (from || to) {
+      return calculateMatchingPreset(from, to);
+    }
+    return internalPreset;
+  }, [from, to, internalPreset]);
 
   const effectivePreset =
-    activePreset !== undefined ? activePreset : internalPreset;
+    activePreset !== undefined ? activePreset : calculatedPreset;
 
   const handlePresetChange = (value) => {
     const nextValue = Array.isArray(value) ? value[0] : value;
@@ -158,7 +168,7 @@ export const ChartAreaInteractive = ({
               size="sm"
               aria-label="Selecionar período"
             >
-              <SelectValue placeholder="Últimos 3 meses" />
+              <SelectValue placeholder="Selecionar período" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
               <SelectItem value="90d" className="rounded-lg">

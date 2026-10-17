@@ -1,4 +1,9 @@
-import { eachDayOfInterval, format, isValid } from 'date-fns';
+import {
+  differenceInCalendarDays,
+  eachDayOfInterval,
+  format,
+  isValid,
+} from 'date-fns';
 
 /**
  * Normaliza uma data para uma instância válida de Date local.
@@ -91,4 +96,28 @@ export function buildDailyChartData(transactions = [], startDate, endDate) {
   }
 
   return Array.from(dailyMap.values());
+}
+
+/**
+ * Identifica o preset correspondente a um intervalo de datas ('7d', '30d', '90d' ou null).
+ *
+ * @param {string | Date} startDate
+ * @param {string | Date} endDate
+ * @returns {'7d' | '30d' | '90d' | null}
+ */
+export function calculateMatchingPreset(startDate, endDate) {
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
+
+  if (!start || !end || start > end) {
+    return null;
+  }
+
+  const diff = differenceInCalendarDays(end, start) + 1;
+
+  if (diff === 7) return '7d';
+  if (diff === 30) return '30d';
+  if (diff >= 89 && diff <= 93) return '90d';
+
+  return null;
 }

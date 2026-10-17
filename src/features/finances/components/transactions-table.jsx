@@ -60,6 +60,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  getStoredFiltersKey,
+  LOCAL_STORAGE_FINANCE_COLUMNS_KEY,
+} from '@/constants/local-storage';
+import { useAuthContext } from '@/contexts/auth';
 import { useGetTransactions } from '@/features/finances/api/hooks';
 import AddTransactionButton from '@/features/finances/components/add-transaction-button';
 import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
@@ -128,6 +133,12 @@ export const TransactionsTable = ({
   const tableKey = useId();
   const isMobile = useIsMobile();
   const [searchParams] = useSearchParams();
+  const { user } = useAuthContext();
+
+  const columnsStorageKey = useMemo(
+    () => getStoredFiltersKey(user?.id, LOCAL_STORAGE_FINANCE_COLUMNS_KEY),
+    [user?.id]
+  );
 
   const from = searchParams.get('from');
   const to = searchParams.get('to');
@@ -251,10 +262,58 @@ export const TransactionsTable = ({
   };
 
   const [rowSelection, setRowSelection] = useState({});
-  const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnVisibility, setColumnVisibility] = useState(() => {
+    try {
+      const stored = localStorage.getItem(
+        getStoredFiltersKey(user?.id, LOCAL_STORAGE_FINANCE_COLUMNS_KEY)
+      );
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          return parsed;
+        }
+      }
+    } catch {
+      // Fallback if localStorage is inaccessible or invalid
+    }
+    return {};
+  });
   const [columnFilters, setColumnFilters] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+
+  const [prevColumnsKey, setPrevColumnsKey] = useState(columnsStorageKey);
+  if (prevColumnsKey !== columnsStorageKey) {
+    setPrevColumnsKey(columnsStorageKey);
+    let nextVisibility = {};
+    try {
+      const stored = localStorage.getItem(columnsStorageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          nextVisibility = parsed;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    setColumnVisibility(nextVisibility);
+  }
+
+  const handleColumnVisibilityChange = (updater) => {
+    setColumnVisibility((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      try {
+        localStorage.setItem(columnsStorageKey, JSON.stringify(next));
+      } catch (err) {
+        console.error(
+          'Falha ao salvar visibilidade de colunas no localStorage',
+          err
+        );
+      }
+      return next;
+    });
+  };
 
   const table = useTable({
     key: tableKey,
@@ -266,7 +325,7 @@ export const TransactionsTable = ({
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
     onPaginationChange: handlePaginationChange,
     state: {
       sorting,
