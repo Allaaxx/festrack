@@ -3,7 +3,7 @@
 import { format, isValid, subDays } from 'date-fns';
 import * as React from 'react';
 import { useMemo, useState } from 'react';
-import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import {
   Card,
@@ -215,6 +215,7 @@ export const ChartAreaInteractive = ({
                 </linearGradient>
               </defs>
               <CartesianGrid vertical={false} />
+              <YAxis domain={[0, 'auto']} hide />
               <XAxis
                 dataKey="date"
                 tickLine={false}
@@ -270,14 +271,14 @@ export const ChartAreaInteractive = ({
               />
               <Area
                 dataKey="saidas"
-                type="natural"
+                type="monotone"
                 fill="url(#fillSaidas)"
                 stroke="var(--color-saidas)"
                 stackId="a"
               />
               <Area
                 dataKey="entradas"
-                type="natural"
+                type="monotone"
                 fill="url(#fillEntradas)"
                 stroke="var(--color-entradas)"
                 stackId="a"

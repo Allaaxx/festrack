@@ -675,7 +675,7 @@ const TableCellViewer = ({ item }) => {
                   />
                   <Area
                     dataKey="mobile"
-                    type="natural"
+                    type="monotone"
                     fill="var(--color-mobile)"
                     fillOpacity={0.6}
                     stroke="var(--color-mobile)"
@@ -683,7 +683,7 @@ const TableCellViewer = ({ item }) => {
                   />
                   <Area
                     dataKey="desktop"
-                    type="natural"
+                    type="monotone"
                     fill="var(--color-desktop)"
                     fillOpacity={0.4}
                     stroke="var(--color-desktop)"
