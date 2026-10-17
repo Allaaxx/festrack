@@ -37,3 +37,7 @@ export {
   useCreateTransactionForm,
   useEditTransactionForm,
 } from './forms/hooks';
+
+// Helpers
+export { buildDailyChartData } from './helpers/chart';
+
