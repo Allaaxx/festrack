@@ -679,6 +679,7 @@ const TableCellViewer = ({ item }) => {
                     fill="var(--color-mobile)"
                     fillOpacity={0.6}
                     stroke="var(--color-mobile)"
+                    stackId="a"
                   />
                   <Area
                     dataKey="desktop"
@@ -686,6 +687,7 @@ const TableCellViewer = ({ item }) => {
                     fill="var(--color-desktop)"
                     fillOpacity={0.4}
                     stroke="var(--color-desktop)"
+                    stackId="a"
                   />
                 </AreaChart>
               </ChartContainer>

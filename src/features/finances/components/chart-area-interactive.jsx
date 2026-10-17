@@ -273,12 +273,14 @@ export const ChartAreaInteractive = ({
                 type="natural"
                 fill="url(#fillSaidas)"
                 stroke="var(--color-saidas)"
+                stackId="a"
               />
               <Area
                 dataKey="entradas"
                 type="natural"
                 fill="url(#fillEntradas)"
                 stroke="var(--color-entradas)"
+                stackId="a"
               />
             </AreaChart>
           </ChartContainer>
