@@ -41,8 +41,10 @@ Festrack follows a **Feature-First (Vertical Slices)** architecture. Domain-spec
 ```
 src/
 ├── api/             # Global API services & hooks (e.g., cross-cutting auth)
+├── assets/          # Static brand assets and SVGs (LogoIcon, etc.)
 ├── components/
-│   ├── layout/      # Application shell, sidebar, header, navigation, DashboardLayout
+│   ├── auth/        # Modular authentication forms (LoginForm, SignupForm)
+│   ├── layout/      # Application shell, sidebar, header, navigation, DashboardLayout, AuthSplitLayout
 │   ├── shared/      # Cross-feature reusable composite components (e.g., PasswordInput)
 │   └── ui/          # shadcn/ui base primitives (Base UI-powered)
 ├── constants/       # App-wide string/value constants
@@ -165,7 +167,7 @@ export const FooContextProvider = ({ children }) => {
 - Protected authenticated routes are wrapped inside `<DashboardLayout>` (`src/components/layout/dashboard-layout.jsx`).
 - `<DashboardLayout>` automatically guards against unauthenticated access: checks `isInitializing`, redirects to `/signin` if `!user`, and renders the `AppSidebar` and `Header`.
 - Individual page components (`Home`, `EventPage`, etc.) should **NOT** duplicate authentication redirects (`if (!user) return <Navigate to="/signin" />`).
-- Unauthenticated routes (`/signin`, `/signup`) do not use `DashboardLayout`.
+- Unauthenticated public authentication routes (`/signin`, `/signup`) use `<AuthSplitLayout>` (`src/components/layout/auth-split-layout.jsx`) to render the responsive two-column split shell with brand header and theme-adaptive hero cover.
 
 ---
 
@@ -174,6 +176,7 @@ export const FooContextProvider = ({ children }) => {
 - **Base UI Primitives (CRITICAL):** This project uses shadcn with `@base-ui/react`, NOT Radix UI.
   - **NEVER use `asChild`.** It does not exist in Base UI and will cause runtime errors or broken markup.
   - Use the `render` prop for element composition: e.g. `<SidebarMenuButton render={<Link to={to} />} isActive={isActive}>` or `<DialogTrigger render={<Button>Abrir</Button>} />`.
+  - **shadcn blocks / templates safety:** When adopting shadcn blocks or templates (e.g. `login-02`), NEVER run `npx shadcn add <block>` without `--dry-run`. Third-party blocks often pull in standard Radix primitives that can destructively overwrite our `@base-ui/react` primitives. Always inspect changes or adapt block structures manually.
 - **File naming**: `kebab-case.jsx` for all components.
 - **Export style**: `default export` for page and feature components; named exports for UI primitives.
 - **Icons**: Always use `lucide-react` — it is the configured icon library for shadcn.

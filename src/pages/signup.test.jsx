@@ -64,6 +64,67 @@ describe('SignUpPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders brand header with logo and link to home', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const brandLink = screen.getByRole('link', { name: /festrack/i });
+    expect(brandLink).toBeInTheDocument();
+    expect(brandLink).toHaveAttribute('href', '/');
+  });
+
+  it('renders theme-adaptive cover images in right column', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const coverImages = screen.getAllByAltText('Festrack');
+    expect(coverImages).toHaveLength(2);
+    expect(coverImages[0]).toHaveAttribute('src', '/auth-cover-white.jpg');
+    expect(coverImages[1]).toHaveAttribute('src', '/auth-cover-black.jpg');
+  });
+
+  it('renders login link pointing to /signin', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const signinLink = screen.getByRole('link', { name: /faça login/i });
+    expect(signinLink).toBeInTheDocument();
+    expect(signinLink).toHaveAttribute('href', '/signin');
+  });
+
   it('redirects to / when user is already authenticated without location state', () => {
     useAuthContext.mockReturnValue({
       user: { id: 'u1', name: 'John Doe' },
@@ -336,6 +397,135 @@ describe('SignUpPage', () => {
       expect(
         screen.getByText(/Erro no cadastro via Google/i)
       ).toBeInTheDocument();
+    });
+  });
+
+  it('preserves location state in login link pointing to /signin', () => {
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: '/signup',
+            state: { from: { pathname: '/event', search: '?view=month' } },
+          },
+        ]}
+      >
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const signinLink = screen.getByRole('link', { name: /faça login/i });
+    expect(signinLink).toBeInTheDocument();
+    expect(signinLink).toHaveAttribute('href', '/signin');
+  });
+
+  describe('OAuth error search parameter feedback', () => {
+    it('displays localized error alert when redirected with ?error=state_mismatch', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signup: mockSignup,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/signup?error=state_mismatch']}>
+          <Routes>
+            <Route path="/signup" element={<SignUpPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'A sessão de autenticação expirou ou é inválida. Por favor, tente novamente.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('displays localized error alert when redirected with ?error=access_denied', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signup: mockSignup,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/signup?error=access_denied']}>
+          <Routes>
+            <Route path="/signup" element={<SignUpPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'O acesso foi negado ou cancelado. Por favor, tente novamente.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('displays localized error alert when redirected with ?error=oauth_link_error', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signup: mockSignup,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter initialEntries={['/signup?error=oauth_link_error']}>
+          <Routes>
+            <Route path="/signup" element={<SignUpPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Não foi possível vincular a conta do Google. Verifique se o e-mail já está associado a outra conta.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('displays error_description when an unmapped error code is provided', () => {
+      useAuthContext.mockReturnValue({
+        user: null,
+        isInitializing: false,
+        signup: mockSignup,
+        signInWithGoogle: vi.fn(),
+      });
+
+      render(
+        <MemoryRouter
+          initialEntries={[
+            '/signup?error=server_error&error_description=Falha+no+servidor+Google',
+          ]}
+        >
+          <Routes>
+            <Route path="/signup" element={<SignUpPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toBeInTheDocument();
+      expect(screen.getByText('Falha no servidor Google')).toBeInTheDocument();
     });
   });
 });
