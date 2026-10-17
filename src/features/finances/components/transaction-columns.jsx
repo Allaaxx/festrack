@@ -1,6 +1,12 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowUpDown, EllipsisVertical } from 'lucide-react';
+import {
+  ArrowUpDown,
+  EllipsisVertical,
+  PenBoxIcon,
+  Trash2Icon,
+} from 'lucide-react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +31,109 @@ const parseDateSafely = (dateValue) => {
     return new Date(Number(year), Number(month) - 1, Number(day));
   }
   return new Date(dateValue);
+};
+
+/**
+ * Célula isolada de ações para uma linha de transação.
+ * Renderiza o dropdown de ações e monta os modais de edição e exclusão
+ * fora do container do menu, isolando a propagação de eventos para que
+ * cliques não acionem o drawer de detalhes da linha.
+ *
+ * @param {{ transaction: Object }} props
+ */
+export const TransactionActionsCell = ({ transaction }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+  const handleEditClick = (e) => {
+    e?.stopPropagation?.();
+    setIsDropdownOpen(false);
+    setIsEditOpen(true);
+  };
+
+  const handleDeleteClick = (e) => {
+    e?.stopPropagation?.();
+    setIsDropdownOpen(false);
+    setIsDeleteOpen(true);
+  };
+
+  return (
+    <div
+      className="flex items-center justify-end"
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              className="text-muted-foreground data-[state=open]:bg-muted flex size-8"
+              size="icon"
+              aria-label="Ações da transação"
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <EllipsisVertical />
+              <span className="sr-only">Ações da transação</span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent
+          align="end"
+          className="w-32"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <DropdownMenuItem
+            onClick={handleEditClick}
+            aria-label="Editar transação"
+          >
+            <PenBoxIcon />
+            Editar
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={handleDeleteClick}
+            aria-label="Excluir transação"
+          >
+            <Trash2Icon />
+            Excluir
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {isEditOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <EditTransactionButton
+            transaction={transaction}
+            open={isEditOpen}
+            onOpenChange={setIsEditOpen}
+            trigger={null}
+          />
+        </div>
+      )}
+
+      {isDeleteOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <DeleteTransactionButton
+            transaction={transaction}
+            open={isDeleteOpen}
+            onOpenChange={setIsDeleteOpen}
+            trigger={null}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const transactionColumns = [
@@ -149,31 +258,7 @@ export const transactionColumns = [
     enableSorting: false,
 
     cell: ({ row: { original: transaction } }) => {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                className="text-muted-foreground data-[state=open]:bg-muted flex size-8"
-                size="icon"
-              >
-                <EllipsisVertical />
-                <span className="sr-only">Open menu</span>
-              </Button>
-            }
-          ></DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-32">
-            <DropdownMenuItem>
-              <EditTransactionButton transaction={transaction} />
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
-              <DeleteTransactionButton transaction={transaction} />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <TransactionActionsCell transaction={transaction} />;
     },
   },
 ];

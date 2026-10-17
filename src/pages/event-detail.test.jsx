@@ -6,6 +6,7 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -373,7 +374,8 @@ describe('EventDetailPage', () => {
       expect(netBalanceCard).toHaveTextContent(/R\$\s*1\.000,00/);
     });
 
-    it('renders transactions table with proper columns, badges, dates, amounts, and row actions', () => {
+    it('renders transactions table with proper columns, badges, dates, amounts, and row actions', async () => {
+      const user = userEvent.setup();
       useGetEvent.mockReturnValue({
         data: mockEvent,
         isLoading: false,
@@ -432,15 +434,19 @@ describe('EventDetailPage', () => {
       expect(tableScope.getByText(/R\$\s*700,00/)).toBeInTheDocument();
 
       // Row action buttons
-      const editButtons = tableScope.getAllByRole('button', {
-        name: /editar transação/i,
+      const actionButtons = tableScope.getAllByRole('button', {
+        name: /ações da transação/i,
       });
-      expect(editButtons.length).toBe(3);
+      expect(actionButtons.length).toBe(3);
 
-      const deleteButtons = tableScope.getAllByRole('button', {
-        name: /excluir transação/i,
-      });
-      expect(deleteButtons.length).toBe(3);
+      await user.click(actionButtons[0]);
+
+      expect(
+        await screen.findByRole('menuitem', { name: /editar/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('menuitem', { name: /excluir/i })
+      ).toBeInTheDocument();
     });
 
     it('renders empty state when transaction list is empty with an actionable CTA button', () => {
