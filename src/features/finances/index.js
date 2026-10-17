@@ -7,7 +7,10 @@ export { default as DateSelection } from './components/date-selection';
 export { default as DeleteTransactionButton } from './components/delete-transaction-button';
 export { default as EditTransactionButton } from './components/edit-transaction-button';
 export { default as SectionCards } from './components/section-cards';
-export { default as transactionColumns } from './components/transaction-columns';
+export {
+  TransactionActionsCell,
+  default as transactionColumns,
+} from './components/transaction-columns';
 export { default as TransactionTypeBadge } from './components/transaction-type-badge';
 export { default as DataTable } from './components/transactions-table';
 export { default as TransactionsTable } from './components/transactions-table';

@@ -22,22 +22,44 @@ import { useAuthContext } from '@/contexts/auth';
 import { useDeleteTransaction } from '@/features/finances/api/hooks';
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
 
-const DeleteTransactionButton = ({ transaction }) => {
+const DeleteTransactionButton = ({
+  transaction,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+  trigger,
+  render,
+}) => {
   const { user } = useAuthContext();
-  const [deleteDialogIsOpen, setDeleteDialogIsOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const deleteDialogIsOpen = isControlled ? controlledOpen : internalOpen;
   const [inputValue, setInputValue] = useState('');
+
+  const handleOpenChange = (open) => {
+    if (!isControlled) {
+      setInternalOpen(open);
+    }
+    setInputValue('');
+    onOpenChange?.(open);
+  };
+
+  const actionTrigger = trigger !== undefined ? trigger : render;
+  const hasTrigger =
+    actionTrigger !== null && (!isControlled || Boolean(actionTrigger));
 
   const { mutateAsync: deleteTransaction, isPending } = useDeleteTransaction();
 
   const isButtonDisabled =
-    inputValue !== user.firstName + '/' + transaction.name || isPending;
+    inputValue !== user?.firstName + '/' + transaction?.name || isPending;
 
   const handleDelete = () => {
     deleteTransaction(
       { id: transaction.id },
       {
         onSuccess: () => {
-          setDeleteDialogIsOpen(false);
+          handleOpenChange(false);
+          onSuccess?.();
           toast.add({
             type: 'success',
             title: 'Transação deletada com sucesso!',
@@ -55,26 +77,24 @@ const DeleteTransactionButton = ({ transaction }) => {
   };
 
   return (
-    <Dialog
-      open={deleteDialogIsOpen}
-      onOpenChange={(open) => {
-        setDeleteDialogIsOpen(open);
-        setInputValue('');
-      }}
-    >
-      <DialogTrigger
-        className="h-6"
-        render={
-          <Button
-            variant="ghost"
-            className="text-muted-foreground gap-2"
-            aria-label="Excluir transação"
-          >
-            <Trash2Icon />
-            Deletar
-          </Button>
-        }
-      />
+    <Dialog open={deleteDialogIsOpen} onOpenChange={handleOpenChange}>
+      {hasTrigger && (
+        <DialogTrigger
+          className="h-6"
+          render={
+            actionTrigger ?? (
+              <Button
+                variant="ghost"
+                className="text-muted-foreground gap-2"
+                aria-label="Excluir transação"
+              >
+                <Trash2Icon />
+                Deletar
+              </Button>
+            )
+          }
+        />
+      )}
       <DialogContent className="sm:min-w-112.5">
         <DialogHeader>
           <DialogTitle>Deletar "{transaction.name}"</DialogTitle>
