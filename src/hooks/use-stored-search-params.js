@@ -128,16 +128,26 @@ export const useStoredSearchParams = (
     setSearchParams,
   ]);
 
+  const latestParamsRef = useRef(null);
+
+  useEffect(() => {
+    latestParamsRef.current = null;
+  }, [currentUrlParams]);
+
   // Helper to update parameters and URL
   const setParams = useCallback(
     (newParamsOrUpdater, navOptions = { replace: true }) => {
-      const current = { ...defaultParams, ...currentUrlParams };
+      const current = latestParamsRef.current ?? {
+        ...defaultParams,
+        ...currentUrlParams,
+      };
       const updates =
         typeof newParamsOrUpdater === 'function'
           ? newParamsOrUpdater(current)
           : newParamsOrUpdater;
 
       const merged = { ...current, ...updates };
+      latestParamsRef.current = merged;
 
       const nextSearchParams = new URLSearchParams(searchParams);
       Object.entries(merged).forEach(([key, value]) => {
