@@ -39,11 +39,11 @@ export const description =
 const chartConfig = {
   entradas: {
     label: 'Entradas',
-    color: 'var(--color-primary-green)',
+    color: 'var(--primary)',
   },
   saidas: {
     label: 'Saídas',
-    color: 'var(--color-primary-red)',
+    color: 'var(--primary)',
   },
 };
 
@@ -79,7 +79,6 @@ export const ChartAreaInteractive = ({
       setInternalPreset('7d');
     }
   }, [isMobile, activePreset]);
-
 
   const effectivePreset =
     activePreset !== undefined ? activePreset : internalPreset;
@@ -194,7 +193,7 @@ export const ChartAreaInteractive = ({
                   <stop
                     offset="5%"
                     stopColor="var(--color-entradas)"
-                    stopOpacity={0.8}
+                    stopOpacity={1.0}
                   />
                   <stop
                     offset="95%"
@@ -253,11 +252,7 @@ export const ChartAreaInteractive = ({
                           <div
                             className="h-2.5 w-2.5 shrink-0 rounded-xs"
                             style={{
-                              backgroundColor:
-                                item?.color ??
-                                (name === 'entradas'
-                                  ? 'var(--color-primary-green)'
-                                  : 'var(--color-primary-red)'),
+                              backgroundColor: item?.color ?? 'var(--primary)',
                             }}
                           />
                           <span className="text-muted-foreground">

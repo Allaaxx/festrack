@@ -361,4 +361,67 @@ describe('TransactionsTable Component', () => {
 
     expect(onPageSizeChange).toHaveBeenCalledWith(20);
   });
+
+  it('hides column header and cells when toggling column visibility in customize columns dropdown', async () => {
+    const user = userEvent.setup();
+    useGetTransactions.mockReturnValue({
+      data: mockTransactions,
+      isLoading: false,
+      isError: false,
+    });
+
+    renderComponent();
+
+    // Headers are initially present
+    expect(screen.getByRole('button', { name: /tipo/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /título/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /valor/i })).toBeInTheDocument();
+
+    // Click customize columns button
+    const customizeBtn = screen.getByRole('button', {
+      name: /personalizar colunas/i,
+    });
+    await user.click(customizeBtn);
+
+    // Uncheck "Tipo"
+    const tipoOption = await screen.findByRole('menuitemcheckbox', {
+      name: /tipo/i,
+    });
+    await user.click(tipoOption);
+
+    // Header "Tipo" should disappear
+    expect(
+      screen.queryByRole('button', { name: /tipo/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /título/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /valor/i })).toBeInTheDocument();
+
+    // Uncheck "Título"
+    const tituloOption = await screen.findByRole('menuitemcheckbox', {
+      name: /título/i,
+    });
+    await user.click(tituloOption);
+
+    // Header "Título" should also disappear
+    expect(
+      screen.queryByRole('button', { name: /título/i })
+    ).not.toBeInTheDocument();
+
+    // Uncheck "Valor"
+    const valorOption = await screen.findByRole('menuitemcheckbox', {
+      name: /valor/i,
+    });
+    await user.click(valorOption);
+
+    // Header "Valor" should also disappear
+    expect(
+      screen.queryByRole('button', { name: /valor/i })
+    ).not.toBeInTheDocument();
+
+    // Re-check "Tipo"
+    await user.click(tipoOption);
+    expect(
+      await screen.findByRole('button', { name: /tipo/i })
+    ).toBeInTheDocument();
+  });
 });

@@ -150,9 +150,7 @@ export const TransactionsTable = ({
       : queryIsLoading && !propTransactions;
 
   const isError =
-    propIsError !== undefined
-      ? propIsError
-      : queryIsError && !propTransactions;
+    propIsError !== undefined ? propIsError : queryIsError && !propTransactions;
 
   const refetch = propRefetch ?? queryRefetch;
 
@@ -405,16 +403,18 @@ export const TransactionsTable = ({
             <TableHeader className="bg-muted sticky top-0 z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
+                  {headerGroup.headers
+                    .filter((header) => header.column.getIsVisible())
+                    .map((header) => (
+                      <TableHead key={header.id} colSpan={header.colSpan}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
                 </TableRow>
               ))}
             </TableHeader>
@@ -452,7 +452,7 @@ export const TransactionsTable = ({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={transactionColumns.length}
+                    colSpan={table.getVisibleLeafColumns().length}
                     className="h-24 text-center"
                   >
                     {!transactions.length
