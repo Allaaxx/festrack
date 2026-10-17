@@ -206,4 +206,159 @@ describe('TransactionsTable Component', () => {
     expect(screen.getByText('Página 2 de 3')).toBeInTheDocument();
     expect(screen.getByText('Transação 11')).toBeInTheDocument();
   });
+
+  it('supports controlled transactions, isLoading, and isError props', () => {
+    const { unmount: unmountLoading } = renderComponent({ isLoading: true });
+    expect(screen.getByTestId('transactions-loading')).toBeInTheDocument();
+    unmountLoading();
+
+    const mockRefetch = vi.fn();
+    const { unmount: unmountError } = renderComponent({
+      isError: true,
+      refetch: mockRefetch,
+    });
+    expect(screen.getByTestId('transactions-error')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /tentar novamente/i }));
+    expect(mockRefetch).toHaveBeenCalledTimes(1);
+    unmountError();
+
+    renderComponent({
+      transactions: [
+        {
+          id: 'tx-controlled',
+          name: 'Freelance Design',
+          type: 'EARNING',
+          amount: 2500,
+          date: '2026-10-15T12:00:00.000Z',
+        },
+      ],
+      isLoading: false,
+      isError: false,
+    });
+    expect(screen.getByText('Freelance Design')).toBeInTheDocument();
+  });
+
+  it('supports controlled search query and resets page on search input', async () => {
+    const user = userEvent.setup();
+    const onSearchChange = vi.fn();
+    const onPageChange = vi.fn();
+
+    renderComponent({
+      transactions: mockTransactions,
+      q: 'Salário',
+      onSearchChange,
+      onPageChange,
+    });
+
+    const searchInput = screen.getByPlaceholderText('Buscar por título...');
+    expect(searchInput).toHaveValue('Salário');
+    expect(screen.getByText('Salário Mensal')).toBeInTheDocument();
+    expect(screen.queryByText('Supermercado Central')).not.toBeInTheDocument();
+
+    await user.type(searchInput, '!');
+    expect(onSearchChange).toHaveBeenCalled();
+    expect(onPageChange).toHaveBeenCalledWith(0);
+  });
+
+  it('supports controlled pagination navigation buttons', () => {
+    const manyTransactions = Array.from({ length: 30 }).map((_, index) => ({
+      id: `tx-${index}`,
+      name: `Transação ${index + 1}`,
+      type: 'EXPENSE',
+      amount: 100 * (index + 1),
+      date: '2026-10-01T12:00:00.000Z',
+    }));
+
+    const onPageChange = vi.fn();
+    const onPageSizeChange = vi.fn();
+
+    renderComponent({
+      transactions: manyTransactions,
+      page: 1,
+      pageSize: 10,
+      onPageChange,
+      onPageSizeChange,
+    });
+
+    expect(screen.getByText('Página 2 de 3')).toBeInTheDocument();
+    expect(screen.getByText('Transação 11')).toBeInTheDocument();
+    expect(screen.queryByText('Transação 1')).not.toBeInTheDocument();
+
+    const firstBtn = screen.getByRole('button', { name: /primeira página/i });
+    fireEvent.click(firstBtn);
+    expect(onPageChange).toHaveBeenCalledWith(0);
+
+    const prevBtn = screen.getByRole('button', { name: /página anterior/i });
+    fireEvent.click(prevBtn);
+    expect(onPageChange).toHaveBeenCalledWith(0);
+
+    const nextBtn = screen.getByRole('button', { name: /próxima página/i });
+    fireEvent.click(nextBtn);
+    expect(onPageChange).toHaveBeenCalledWith(2);
+
+    const lastBtn = screen.getByRole('button', { name: /última página/i });
+    fireEvent.click(lastBtn);
+    expect(onPageChange).toHaveBeenCalledWith(2);
+  });
+
+  it('clamps out-of-bounds page index when filtered rows decrease', () => {
+    const onPageChange = vi.fn();
+
+    renderComponent({
+      transactions: mockTransactions,
+      page: 5,
+      pageSize: 10,
+      onPageChange,
+    });
+
+    expect(onPageChange).toHaveBeenCalledWith(0);
+    expect(screen.getByText('Página 1 de 1')).toBeInTheDocument();
+  });
+
+  it('strictly slices visible rows according to pageSize using TanStack paginatedRowModel', () => {
+    const manyTransactions = Array.from({ length: 25 }).map((_, index) => ({
+      id: `tx-${index}`,
+      name: `Transação ${index + 1}`,
+      type: 'EXPENSE',
+      amount: 100 * (index + 1),
+      date: '2026-10-01T12:00:00.000Z',
+    }));
+
+    renderComponent({
+      transactions: manyTransactions,
+      page: 0,
+      pageSize: 10,
+    });
+
+    const rows = screen.getAllByTestId('transaction-row');
+    expect(rows).toHaveLength(10);
+  });
+
+  it('updates rows per page when changing pageSize selector', async () => {
+    const user = userEvent.setup();
+    const manyTransactions = Array.from({ length: 30 }).map((_, index) => ({
+      id: `tx-${index}`,
+      name: `Transação ${index + 1}`,
+      type: 'EXPENSE',
+      amount: 100 * (index + 1),
+      date: '2026-10-01T12:00:00.000Z',
+    }));
+
+    const onPageSizeChange = vi.fn();
+
+    renderComponent({
+      transactions: manyTransactions,
+      page: 0,
+      pageSize: 10,
+      onPageSizeChange,
+    });
+
+    const trigger = screen.getByRole('combobox');
+    await user.click(trigger);
+
+    const option20 = await screen.findByRole('option', { name: '20' });
+    await user.click(option20);
+
+    expect(onPageSizeChange).toHaveBeenCalledWith(20);
+  });
 });
