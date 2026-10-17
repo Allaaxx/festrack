@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   BalanceService,
   TransactionService,
-} from '@/features/transactions/api/services';
+} from '@/features/finances/api/services';
 import protectedApi from '@/lib/axios';
 
 vi.mock('@/lib/axios', () => {

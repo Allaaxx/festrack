@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetTransactions } from '@/features/transactions/api/hooks';
-import AddTransactionButton from '@/features/transactions/components/add-transaction-button';
-import transactionColumns from '@/features/transactions/components/transaction-columns';
+import { useGetTransactions } from '@/features/finances/api/hooks';
+import AddTransactionButton from '@/features/finances/components/add-transaction-button';
+import transactionColumns from '@/features/finances/components/transaction-columns';
 
 const TransactionsTable = () => {
   const [searchParams] = useSearchParams();

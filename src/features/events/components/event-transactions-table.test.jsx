@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuthContext } from '@/contexts/auth';
-import { useGetTransactions } from '@/features/transactions/api/hooks';
+import { useGetTransactions } from '@/features/finances/api/hooks';
 
 import EventTransactionsTable from './event-transactions-table';
 
@@ -11,8 +11,8 @@ vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
 }));
 
-vi.mock('@/features/transactions/api/hooks', async () => {
-  const actual = await vi.importActual('@/features/transactions/api/hooks');
+vi.mock('@/features/finances/api/hooks', async () => {
+  const actual = await vi.importActual('@/features/finances/api/hooks');
   return {
     ...actual,
     useGetTransactions: vi.fn(),

@@ -11,17 +11,17 @@ import {
   useEditTransaction,
   useGetTransactions,
   useGetUserBalance,
-} from '@/features/transactions/api/hooks';
+} from '@/features/finances/api/hooks';
 import {
   BalanceService,
   TransactionService,
-} from '@/features/transactions/api/services';
+} from '@/features/finances/api/services';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
 }));
 
-vi.mock('@/features/transactions/api/services', () => ({
+vi.mock('@/features/finances/api/services', () => ({
   BalanceService: {
     getBalance: vi.fn(),
   },

@@ -33,7 +33,7 @@ import { EventCombobox } from '@/features/events';
 import {
   getDefaultTransactionValues,
   useCreateTransactionForm,
-} from '@/features/transactions/forms/hooks';
+} from '@/features/finances/forms/hooks';
 
 const AddTransactionButton = ({
   initialEventId = null,

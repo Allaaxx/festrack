@@ -3,9 +3,9 @@ import { ptBR } from 'date-fns/locale/pt-BR';
 import { ArrowUpDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import DeleteTransactionButton from '@/features/transactions/components/delete-transaction-button';
-import EditTransactionButton from '@/features/transactions/components/edit-transaction-button';
-import TransactionTypeBadge from '@/features/transactions/components/transaction-type-badge';
+import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
+import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
+import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
 import { formatCurrency } from '@/helpers/currency';
 
 const parseDateSafely = (dateValue) => {
@@ -99,9 +99,13 @@ export const transactionColumns = [
     },
 
     cell: ({ row: { original: transaction } }) => {
-      return format(parseDateSafely(transaction.date), "dd 'de' MMMM 'de' yyyy", {
-        locale: ptBR,
-      });
+      return format(
+        parseDateSafely(transaction.date),
+        "dd 'de' MMMM 'de' yyyy",
+        {
+          locale: ptBR,
+        }
+      );
     },
   },
 

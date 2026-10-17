@@ -4,7 +4,7 @@ import {
   DateSelection,
   TransactionsTable,
   TransactionsTypeChart,
-} from '@/features/transactions';
+} from '@/features/finances';
 
 const HomePage = () => {
   return (

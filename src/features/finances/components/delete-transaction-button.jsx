@@ -19,8 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
-import { useDeleteTransaction } from '@/features/transactions/api/hooks';
-import TransactionTypeBadge from '@/features/transactions/components/transaction-type-badge';
+import { useDeleteTransaction } from '@/features/finances/api/hooks';
+import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
 
 const DeleteTransactionButton = ({ transaction }) => {
   const { user } = useAuthContext();

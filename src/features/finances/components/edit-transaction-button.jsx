@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { EventCombobox } from '@/features/events';
-import { useEditTransactionForm } from '@/features/transactions/forms/hooks';
+import { useEditTransactionForm } from '@/features/finances/forms/hooks';
 
 const EditTransactionButton = ({ transaction }) => {
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
@@ -54,11 +54,7 @@ const EditTransactionButton = ({ transaction }) => {
     <Sheet open={sheetIsOpen} onOpenChange={setSheetIsOpen}>
       <SheetTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Editar transação"
-          >
+          <Button variant="ghost" size="icon" aria-label="Editar transação">
             <ExternalLinkIcon className="text-muted-foreground" />
           </Button>
         }
