@@ -307,7 +307,7 @@ export const TransactionsTable = ({ transactions: propTransactions }) => {
                     key={row.id}
                     data-testid="transaction-row"
                     data-state={row.getIsSelected() && 'selected'}
-                    className="relative z-0 cursor-pointer px-1"
+                    className="relative z-0 cursor-pointer"
                     onClick={() => setSelectedTransaction(row.original)}
                   >
                     {row.getVisibleCells().map((cell) => (

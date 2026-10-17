@@ -1,8 +1,15 @@
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale/pt-BR';
-import { ArrowUpDown } from 'lucide-react';
+import { ptBR } from 'date-fns/locale';
+import { ArrowUpDown, EllipsisVertical } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
 import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
@@ -143,10 +150,29 @@ export const transactionColumns = [
 
     cell: ({ row: { original: transaction } }) => {
       return (
-        <div className="flex items-center gap-2">
-          <EditTransactionButton transaction={transaction} />
-          <DeleteTransactionButton transaction={transaction} />
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                className="text-muted-foreground data-[state=open]:bg-muted flex size-8"
+                size="icon"
+              >
+                <EllipsisVertical />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            }
+          ></DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-32">
+            <DropdownMenuItem>
+              <EditTransactionButton transaction={transaction} />
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive">
+              <DeleteTransactionButton transaction={transaction} />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },

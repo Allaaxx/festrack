@@ -1,6 +1,6 @@
 import {
-  ExternalLinkIcon,
   Loader2Icon,
+  PenBoxIcon,
   PiggyBankIcon,
   TrendingDownIcon,
   TrendingUpIcon,
@@ -53,9 +53,15 @@ const EditTransactionButton = ({ transaction }) => {
   return (
     <Sheet open={sheetIsOpen} onOpenChange={setSheetIsOpen}>
       <SheetTrigger
+        className="h-6"
         render={
-          <Button variant="ghost" size="icon" aria-label="Editar transação">
-            <ExternalLinkIcon className="text-muted-foreground" />
+          <Button
+            variant="ghost"
+            className="gap-2"
+            aria-label="Editar transação"
+          >
+            <PenBoxIcon />
+            Editar
           </Button>
         }
       />

@@ -16,7 +16,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import DatePickerWithRange from '@/components/ui/date-picker-with-range';
 import {
   Select,
   SelectContent,
@@ -26,6 +25,8 @@ import {
 } from '@/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useIsMobile } from '@/hooks/use-mobile';
+
+import { DateSelection } from '..';
 
 export const description = 'An interactive area chart';
 
@@ -192,7 +193,7 @@ export const ChartAreaInteractive = () => {
           </span>
         </CardDescription>
         <CardAction className="flex gap-2">
-          <DatePickerWithRange />
+          <DateSelection />
           <ToggleGroup
             type="single"
             value={timeRange}
