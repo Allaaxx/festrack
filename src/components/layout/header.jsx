@@ -46,7 +46,11 @@ const Header = () => {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <SearchForm className="w-full sm:ml-auto sm:w-auto" />
+        <SearchForm
+          label="Pesquise aqui"
+          placeholder="Pesquise aqui"
+          className="w-full sm:ml-auto sm:w-auto"
+        />
         <ModeToggle />
       </div>
     </header>

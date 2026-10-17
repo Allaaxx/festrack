@@ -126,13 +126,13 @@ export const ChartAreaInteractive = ({
 
   return (
     <Card className="@container/card">
-      <CardHeader>
+      <CardHeader className="flex flex-col md:flex-row">
         <CardTitle>Fluxo de Caixa</CardTitle>
         <CardDescription>
           <span className="hidden @[540px]/card:block">{descriptionLong}</span>
           <span className="@[540px]/card:hidden">{descriptionShort}</span>
         </CardDescription>
-        <CardAction className="flex gap-2">
+        <CardAction className="flex flex-col gap-2 sm:flex-row">
           <DateSelection
             from={effectiveFrom}
             to={effectiveTo}

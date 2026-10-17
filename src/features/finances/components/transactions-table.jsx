@@ -25,6 +25,7 @@ import {
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
+import { SearchForm } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -41,7 +42,6 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -342,17 +342,14 @@ export const TransactionsTable = ({
       className="flex w-full flex-col justify-start gap-4"
     >
       {/* Top Bar seguindo o layout exato do Template */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Label htmlFor="search-transactions" className="sr-only">
-            Buscar
-          </Label>
-          <Input
+      <div className="flex flex-col-reverse items-center justify-between gap-2 sm:flex-row">
+        <div className="flex w-full items-center gap-2 sm:w-fit">
+          <SearchForm
             id="search-transactions"
             placeholder="Buscar por título..."
             value={currentSearchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="h-8 w-full sm:w-64"
+            className="h-8 w-full sm:ml-auto sm:w-auto"
           />
         </div>
 

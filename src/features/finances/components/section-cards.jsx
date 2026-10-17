@@ -83,7 +83,7 @@ export const SectionCards = ({ balance, isLoading = false }) => {
 
       {/* 1. Receita Total */}
       <Card data-testid="kpi-card-revenue" className="@container/card">
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:grid md:flex-row">
           <CardDescription>Receita Total</CardDescription>
           {isLoading ? (
             <Skeleton
@@ -135,7 +135,7 @@ export const SectionCards = ({ balance, isLoading = false }) => {
 
       {/* 2. Despesas do Mês */}
       <Card data-testid="kpi-card-expenses" className="@container/card">
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:grid md:flex-row">
           <CardDescription>Despesas do Mês</CardDescription>
           {isLoading ? (
             <Skeleton
@@ -191,7 +191,7 @@ export const SectionCards = ({ balance, isLoading = false }) => {
 
       {/* 3. Investimentos Ativos */}
       <Card data-testid="kpi-card-investments" className="@container/card">
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:grid md:flex-row">
           <CardDescription>Investimentos Ativos</CardDescription>
           {isLoading ? (
             <Skeleton
@@ -238,7 +238,7 @@ export const SectionCards = ({ balance, isLoading = false }) => {
 
       {/* 4. Saldo Geral */}
       <Card data-testid="kpi-card-balance" className="@container/card">
-        <CardHeader>
+        <CardHeader className="flex flex-col sm:grid md:flex-row">
           <CardDescription>Saldo Geral</CardDescription>
           {isLoading ? (
             <Skeleton
@@ -270,11 +270,13 @@ export const SectionCards = ({ balance, isLoading = false }) => {
           <div className="line-clamp-1 flex gap-2 font-medium">
             {netMargin >= 0 ? (
               <>
-                Balanço financeiro positivo <TrendingUpIcon className="size-4" />
+                Balanço financeiro positivo{' '}
+                <TrendingUpIcon className="size-4" />
               </>
             ) : (
               <>
-                Balanço financeiro negativo <TrendingDownIcon className="size-4" />
+                Balanço financeiro negativo{' '}
+                <TrendingDownIcon className="size-4" />
               </>
             )}
           </div>
