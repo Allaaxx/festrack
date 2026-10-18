@@ -4,10 +4,12 @@ export const useNavMenu = (rawItems) => {
   const location = useLocation();
 
   const processedItems = rawItems.map((item) => {
-    // Verifica se a rota principal ou algum subitem está ativo
-    const isCurrentRoute =
+    // Verifica se a rota principal, sub-rota aninhada ou algum subitem está ativo
+    const isCurrentRoute = Boolean(
       location.pathname === item.url ||
-      item.items?.some((subItem) => location.pathname === subItem.url);
+      location.pathname.startsWith(`${item.url}/`) ||
+      item.items?.some((subItem) => location.pathname === subItem.url)
+    );
 
     // Mantém os parâmetros de busca (querystrings) se estiver na rota atual
     const to = isCurrentRoute
