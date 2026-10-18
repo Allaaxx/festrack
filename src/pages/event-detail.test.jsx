@@ -171,7 +171,7 @@ describe('EventDetailPage', () => {
     expect(screen.getByText(/evento não encontrado/i)).toBeInTheDocument();
   });
 
-  it('renders event details: title, description, formatted date, and status badge', () => {
+  it('renders event details: card container, date badge, title, description, formatted date, and status badge', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -184,14 +184,42 @@ describe('EventDetailPage', () => {
       </Routes>
     );
 
+    expect(screen.getByTestId('event-header-card')).toBeInTheDocument();
+    expect(screen.getByTestId('event-header-date-badge')).toHaveTextContent(
+      'DEZ'
+    );
+    expect(screen.getByTestId('event-header-date-badge')).toHaveTextContent(
+      '01'
+    );
     expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
     expect(screen.getByText('Férias de verão com amigos')).toBeInTheDocument();
     expect(
       screen.getByText(/01\/12\/2026 até 10\/12\/2026/)
     ).toBeInTheDocument();
+    expect(screen.getByText('Múltiplos dias')).toBeInTheDocument();
     expect(
       screen.getAllByText(/agendado|em andamento|finalizado/i).length
     ).toBeGreaterThan(0);
+  });
+
+  it('renders "Dia único" badge when event starts and ends on the same day', () => {
+    useGetEvent.mockReturnValue({
+      data: {
+        ...mockEvent,
+        startDate: '2026-12-01T09:00:00.000Z',
+        endDate: '2026-12-01T18:00:00.000Z',
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
+      </Routes>
+    );
+
+    expect(screen.getByText('Dia único')).toBeInTheDocument();
   });
 
   it('renders "Voltar ao calendário" button and navigates to /events on click', () => {
