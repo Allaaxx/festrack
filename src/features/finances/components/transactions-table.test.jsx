@@ -477,4 +477,102 @@ describe('TransactionsTable Component', () => {
     // "Título" header should still be visible
     expect(screen.getByRole('button', { name: /título/i })).toBeInTheDocument();
   });
+
+  describe('Event Context Integration (eventId prop)', () => {
+    it('queries transactions by eventId when eventId is provided', () => {
+      useGetTransactions.mockReturnValue({
+        data: mockTransactions,
+        isLoading: false,
+        isError: false,
+      });
+
+      renderComponent({ eventId: 'ev-123' });
+
+      expect(useGetTransactions).toHaveBeenCalledWith({ eventId: 'ev-123' });
+    });
+
+    it('renders event-specific loading and error test IDs when eventId is provided', () => {
+      useGetTransactions.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        isError: false,
+      });
+
+      const { rerender } = renderComponent({ eventId: 'ev-123' });
+      expect(
+        screen.getByTestId('event-transactions-skeleton')
+      ).toBeInTheDocument();
+
+      useGetTransactions.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+      });
+
+      rerender(
+        <QueryClientProvider
+          client={
+            new QueryClient({
+              defaultOptions: {
+                queries: { retry: false },
+                mutations: { retry: false },
+              },
+            })
+          }
+        >
+          <MemoryRouter>
+            <TransactionsTable eventId="ev-123" />
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+
+      expect(
+        screen.getByTestId('event-transactions-error')
+      ).toBeInTheDocument();
+    });
+
+    it('renders event-contextualized empty state with CTA button', () => {
+      useGetTransactions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+      });
+
+      renderComponent({ eventId: 'ev-123' });
+
+      expect(
+        screen.getByTestId('event-transactions-empty')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Nenhuma transação encontrada')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Nenhuma transação registrada para este evento.')
+      ).toBeInTheDocument();
+
+      const addBtn = screen.getAllByRole('button', {
+        name: /adicionar transação/i,
+      });
+      expect(addBtn.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('never renders an internal h2 heading title in any mode', () => {
+      useGetTransactions.mockReturnValue({
+        data: mockTransactions,
+        isLoading: false,
+        isError: false,
+      });
+
+      const { unmount } = renderComponent({ eventId: 'ev-123' });
+      expect(
+        screen.queryByRole('heading', { level: 2 })
+      ).not.toBeInTheDocument();
+      unmount();
+
+      renderComponent();
+      expect(
+        screen.queryByRole('heading', { level: 2 })
+      ).not.toBeInTheDocument();
+    });
+  });
 });
