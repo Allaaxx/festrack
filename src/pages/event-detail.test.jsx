@@ -190,8 +190,8 @@ describe('EventDetailPage', () => {
       screen.getByText(/01\/12\/2026 até 10\/12\/2026/)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/agendado|em andamento|finalizado/i)
-    ).toBeInTheDocument();
+      screen.getAllByText(/agendado|em andamento|finalizado/i).length
+    ).toBeGreaterThan(0);
   });
 
   it('renders "Voltar ao calendário" button and navigates to /events on click', () => {
@@ -563,6 +563,86 @@ describe('EventDetailPage', () => {
       );
       expect(screen.getByTestId('kpi-net-balance')).toHaveTextContent(
         /R\$\s*4\.500,00/
+      );
+    });
+
+    it('renders operational StatCards with accurate status, transaction count, average expense, and max expense for populated and empty ledgers (#68)', () => {
+      useGetEvent.mockReturnValue({
+        data: mockEvent,
+        isLoading: false,
+        isError: false,
+      });
+      useGetTransactions.mockReturnValue({
+        data: [
+          ...mockTransactions,
+          {
+            id: 'tx-4',
+            name: 'Hospedagem Extra',
+            type: 'EXPENSE',
+            amount: 500,
+            date: '2026-12-05T12:00:00.000Z',
+            eventId: 'ev-123',
+          },
+        ],
+        isLoading: false,
+        isError: false,
+      });
+
+      const { rerender } = renderWithProviders(
+        <Routes>
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
+        </Routes>
+      );
+
+      const statusCard = screen.getByTestId('stat-status');
+      expect(statusCard).toHaveTextContent('Status do Evento');
+      expect(statusCard).toHaveTextContent(/Agendado|Em andamento|Finalizado/);
+
+      const countCard = screen.getByTestId('stat-transactions-count');
+      expect(countCard).toHaveTextContent('Total de Transações');
+      expect(countCard).toHaveTextContent('4');
+      expect(countCard).toHaveTextContent('4 lançamentos');
+
+      // Expenses: 1500 + 500 = 2000 -> average = 1000
+      const avgExpenseCard = screen.getByTestId('stat-average-expense');
+      expect(avgExpenseCard).toHaveTextContent('Ticket Médio de Despesa');
+      expect(avgExpenseCard).toHaveTextContent(/R\$\s*1\.000,00/);
+      expect(avgExpenseCard).toHaveTextContent('Média por gasto');
+
+      // Max expense: Passagem Aérea (1500)
+      const maxExpenseCard = screen.getByTestId('stat-max-expense');
+      expect(maxExpenseCard).toHaveTextContent('Maior Despesa');
+      expect(maxExpenseCard).toHaveTextContent(/R\$\s*1\.500,00/);
+      expect(maxExpenseCard).toHaveTextContent('Passagem Aérea');
+
+      // Empty transactions state
+      useGetTransactions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+      });
+
+      rerender(
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/events/ev-123']}>
+            <Routes>
+              <Route path="/events/:eventId" element={<EventDetailPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByTestId('stat-transactions-count')).toHaveTextContent(
+        '0 lançamentos'
+      );
+      expect(screen.getByTestId('stat-average-expense')).toHaveTextContent(
+        /R\$\s*0,00/
+      );
+      expect(screen.getByTestId('stat-max-expense')).toHaveTextContent(
+        /R\$\s*0,00/
+      );
+      expect(screen.getByTestId('stat-max-expense')).toHaveTextContent(
+        'Nenhuma despesa'
       );
     });
   });

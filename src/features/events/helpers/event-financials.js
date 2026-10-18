@@ -1,9 +1,9 @@
-import { format } from 'date-fns';
+import { differenceInCalendarDays, format, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import { formatCurrency } from '@/helpers/currency';
 
-import { parseEventDate } from './event';
+import { getEventStatus, getEventStatusLabel, parseEventDate } from './event';
 
 /**
  * Calcula os totais financeiros (Receitas, Despesas, Investimentos e Saldo Líquido)
@@ -93,7 +93,9 @@ export const buildTransactionTypeSeries = (transactions = [], targetType) => {
 
     const amount = Number(transaction?.amount) || 0;
     const parsedDate = parseEventDate(transaction?.date);
-    const sortKey = parsedDate ? format(parsedDate, 'yyyy-MM-dd') : '0000-00-00';
+    const sortKey = parsedDate
+      ? format(parsedDate, 'yyyy-MM-dd')
+      : '0000-00-00';
     const dateValue = parsedDate ? sortKey : '';
     const label = parsedDate
       ? format(parsedDate, 'dd/MM', { locale: ptBR })
@@ -200,3 +202,106 @@ export const buildEventMetricCardsData = (transactions = []) => {
   };
 };
 
+/**
+ * Constrói os 4 indicadores operacionais do evento (StatCards) em português (BR):
+ * 1. Status do Evento (stat-status)
+ * 2. Total de Transações (stat-transactions-count)
+ * 3. Ticket Médio de Despesa (stat-average-expense)
+ * 4. Maior Despesa (stat-max-expense)
+ *
+ * @param {{ startDate?: Date | string, endDate?: Date | string } | null | undefined} event
+ * @param {Array<{ name?: string, type?: string, amount?: number | string }>} [transactions=[]]
+ */
+export const buildEventOperationalStats = (event, transactions = []) => {
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const today = startOfDay(new Date());
+  const parsedStart = parseEventDate(event?.startDate);
+  const parsedEnd = parseEventDate(event?.endDate);
+  const start = startOfDay(parsedStart ?? today);
+  const end = startOfDay(parsedEnd ?? start);
+
+  const statusKey = event?.startDate ? getEventStatus(event) : 'scheduled';
+  const statusLabel = getEventStatusLabel(statusKey);
+
+  let statusBadge = 'Em curso';
+  if (statusKey === 'scheduled') {
+    const daysUntilStart = Math.max(1, differenceInCalendarDays(start, today));
+    statusBadge =
+      daysUntilStart === 1 ? 'Falta 1 dia' : `Faltam ${daysUntilStart} dias`;
+  } else if (statusKey === 'completed') {
+    statusBadge = 'Concluído';
+  }
+
+  const durationDays = Math.max(1, differenceInCalendarDays(end, start) + 1);
+  const durationLabel = durationDays === 1 ? '1 dia' : `${durationDays} dias`;
+
+  const totalCount = safeTransactions.length;
+
+  const expenseTransactions = safeTransactions.filter(
+    (tx) => String(tx?.type ?? '').toUpperCase() === 'EXPENSE'
+  );
+  const expenseCount = expenseTransactions.length;
+  const totalExpenseAmount = expenseTransactions.reduce(
+    (sum, tx) => sum + (Number(tx?.amount) || 0),
+    0
+  );
+  const averageExpense =
+    expenseCount > 0
+      ? Math.round((totalExpenseAmount / expenseCount) * 100) / 100
+      : 0;
+
+  let maxExpenseAmount = 0;
+  let maxExpenseName = '';
+  for (const tx of expenseTransactions) {
+    const amount = Number(tx?.amount) || 0;
+    if (amount > maxExpenseAmount) {
+      maxExpenseAmount = amount;
+      maxExpenseName = tx?.name ? String(tx.name).trim() : '';
+    }
+  }
+
+  return [
+    {
+      id: 'status',
+      testId: 'stat-status',
+      icon: 'TicketCheck',
+      trend: durationLabel,
+      trendUp: statusKey !== 'completed',
+      value: statusLabel,
+      title: 'Status do Evento',
+      badge: statusBadge,
+    },
+    {
+      id: 'transactions-count',
+      testId: 'stat-transactions-count',
+      icon: 'ShoppingCart',
+      trend: totalCount > 0 ? `+${totalCount}` : '0',
+      trendUp: totalCount > 0,
+      value: String(totalCount),
+      title: 'Total de Transações',
+      badge: totalCount === 1 ? '1 lançamento' : `${totalCount} lançamentos`,
+    },
+    {
+      id: 'average-expense',
+      testId: 'stat-average-expense',
+      icon: 'DollarSign',
+      trend: expenseCount === 1 ? '1 despesa' : `${expenseCount} despesas`,
+      trendUp: false,
+      amount: averageExpense,
+      value: formatCurrency(averageExpense),
+      title: 'Ticket Médio de Despesa',
+      badge: 'Média por gasto',
+    },
+    {
+      id: 'max-expense',
+      testId: 'stat-max-expense',
+      icon: 'BookMarked',
+      trend: maxExpenseAmount > 0 ? 'Pico' : '0%',
+      trendUp: false,
+      amount: maxExpenseAmount,
+      value: formatCurrency(maxExpenseAmount),
+      title: 'Maior Despesa',
+      badge: maxExpenseName || 'Nenhuma despesa',
+    },
+  ];
+};

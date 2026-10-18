@@ -2,16 +2,18 @@ import { WalletIcon } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import MetricAreaCard from '@/features/events/components/metric-area-card';
+import StatCards from '@/features/events/components/stat-cards';
 import { buildEventMetricCardsData } from '@/features/events/helpers/event-financials';
 import { BalanceItem, useGetTransactions } from '@/features/finances';
 
 /**
- * Cards de métricas financeiras (KPIs) para a página de detalhes do evento.
- * Exibe os três MetricAreaCards (Total de Receitas, Total de Despesas, Total de Investimentos)
- * com gráficos de área cronológicos e o indicador de Saldo Líquido.
+ * Cards de métricas financeiras e operacionais (KPIs) para a página de detalhes do evento.
+ * Exibe os StatCards operacionais, os três MetricAreaCards (Total de Receitas,
+ * Total de Despesas, Total de Investimentos) e o indicador de Saldo Líquido.
  *
  * @param {{
  *   eventId: string,
+ *   event?: { startDate?: Date | string, endDate?: Date | string } | null,
  *   transactions?: Array<any>,
  *   isLoading?: boolean,
  *   hideNetBalance?: boolean,
@@ -19,6 +21,7 @@ import { BalanceItem, useGetTransactions } from '@/features/finances';
  */
 const EventFinancialCards = ({
   eventId,
+  event,
   transactions: propTransactions,
   isLoading: propIsLoading,
   hideNetBalance = false,
@@ -53,6 +56,8 @@ const EventFinancialCards = ({
       data-testid="event-financial-cards"
       className="grid grid-cols-1 gap-6 lg:grid-cols-6"
     >
+      {event && <StatCards event={event} transactions={transactions} />}
+
       {cards.map((card) => (
         <MetricAreaCard
           key={card.id}
@@ -80,4 +85,3 @@ const EventFinancialCards = ({
 };
 
 export default EventFinancialCards;
-

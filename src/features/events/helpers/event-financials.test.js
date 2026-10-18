@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildEventMetricCardsData,
+  buildEventOperationalStats,
   buildTransactionTypeSeries,
   calculateEventFinancialTotals,
 } from './event-financials';
@@ -221,7 +222,7 @@ describe('buildEventMetricCardsData', () => {
 
     // totalVolume = 2900 + 1500 + 600 = 5000
     expect(data.totals.totalVolume).toBe(5000);
-    expect(data. totals.netBalance).toBe(800);
+    expect(data.totals.netBalance).toBe(800);
     expect(data.shares).toEqual({
       earnings: '58%',
       expenses: '30%',
@@ -244,3 +245,100 @@ describe('buildEventMetricCardsData', () => {
   });
 });
 
+describe('buildEventOperationalStats', () => {
+  const futureEvent = {
+    id: 'ev-future',
+    name: 'Festival de Verão',
+    startDate: '2099-12-01T00:00:00.000Z',
+    endDate: '2099-12-05T23:59:59.000Z',
+  };
+
+  const ongoingEvent = {
+    id: 'ev-ongoing',
+    name: 'Feira Gastronômica',
+    startDate: '2020-01-01T00:00:00.000Z',
+    endDate: '2099-12-31T23:59:59.000Z',
+  };
+
+  const completedEvent = {
+    id: 'ev-completed',
+    name: 'Congresso Passado',
+    startDate: '2020-01-01T00:00:00.000Z',
+    endDate: '2020-01-03T23:59:59.000Z',
+  };
+
+  it('safely handles zero transactions without NaN and returns R$ 0,00 defaults in pt-BR', () => {
+    const stats = buildEventOperationalStats(futureEvent, []);
+
+    expect(stats).toHaveLength(4);
+    expect(stats.map((s) => s.testId)).toEqual([
+      'stat-status',
+      'stat-transactions-count',
+      'stat-average-expense',
+      'stat-max-expense',
+    ]);
+
+    const [statusCard, countCard, avgExpenseCard, maxExpenseCard] = stats;
+
+    expect(statusCard.title).toBe('Status do Evento');
+    expect(statusCard.value).toBe('Agendado');
+    expect(statusCard.badge).toMatch(/^Faltam \d+ dias$/);
+
+    expect(countCard.title).toBe('Total de Transações');
+    expect(countCard.value).toBe('0');
+    expect(countCard.badge).toBe('0 lançamentos');
+
+    expect(avgExpenseCard.title).toBe('Ticket Médio de Despesa');
+    expect(avgExpenseCard.value).toMatch(/R\$\s*0,00/);
+    expect(avgExpenseCard.badge).toBe('Média por gasto');
+
+    expect(maxExpenseCard.title).toBe('Maior Despesa');
+    expect(maxExpenseCard.value).toMatch(/R\$\s*0,00/);
+    expect(maxExpenseCard.badge).toBe('Nenhuma despesa');
+  });
+
+  it('computes status, transaction count, average expense, and max expense with transaction name', () => {
+    const transactions = [
+      { id: '1', name: 'Ingresso Lote 1', type: 'EARNING', amount: 3000 },
+      { id: '2', name: 'Buffet Executivo', type: 'EXPENSE', amount: 1800 },
+      { id: '3', name: 'Som e Iluminação', type: 'EXPENSE', amount: 600 },
+      { id: '4', name: 'Tráfego Pago', type: 'INVESTMENT', amount: 400 },
+    ];
+
+    const stats = buildEventOperationalStats(ongoingEvent, transactions);
+    const [statusCard, countCard, avgExpenseCard, maxExpenseCard] = stats;
+
+    expect(statusCard.value).toBe('Em andamento');
+    expect(statusCard.badge).toBe('Em curso');
+
+    expect(countCard.value).toBe('4');
+    expect(countCard.badge).toBe('4 lançamentos');
+
+    // Average of 1800 and 600 = 1200
+    expect(avgExpenseCard.value).toMatch(/R\$\s*1\.200,00/);
+    expect(avgExpenseCard.badge).toBe('Média por gasto');
+
+    // Max expense is Buffet Executivo (1800)
+    expect(maxExpenseCard.value).toMatch(/R\$\s*1\.800,00/);
+    expect(maxExpenseCard.badge).toBe('Buffet Executivo');
+  });
+
+  it('formats singular 1 lançamento and completed status badge accurately', () => {
+    const transactions = [
+      { id: '1', name: 'Aluguel do Espaço', type: 'EXPENSE', amount: 2500 },
+    ];
+
+    const stats = buildEventOperationalStats(completedEvent, transactions);
+    const [statusCard, countCard, avgExpenseCard, maxExpenseCard] = stats;
+
+    expect(statusCard.value).toBe('Finalizado');
+    expect(statusCard.badge).toBe('Concluído');
+
+    expect(countCard.value).toBe('1');
+    expect(countCard.badge).toBe('1 lançamento');
+
+    expect(avgExpenseCard.value).toMatch(/R\$\s*2\.500,00/);
+    expect(maxExpenseCard.value).toMatch(/R\$\s*2\.500,00/);
+    expect(maxExpenseCard.badge).toBe('Aluguel do Espaço');
+  });
+});
