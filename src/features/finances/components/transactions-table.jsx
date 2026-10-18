@@ -545,7 +545,7 @@ export const TransactionsTable = ({
                     className="h-32 text-center"
                   >
                     {!transactions.length ? (
-                      <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
                         <ReceiptText className="text-muted-foreground size-8" />
                         <div className="space-y-1">
                           <p className="font-medium">
@@ -557,17 +557,6 @@ export const TransactionsTable = ({
                             </p>
                           )}
                         </div>
-                        {eventId && (
-                          <AddTransactionButton
-                            initialEventId={eventId}
-                            trigger={
-                              <Button size="sm">
-                                <PlusIcon className="size-4" />
-                                Adicionar transação
-                              </Button>
-                            }
-                          />
-                        )}
                       </div>
                     ) : (
                       'Nenhuma transação corresponde ao filtro.'
