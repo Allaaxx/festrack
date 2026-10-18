@@ -12,7 +12,6 @@ export {
   default as transactionColumns,
 } from './components/transaction-columns';
 export { default as TransactionTypeBadge } from './components/transaction-type-badge';
-export { default as DataTable } from './components/transactions-table';
 export { default as TransactionsTable } from './components/transactions-table';
 export { default as TransactionsTypeChart } from './components/transactions-type-chart';
 

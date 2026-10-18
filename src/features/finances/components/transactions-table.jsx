@@ -21,6 +21,8 @@ import {
   ChevronsLeftIcon,
   ChevronsRightIcon,
   Columns2Icon,
+  PlusIcon,
+  ReceiptText,
 } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -106,6 +108,8 @@ const parseDateSafely = (dateValue) => {
 
 /**
  * @param {{
+ *   eventId?: string,
+ *   testId?: string,
  *   transactions?: Array,
  *   isLoading?: boolean,
  *   isError?: boolean,
@@ -119,6 +123,8 @@ const parseDateSafely = (dateValue) => {
  * }} props
  */
 export const TransactionsTable = ({
+  eventId,
+  testId,
   transactions: propTransactions,
   isLoading: propIsLoading,
   isError: propIsError,
@@ -143,12 +149,17 @@ export const TransactionsTable = ({
   const from = searchParams.get('from');
   const to = searchParams.get('to');
 
+  const queryParams = useMemo(
+    () => (eventId ? { eventId } : { from, to }),
+    [eventId, from, to]
+  );
+
   const {
     data: fetchedTransactions,
     isLoading: queryIsLoading,
     isError: queryIsError,
     refetch: queryRefetch,
-  } = useGetTransactions({ from, to });
+  } = useGetTransactions(queryParams);
 
   const transactions = useMemo(
     () => propTransactions ?? fetchedTransactions ?? [],
@@ -339,10 +350,25 @@ export const TransactionsTable = ({
     },
   });
 
+  const loadingTestId =
+    testId ??
+    (eventId ? 'event-transactions-skeleton' : 'transactions-loading');
+  const errorTestId =
+    testId ?? (eventId ? 'event-transactions-error' : 'transactions-error');
+  const sectionTestId =
+    testId ??
+    (!transactions.length
+      ? eventId
+        ? 'event-transactions-empty'
+        : 'transactions-empty'
+      : eventId
+        ? 'event-transactions-section'
+        : 'transactions-table-section');
+
   if (isLoading) {
     return (
       <section
-        data-testid="transactions-loading"
+        data-testid={loadingTestId}
         className="flex w-full flex-col justify-start gap-4"
       >
         <div className="flex items-center justify-between gap-2">
@@ -366,7 +392,7 @@ export const TransactionsTable = ({
   if (isError) {
     return (
       <section
-        data-testid="transactions-error"
+        data-testid={errorTestId}
         className="flex w-full flex-col justify-start gap-4"
       >
         <div className="flex flex-col items-center justify-center gap-4 rounded-lg border py-16 text-center">
@@ -379,7 +405,7 @@ export const TransactionsTable = ({
               Verifique sua conexão e tente novamente.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" onClick={() => refetch?.()}>
             Tentar novamente
           </Button>
         </div>
@@ -393,11 +419,7 @@ export const TransactionsTable = ({
 
   return (
     <section
-      data-testid={
-        !transactions.length
-          ? 'transactions-empty'
-          : 'transactions-table-section'
-      }
+      data-testid={sectionTestId}
       className="flex w-full flex-col justify-start gap-4"
     >
       {/* Top Bar seguindo o layout exato do Template */}
@@ -448,7 +470,18 @@ export const TransactionsTable = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <AddTransactionButton className="w-full sm:w-fit" />
+          <AddTransactionButton
+            initialEventId={eventId}
+            trigger={
+              eventId ? (
+                <Button size="sm" className="w-full sm:w-fit">
+                  <PlusIcon className="size-4" />
+                  Adicionar transação
+                </Button>
+              ) : undefined
+            }
+            className="w-full sm:w-fit"
+          />
         </div>
       </div>
 
@@ -509,11 +542,25 @@ export const TransactionsTable = ({
                 <TableRow>
                   <TableCell
                     colSpan={table.getVisibleLeafColumns().length}
-                    className="h-24 text-center"
+                    className="h-32 text-center"
                   >
-                    {!transactions.length
-                      ? 'Nenhuma transação encontrada'
-                      : 'Nenhuma transação corresponde ao filtro.'}
+                    {!transactions.length ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+                        <ReceiptText className="text-muted-foreground size-8" />
+                        <div className="space-y-1">
+                          <p className="font-medium">
+                            Nenhuma transação encontrada
+                          </p>
+                          {eventId && (
+                            <p className="text-muted-foreground text-sm">
+                              Nenhuma transação registrada para este evento.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      'Nenhuma transação corresponde ao filtro.'
+                    )}
                   </TableCell>
                 </TableRow>
               )}
