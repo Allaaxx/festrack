@@ -20,7 +20,7 @@ export default function FinancePage() {
             transactions={financePage.transactions}
             from={financePage.params.from}
             to={financePage.params.to}
-            activePreset={financePage.params.preset}
+            activePreset={financePage.preset}
             onPresetChange={financePage.handlers.setPresetRange}
             onDateRangeChange={financePage.handlers.setDateRange}
             isLoading={financePage.isLoading}

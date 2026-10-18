@@ -136,7 +136,6 @@ describe('ChartAreaInteractive', () => {
     expect(container.querySelector('#fillEntradas')).toBeInTheDocument();
     expect(container.querySelector('#fillSaidas')).toBeInTheDocument();
 
-
     // Verify chart container and areas
     expect(container.querySelector('[data-slot="chart"]')).toBeInTheDocument();
   });
@@ -156,5 +155,67 @@ describe('ChartAreaInteractive', () => {
       name: /out 01, 2026 - out 15, 2026/i,
     });
     expect(triggerBtn).toBeInTheDocument();
+  });
+
+  it('dynamically activates 7d button when from and to match 7 days', () => {
+    render(<ChartAreaInteractive from="2026-10-01" to="2026-10-07" />);
+
+    expect(
+      screen.getByRole('button', { name: 'Últimos 7 dias' })
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 30 dias' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 3 meses' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Total dos últimos 7 dias')).toBeInTheDocument();
+  });
+
+  it('dynamically activates 30d button when from and to match 30 days', () => {
+    render(<ChartAreaInteractive from="2026-10-01" to="2026-10-30" />);
+
+    expect(
+      screen.getByRole('button', { name: 'Últimos 30 dias' })
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 7 dias' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 3 meses' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Total dos últimos 30 dias')).toBeInTheDocument();
+  });
+
+  it('dynamically activates 90d button when from and to match approximately 3 months', () => {
+    render(<ChartAreaInteractive from="2026-07-01" to="2026-09-29" />);
+
+    expect(
+      screen.getByRole('button', { name: 'Últimos 3 meses' })
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 7 dias' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 30 dias' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Total dos últimos 3 meses')).toBeInTheDocument();
+  });
+
+  it('leaves all preset buttons inactive when date range does not match any preset', () => {
+    render(<ChartAreaInteractive from="2026-10-01" to="2026-10-15" />);
+
+    expect(
+      screen.getByRole('button', { name: 'Últimos 7 dias' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 30 dias' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByRole('button', { name: 'Últimos 3 meses' })
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.getByText('Total do período selecionado')
+    ).toBeInTheDocument();
   });
 });

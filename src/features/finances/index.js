@@ -39,5 +39,4 @@ export {
 } from './forms/hooks';
 
 // Helpers
-export { buildDailyChartData } from './helpers/chart';
-
+export { buildDailyChartData, calculateMatchingPreset } from './helpers/chart';

@@ -47,9 +47,7 @@ describe('useFinancePage Hook', () => {
 
     return ({ children }) => (
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={initialEntries}>
-          {children}
-        </MemoryRouter>
+        <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
       </QueryClientProvider>
     );
   };
@@ -95,6 +93,7 @@ describe('useFinancePage Hook', () => {
         page: 0,
         pageSize: 10,
       });
+      expect(result.current.preset).toBeNull();
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
@@ -271,6 +270,7 @@ describe('useFinancePage Hook', () => {
 
       expect(result.current.params.to).toBe(expectedTo);
       expect(result.current.params.from).toBe(expectedFrom);
+      expect(result.current.preset).toBe('7d');
     });
 
     it('calculates proper 30d preset range ending on current date', async () => {
@@ -287,6 +287,7 @@ describe('useFinancePage Hook', () => {
 
       expect(result.current.params.to).toBe(expectedTo);
       expect(result.current.params.from).toBe(expectedFrom);
+      expect(result.current.preset).toBe('30d');
     });
 
     it('calculates proper 90d preset range ending on current date', async () => {
@@ -303,6 +304,7 @@ describe('useFinancePage Hook', () => {
 
       expect(result.current.params.to).toBe(expectedTo);
       expect(result.current.params.from).toBe(expectedFrom);
+      expect(result.current.preset).toBe('90d');
     });
 
     it('resets page to 0 when setSearchQuery is called', async () => {

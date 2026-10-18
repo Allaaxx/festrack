@@ -6,6 +6,7 @@ import {
   useGetTransactions,
   useGetUserBalance,
 } from '@/features/finances/api/hooks';
+import { calculateMatchingPreset } from '@/features/finances/helpers/chart';
 import useStoredSearchParams from '@/hooks/use-stored-search-params';
 
 export const isValidDateString = (val) => {
@@ -86,6 +87,11 @@ export function useFinancePage() {
       storedParams.page,
       storedParams.pageSize,
     ]
+  );
+
+  const preset = useMemo(
+    () => calculateMatchingPreset(params.from, params.to),
+    [params.from, params.to]
   );
 
   const balanceQuery = useGetUserBalance({
@@ -206,6 +212,7 @@ export function useFinancePage() {
     isError,
     refetch,
     params,
+    preset,
     handlers: {
       setDateRange,
       setPresetRange,
