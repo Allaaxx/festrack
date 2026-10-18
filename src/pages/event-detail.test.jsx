@@ -7,6 +7,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,6 +17,20 @@ import { useDeleteEvent, useGetEvent } from '@/features/events/api/hooks';
 import { useGetTransactions } from '@/features/finances';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';
+
+vi.mock('recharts', async () => {
+  const original = await vi.importActual('recharts');
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }) => (
+      <div data-testid="responsive-container">
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { width: 320, height: 120 })
+          : children}
+      </div>
+    ),
+  };
+});
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
@@ -281,7 +296,7 @@ describe('EventDetailPage', () => {
     });
   });
 
-  it('mounts EventDetailPage via /events/:eventId within application AppRoutes', () => {
+  it('mounts EventDetailPage via /events/:eventId within application AppRoutes without duplicate main landmarks', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -292,6 +307,7 @@ describe('EventDetailPage', () => {
 
     expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
     expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
+    expect(screen.getAllByRole('main')).toHaveLength(1);
   });
 
   it('redirects legacy /event/:eventId to /events/:eventId within application AppRoutes', () => {
@@ -307,7 +323,7 @@ describe('EventDetailPage', () => {
     expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
   });
 
-  describe('Event Financial KPI Metrics Cards and Transactions Table (#42)', () => {
+  describe('Event Financial KPI Metrics Cards and Transactions Table (#42, #67)', () => {
     const mockTransactions = [
       {
         id: 'tx-1',
@@ -335,7 +351,7 @@ describe('EventDetailPage', () => {
       },
     ];
 
-    it('calculates and displays accurate totals for EARNING, EXPENSE, INVESTMENT, and Net Balance in BRL', () => {
+    it('calculates and displays accurate totals, volume shares, and area charts for EARNING, EXPENSE, INVESTMENT, and Net Balance in BRL', () => {
       useGetEvent.mockReturnValue({
         data: mockEvent,
         isLoading: false,
@@ -353,20 +369,35 @@ describe('EventDetailPage', () => {
         </Routes>
       );
 
-      // Total de Receitas: 3200
+      // Total de Receitas: 3200 (59% of 5400)
       const earningsCard = screen.getByTestId('kpi-earnings');
       expect(earningsCard).toHaveTextContent('Total de Receitas');
       expect(earningsCard).toHaveTextContent(/R\$\s*3\.200,00/);
+      expect(earningsCard).toHaveTextContent('59%');
+      expect(earningsCard).toHaveTextContent('do volume do evento');
+      expect(
+        earningsCard.querySelector('[data-slot="chart"]')
+      ).toBeInTheDocument();
 
-      // Total de Despesas: 1500
+      // Total de Despesas: 1500 (28% of 5400)
       const expensesCard = screen.getByTestId('kpi-expenses');
       expect(expensesCard).toHaveTextContent('Total de Despesas');
       expect(expensesCard).toHaveTextContent(/R\$\s*1\.500,00/);
+      expect(expensesCard).toHaveTextContent('28%');
+      expect(expensesCard).toHaveTextContent('do volume do evento');
+      expect(
+        expensesCard.querySelector('[data-slot="chart"]')
+      ).toBeInTheDocument();
 
-      // Total de Investimentos: 700
+      // Total de Investimentos: 700 (13% of 5400)
       const investmentsCard = screen.getByTestId('kpi-investments');
       expect(investmentsCard).toHaveTextContent('Total de Investimentos');
       expect(investmentsCard).toHaveTextContent(/R\$\s*700,00/);
+      expect(investmentsCard).toHaveTextContent('13%');
+      expect(investmentsCard).toHaveTextContent('do volume do evento');
+      expect(
+        investmentsCard.querySelector('[data-slot="chart"]')
+      ).toBeInTheDocument();
 
       // Saldo Líquido: 3200 - (1500 + 700) = 1000
       const netBalanceCard = screen.getByTestId('kpi-net-balance');

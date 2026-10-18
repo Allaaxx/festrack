@@ -59,7 +59,7 @@ const EventDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="@container/main flex flex-1 flex-col gap-6">
       <EventDetailHeader
         event={event}
         onDeleteSuccess={() => navigate('/events')}
@@ -74,3 +74,4 @@ const EventDetailPage = () => {
 };
 
 export default EventDetailPage;
+

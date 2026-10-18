@@ -1,28 +1,27 @@
-import {
-  PiggyBankIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-  WalletIcon,
-} from 'lucide-react';
+import { WalletIcon } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { calculateEventFinancialTotals } from '@/features/events/helpers/event-financials';
+import MetricAreaCard from '@/features/events/components/metric-area-card';
+import { buildEventMetricCardsData } from '@/features/events/helpers/event-financials';
 import { BalanceItem, useGetTransactions } from '@/features/finances';
 
 /**
  * Cards de métricas financeiras (KPIs) para a página de detalhes do evento.
- * Exibe Total de Receitas, Total de Despesas, Total de Investimentos e Saldo Líquido.
+ * Exibe os três MetricAreaCards (Total de Receitas, Total de Despesas, Total de Investimentos)
+ * com gráficos de área cronológicos e o indicador de Saldo Líquido.
  *
  * @param {{
  *   eventId: string,
  *   transactions?: Array<any>,
  *   isLoading?: boolean,
+ *   hideNetBalance?: boolean,
  * }} props
  */
 const EventFinancialCards = ({
   eventId,
   transactions: propTransactions,
   isLoading: propIsLoading,
+  hideNetBalance = false,
 }) => {
   const query = useGetTransactions({ eventId });
   const transactions = propTransactions ?? query.data ?? [];
@@ -32,48 +31,53 @@ const EventFinancialCards = ({
     return (
       <div
         data-testid="event-financial-cards-skeleton"
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-6 lg:grid-cols-6"
       >
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-28 rounded-xl" />
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton
+            key={index}
+            className="col-span-2 h-32 rounded-xl max-lg:col-span-full"
+          />
         ))}
+        {!hideNetBalance && (
+          <Skeleton className="col-span-full h-28 rounded-xl" />
+        )}
       </div>
     );
   }
 
-  const totals = calculateEventFinancialTotals(transactions);
+  const { totals, cards } = buildEventMetricCardsData(transactions);
 
   return (
     <div
       data-testid="event-financial-cards"
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      className="grid grid-cols-1 gap-6 lg:grid-cols-6"
     >
-      <BalanceItem
-        data-testid="kpi-earnings"
-        label="Total de Receitas"
-        amount={totals.earnings}
-        icon={<TrendingUpIcon size={16} className="text-primary-green" />}
-      />
-      <BalanceItem
-        data-testid="kpi-expenses"
-        label="Total de Despesas"
-        amount={totals.expenses}
-        icon={<TrendingDownIcon size={16} className="text-primary-red" />}
-      />
-      <BalanceItem
-        data-testid="kpi-investments"
-        label="Total de Investimentos"
-        amount={totals.investments}
-        icon={<PiggyBankIcon size={16} className="text-primary-blue" />}
-      />
-      <BalanceItem
-        data-testid="kpi-net-balance"
-        label="Saldo Líquido"
-        amount={totals.netBalance}
-        icon={<WalletIcon size={16} />}
-      />
+      {cards.map((card) => (
+        <MetricAreaCard
+          key={card.id}
+          data-testid={card.testId}
+          title={card.title}
+          value={card.value}
+          badge={card.badge}
+          comparison={card.comparison}
+          variant={card.variant}
+          data={card.data}
+        />
+      ))}
+
+      {!hideNetBalance && (
+        <BalanceItem
+          data-testid="kpi-net-balance"
+          className="col-span-full"
+          label="Saldo Líquido"
+          amount={totals.netBalance}
+          icon={<WalletIcon size={16} />}
+        />
+      )}
     </div>
   );
 };
 
 export default EventFinancialCards;
+

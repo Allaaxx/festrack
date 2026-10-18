@@ -13,6 +13,7 @@ export { default as EventStatusBadge } from './components/event-status-badge';
 export { default as EventTransactionsTable } from './components/event-transactions-table';
 export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
+export { default as MetricAreaCard } from './components/metric-area-card';
 
 // Hooks & Queries
 export {
@@ -72,4 +73,10 @@ export {
   mapEventToCalendarItem,
   parseEventDate,
 } from './helpers/event';
-export { calculateEventFinancialTotals } from './helpers/event-financials';
+export {
+  buildEventMetricCardsData,
+  buildTransactionTypeSeries,
+  calculateEventFinancialTotals,
+  formatVolumeShare,
+} from './helpers/event-financials';
+

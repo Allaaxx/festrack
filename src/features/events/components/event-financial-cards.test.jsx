@@ -1,10 +1,25 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useGetTransactions } from '@/features/finances/api/hooks';
 
 import EventFinancialCards from './event-financial-cards';
+
+vi.mock('recharts', async () => {
+  const original = await vi.importActual('recharts');
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }) => (
+      <div data-testid="responsive-container">
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { width: 320, height: 120 })
+          : children}
+      </div>
+    ),
+  };
+});
 
 vi.mock('@/features/finances/api/hooks', async () => {
   const actual = await vi.importActual('@/features/finances/api/hooks');
@@ -41,7 +56,7 @@ describe('EventFinancialCards', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders all four financial KPI cards with zero values when no transactions exist', () => {
+  it('renders all four financial KPI cards with zero values and 0% shares when no transactions exist', () => {
     useGetTransactions.mockReturnValue({
       data: [],
       isLoading: false,
@@ -57,15 +72,44 @@ describe('EventFinancialCards', () => {
 
     const zeroAmounts = screen.getAllByText(/R\$\s*0,00/);
     expect(zeroAmounts.length).toBe(4);
+
+    expect(screen.getByTestId('kpi-earnings')).toHaveTextContent('0%');
+    expect(screen.getByTestId('kpi-expenses')).toHaveTextContent('0%');
+    expect(screen.getByTestId('kpi-investments')).toHaveTextContent('0%');
   });
 
-  it('calculates and formats four KPI cards accurately based on transactions', () => {
+  it('calculates and formats four KPI cards, percentage shares, and area charts accurately based on transactions', () => {
     const mockTransactions = [
-      { id: '1', type: 'EARNING', amount: 3000 },
-      { id: '2', type: 'EARNING', amount: 500 },
-      { id: '3', type: 'EXPENSE', amount: 1200 },
-      { id: '4', type: 'EXPENSE', amount: 300 },
-      { id: '5', type: 'INVESTMENT', amount: 800 },
+      {
+        id: '1',
+        type: 'EARNING',
+        amount: 3000,
+        date: '2026-12-01T10:00:00.000Z',
+      },
+      {
+        id: '2',
+        type: 'EARNING',
+        amount: 500,
+        date: '2026-12-03T10:00:00.000Z',
+      },
+      {
+        id: '3',
+        type: 'EXPENSE',
+        amount: 1200,
+        date: '2026-12-02T10:00:00.000Z',
+      },
+      {
+        id: '4',
+        type: 'EXPENSE',
+        amount: 300,
+        date: '2026-12-04T10:00:00.000Z',
+      },
+      {
+        id: '5',
+        type: 'INVESTMENT',
+        amount: 800,
+        date: '2026-12-05T10:00:00.000Z',
+      },
     ];
 
     useGetTransactions.mockReturnValue({
@@ -75,21 +119,36 @@ describe('EventFinancialCards', () => {
 
     renderWithClient(<EventFinancialCards eventId="ev-123" />);
 
-    // Total de Receitas: 3500
-    // Total de Despesas: 1500
-    // Total de Investimentos: 800
+    // Total de Receitas: 3500 (60% of 5800)
+    // Total de Despesas: 1500 (26% of 5800)
+    // Total de Investimentos: 800 (14% of 5800)
     // Saldo Líquido: 3500 - (1500 + 800) = 1200
     const earningsCard = screen.getByTestId('kpi-earnings');
     expect(earningsCard).toHaveTextContent('Total de Receitas');
     expect(earningsCard).toHaveTextContent(/R\$\s*3\.500,00/);
+    expect(earningsCard).toHaveTextContent('60%');
+    expect(earningsCard).toHaveTextContent('do volume do evento');
+    expect(
+      earningsCard.querySelector('[data-slot="chart"]')
+    ).toBeInTheDocument();
 
     const expensesCard = screen.getByTestId('kpi-expenses');
     expect(expensesCard).toHaveTextContent('Total de Despesas');
     expect(expensesCard).toHaveTextContent(/R\$\s*1\.500,00/);
+    expect(expensesCard).toHaveTextContent('26%');
+    expect(expensesCard).toHaveTextContent('do volume do evento');
+    expect(
+      expensesCard.querySelector('[data-slot="chart"]')
+    ).toBeInTheDocument();
 
     const investmentsCard = screen.getByTestId('kpi-investments');
     expect(investmentsCard).toHaveTextContent('Total de Investimentos');
     expect(investmentsCard).toHaveTextContent(/R\$\s*800,00/);
+    expect(investmentsCard).toHaveTextContent('14%');
+    expect(investmentsCard).toHaveTextContent('do volume do evento');
+    expect(
+      investmentsCard.querySelector('[data-slot="chart"]')
+    ).toBeInTheDocument();
 
     const netBalanceCard = screen.getByTestId('kpi-net-balance');
     expect(netBalanceCard).toHaveTextContent('Saldo Líquido');
@@ -128,5 +187,7 @@ describe('EventFinancialCards', () => {
 
     const earningsCard = screen.getByTestId('kpi-earnings');
     expect(earningsCard).toHaveTextContent(/R\$\s*750,00/);
+    expect(within(earningsCard).getByText('100%')).toBeInTheDocument();
   });
 });
+
