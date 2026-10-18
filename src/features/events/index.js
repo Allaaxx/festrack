@@ -5,6 +5,7 @@ export { default as EditEventSheet } from './components/edit-event-sheet';
 export { default as EventCalendar } from './components/event-calendar';
 export { default as EventCombobox } from './components/event-combobox';
 export { default as EventDetailHeader } from './components/event-detail-header';
+export { default as EventHeaderCard } from './components/event-detail-header';
 export { default as EventDetailSkeleton } from './components/event-detail-skeleton';
 export { default as EventDropdownMenu } from './components/event-dropdown-menu';
 export { default as EventFinancialCards } from './components/event-financial-cards';
@@ -13,6 +14,9 @@ export { default as EventStatusBadge } from './components/event-status-badge';
 export { default as EventTransactionsTable } from './components/event-transactions-table';
 export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
+export { default as MetricAreaCard } from './components/metric-area-card';
+export { default as StatCards } from './components/stat-cards';
+export { default as TotalRevenueCard } from './components/total-revenue-card';
 
 // Hooks & Queries
 export {
@@ -72,4 +76,11 @@ export {
   mapEventToCalendarItem,
   parseEventDate,
 } from './helpers/event';
-export { calculateEventFinancialTotals } from './helpers/event-financials';
+export {
+  buildEventBalanceOverviewData,
+  buildEventMetricCardsData,
+  buildEventOperationalStats,
+  buildTransactionTypeSeries,
+  calculateEventFinancialTotals,
+  formatVolumeShare,
+} from './helpers/event-financials';

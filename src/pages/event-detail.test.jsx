@@ -7,6 +7,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,6 +17,20 @@ import { useDeleteEvent, useGetEvent } from '@/features/events/api/hooks';
 import { useGetTransactions } from '@/features/finances';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';
+
+vi.mock('recharts', async () => {
+  const original = await vi.importActual('recharts');
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }) => (
+      <div data-testid="responsive-container">
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { width: 320, height: 120 })
+          : children}
+      </div>
+    ),
+  };
+});
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
@@ -156,7 +171,7 @@ describe('EventDetailPage', () => {
     expect(screen.getByText(/evento não encontrado/i)).toBeInTheDocument();
   });
 
-  it('renders event details: title, description, formatted date, and status badge', () => {
+  it('renders event details: card container, date badge, title, description, formatted date, and status badge', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -169,14 +184,42 @@ describe('EventDetailPage', () => {
       </Routes>
     );
 
+    expect(screen.getByTestId('event-header-card')).toBeInTheDocument();
+    expect(screen.getByTestId('event-header-date-badge')).toHaveTextContent(
+      'DEZ'
+    );
+    expect(screen.getByTestId('event-header-date-badge')).toHaveTextContent(
+      '01'
+    );
     expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
     expect(screen.getByText('Férias de verão com amigos')).toBeInTheDocument();
     expect(
       screen.getByText(/01\/12\/2026 até 10\/12\/2026/)
     ).toBeInTheDocument();
+    expect(screen.getByText('Múltiplos dias')).toBeInTheDocument();
     expect(
-      screen.getByText(/agendado|em andamento|finalizado/i)
-    ).toBeInTheDocument();
+      screen.getAllByText(/agendado|em andamento|finalizado/i).length
+    ).toBeGreaterThan(0);
+  });
+
+  it('renders "Dia único" badge when event starts and ends on the same day', () => {
+    useGetEvent.mockReturnValue({
+      data: {
+        ...mockEvent,
+        startDate: '2026-12-01T09:00:00.000Z',
+        endDate: '2026-12-01T18:00:00.000Z',
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
+      </Routes>
+    );
+
+    expect(screen.getByText('Dia único')).toBeInTheDocument();
   });
 
   it('renders "Voltar ao calendário" button and navigates to /events on click', () => {
@@ -281,7 +324,7 @@ describe('EventDetailPage', () => {
     });
   });
 
-  it('mounts EventDetailPage via /events/:eventId within application AppRoutes', () => {
+  it('mounts EventDetailPage via /events/:eventId within application AppRoutes without duplicate main landmarks', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -292,6 +335,7 @@ describe('EventDetailPage', () => {
 
     expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
     expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
+    expect(screen.getAllByRole('main')).toHaveLength(1);
   });
 
   it('redirects legacy /event/:eventId to /events/:eventId within application AppRoutes', () => {
@@ -307,7 +351,7 @@ describe('EventDetailPage', () => {
     expect(screen.getByTestId('app-sidebar')).toBeInTheDocument();
   });
 
-  describe('Event Financial KPI Metrics Cards and Transactions Table (#42)', () => {
+  describe('Event Financial KPI Metrics Cards and Transactions Table (#42, #67)', () => {
     const mockTransactions = [
       {
         id: 'tx-1',
@@ -335,7 +379,7 @@ describe('EventDetailPage', () => {
       },
     ];
 
-    it('calculates and displays accurate totals for EARNING, EXPENSE, INVESTMENT, and Net Balance in BRL', () => {
+    it('calculates and displays accurate totals, volume shares, and area charts for EARNING, EXPENSE, INVESTMENT, and Net Balance in BRL', () => {
       useGetEvent.mockReturnValue({
         data: mockEvent,
         isLoading: false,
@@ -353,22 +397,46 @@ describe('EventDetailPage', () => {
         </Routes>
       );
 
-      // Total de Receitas: 3200
+      // Total de Receitas: 3200 (59% of 5400)
       const earningsCard = screen.getByTestId('kpi-earnings');
       expect(earningsCard).toHaveTextContent('Total de Receitas');
       expect(earningsCard).toHaveTextContent(/R\$\s*3\.200,00/);
+      expect(earningsCard).toHaveTextContent('59%');
+      expect(earningsCard).toHaveTextContent('do volume do evento');
+      expect(
+        earningsCard.querySelector('[data-slot="chart"]')
+      ).toBeInTheDocument();
 
-      // Total de Despesas: 1500
+      // Total de Despesas: 1500 (28% of 5400)
       const expensesCard = screen.getByTestId('kpi-expenses');
       expect(expensesCard).toHaveTextContent('Total de Despesas');
       expect(expensesCard).toHaveTextContent(/R\$\s*1\.500,00/);
+      expect(expensesCard).toHaveTextContent('28%');
+      expect(expensesCard).toHaveTextContent('do volume do evento');
+      expect(
+        expensesCard.querySelector('[data-slot="chart"]')
+      ).toBeInTheDocument();
 
-      // Total de Investimentos: 700
+      // Total de Investimentos: 700 (13% of 5400)
       const investmentsCard = screen.getByTestId('kpi-investments');
       expect(investmentsCard).toHaveTextContent('Total de Investimentos');
       expect(investmentsCard).toHaveTextContent(/R\$\s*700,00/);
+      expect(investmentsCard).toHaveTextContent('13%');
+      expect(investmentsCard).toHaveTextContent('do volume do evento');
+      expect(
+        investmentsCard.querySelector('[data-slot="chart"]')
+      ).toBeInTheDocument();
 
-      // Saldo Líquido: 3200 - (1500 + 700) = 1000
+      // Balanço do Evento & Saldo Líquido: 3200 - (1500 + 700) = 1000
+      const balanceOverviewCard = screen.getByTestId(
+        'event-balance-overview-card'
+      );
+      expect(balanceOverviewCard).toHaveTextContent('Balanço do Evento');
+      expect(balanceOverviewCard).toHaveTextContent('Total de Entradas');
+      expect(balanceOverviewCard).toHaveTextContent(/R\$\s*3\.200,00/);
+      expect(balanceOverviewCard).toHaveTextContent('Total de Saídas');
+      expect(balanceOverviewCard).toHaveTextContent(/R\$\s*2\.200,00/);
+
       const netBalanceCard = screen.getByTestId('kpi-net-balance');
       expect(netBalanceCard).toHaveTextContent('Saldo Líquido');
       expect(netBalanceCard).toHaveTextContent(/R\$\s*1\.000,00/);
@@ -532,6 +600,86 @@ describe('EventDetailPage', () => {
       );
       expect(screen.getByTestId('kpi-net-balance')).toHaveTextContent(
         /R\$\s*4\.500,00/
+      );
+    });
+
+    it('renders operational StatCards with accurate status, transaction count, average expense, and max expense for populated and empty ledgers (#68)', () => {
+      useGetEvent.mockReturnValue({
+        data: mockEvent,
+        isLoading: false,
+        isError: false,
+      });
+      useGetTransactions.mockReturnValue({
+        data: [
+          ...mockTransactions,
+          {
+            id: 'tx-4',
+            name: 'Hospedagem Extra',
+            type: 'EXPENSE',
+            amount: 500,
+            date: '2026-12-05T12:00:00.000Z',
+            eventId: 'ev-123',
+          },
+        ],
+        isLoading: false,
+        isError: false,
+      });
+
+      const { rerender } = renderWithProviders(
+        <Routes>
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
+        </Routes>
+      );
+
+      const statusCard = screen.getByTestId('stat-status');
+      expect(statusCard).toHaveTextContent('Status do Evento');
+      expect(statusCard).toHaveTextContent(/Agendado|Em andamento|Finalizado/);
+
+      const countCard = screen.getByTestId('stat-transactions-count');
+      expect(countCard).toHaveTextContent('Total de Transações');
+      expect(countCard).toHaveTextContent('4');
+      expect(countCard).toHaveTextContent('4 lançamentos');
+
+      // Expenses: 1500 + 500 = 2000 -> average = 1000
+      const avgExpenseCard = screen.getByTestId('stat-average-expense');
+      expect(avgExpenseCard).toHaveTextContent('Ticket Médio de Despesa');
+      expect(avgExpenseCard).toHaveTextContent(/R\$\s*1\.000,00/);
+      expect(avgExpenseCard).toHaveTextContent('Média por gasto');
+
+      // Max expense: Passagem Aérea (1500)
+      const maxExpenseCard = screen.getByTestId('stat-max-expense');
+      expect(maxExpenseCard).toHaveTextContent('Maior Despesa');
+      expect(maxExpenseCard).toHaveTextContent(/R\$\s*1\.500,00/);
+      expect(maxExpenseCard).toHaveTextContent('Passagem Aérea');
+
+      // Empty transactions state
+      useGetTransactions.mockReturnValue({
+        data: [],
+        isLoading: false,
+        isError: false,
+      });
+
+      rerender(
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter initialEntries={['/events/ev-123']}>
+            <Routes>
+              <Route path="/events/:eventId" element={<EventDetailPage />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByTestId('stat-transactions-count')).toHaveTextContent(
+        '0 lançamentos'
+      );
+      expect(screen.getByTestId('stat-average-expense')).toHaveTextContent(
+        /R\$\s*0,00/
+      );
+      expect(screen.getByTestId('stat-max-expense')).toHaveTextContent(
+        /R\$\s*0,00/
+      );
+      expect(screen.getByTestId('stat-max-expense')).toHaveTextContent(
+        'Nenhuma despesa'
       );
     });
   });

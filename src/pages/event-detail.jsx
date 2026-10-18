@@ -59,14 +59,14 @@ const EventDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="@container/main flex flex-1 flex-col gap-6">
       <EventDetailHeader
         event={event}
         onDeleteSuccess={() => navigate('/events')}
       />
 
       <div data-testid="event-detail-content" className="space-y-6">
-        <EventFinancialCards eventId={event.id} />
+        <EventFinancialCards eventId={event.id} event={event} />
         <EventTransactionsTable eventId={event.id} />
       </div>
     </div>

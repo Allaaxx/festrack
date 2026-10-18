@@ -1,28 +1,29 @@
-import {
-  PiggyBankIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-  WalletIcon,
-} from 'lucide-react';
-
 import { Skeleton } from '@/components/ui/skeleton';
-import { calculateEventFinancialTotals } from '@/features/events/helpers/event-financials';
-import { BalanceItem, useGetTransactions } from '@/features/finances';
+import MetricAreaCard from '@/features/events/components/metric-area-card';
+import StatCards from '@/features/events/components/stat-cards';
+import TotalRevenueCard from '@/features/events/components/total-revenue-card';
+import { buildEventMetricCardsData } from '@/features/events/helpers/event-financials';
+import { useGetTransactions } from '@/features/finances';
 
 /**
- * Cards de métricas financeiras (KPIs) para a página de detalhes do evento.
- * Exibe Total de Receitas, Total de Despesas, Total de Investimentos e Saldo Líquido.
+ * Cards de métricas financeiras e operacionais (KPIs) para a página de detalhes do evento.
+ * Exibe os StatCards operacionais, o Balanço do Evento (Entradas vs Saídas, medidor de consumo
+ * e Saldo Líquido) e os três MetricAreaCards (Total de Receitas, Total de Despesas, Total de Investimentos).
  *
  * @param {{
  *   eventId: string,
+ *   event?: { startDate?: Date | string, endDate?: Date | string } | null,
  *   transactions?: Array<any>,
  *   isLoading?: boolean,
+ *   hideNetBalance?: boolean,
  * }} props
  */
 const EventFinancialCards = ({
   eventId,
+  event,
   transactions: propTransactions,
   isLoading: propIsLoading,
+  hideNetBalance = false,
 }) => {
   const query = useGetTransactions({ eventId });
   const transactions = propTransactions ?? query.data ?? [];
@@ -32,46 +33,46 @@ const EventFinancialCards = ({
     return (
       <div
         data-testid="event-financial-cards-skeleton"
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        className="grid grid-cols-1 gap-6 lg:grid-cols-6"
       >
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-28 rounded-xl" />
+        {event && (
+          <Skeleton className="col-span-full h-72 rounded-xl xl:col-span-2" />
+        )}
+        {!hideNetBalance && (
+          <Skeleton className="col-span-full h-72 rounded-xl 2xl:col-span-4" />
+        )}
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Skeleton
+            key={index}
+            className="col-span-2 h-32 rounded-xl max-lg:col-span-full"
+          />
         ))}
       </div>
     );
   }
 
-  const totals = calculateEventFinancialTotals(transactions);
+  const { cards } = buildEventMetricCardsData(transactions);
 
   return (
     <div
       data-testid="event-financial-cards"
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      className="grid grid-cols-1 gap-6 lg:grid-cols-6"
     >
-      <BalanceItem
-        data-testid="kpi-earnings"
-        label="Total de Receitas"
-        amount={totals.earnings}
-        icon={<TrendingUpIcon size={16} className="text-primary-green" />}
-      />
-      <BalanceItem
-        data-testid="kpi-expenses"
-        label="Total de Despesas"
-        amount={totals.expenses}
-        icon={<TrendingDownIcon size={16} className="text-primary-red" />}
-      />
-      <BalanceItem
-        data-testid="kpi-investments"
-        label="Total de Investimentos"
-        amount={totals.investments}
-        icon={<PiggyBankIcon size={16} className="text-primary-blue" />}
-      />
-      <BalanceItem
-        data-testid="kpi-net-balance"
-        label="Saldo Líquido"
-        amount={totals.netBalance}
-        icon={<WalletIcon size={16} />}
-      />
+      {event && <StatCards event={event} transactions={transactions} />}
+      {!hideNetBalance && <TotalRevenueCard transactions={transactions} />}
+
+      {cards.map((card) => (
+        <MetricAreaCard
+          key={card.id}
+          data-testid={card.testId}
+          title={card.title}
+          value={card.value}
+          badge={card.badge}
+          comparison={card.comparison}
+          variant={card.variant}
+          data={card.data}
+        />
+      ))}
     </div>
   );
 };
