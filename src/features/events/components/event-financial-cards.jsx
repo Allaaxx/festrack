@@ -1,15 +1,14 @@
-import { WalletIcon } from 'lucide-react';
-
 import { Skeleton } from '@/components/ui/skeleton';
 import MetricAreaCard from '@/features/events/components/metric-area-card';
 import StatCards from '@/features/events/components/stat-cards';
+import TotalRevenueCard from '@/features/events/components/total-revenue-card';
 import { buildEventMetricCardsData } from '@/features/events/helpers/event-financials';
-import { BalanceItem, useGetTransactions } from '@/features/finances';
+import { useGetTransactions } from '@/features/finances';
 
 /**
  * Cards de métricas financeiras e operacionais (KPIs) para a página de detalhes do evento.
- * Exibe os StatCards operacionais, os três MetricAreaCards (Total de Receitas,
- * Total de Despesas, Total de Investimentos) e o indicador de Saldo Líquido.
+ * Exibe os StatCards operacionais, o Balanço do Evento (Entradas vs Saídas, medidor de consumo
+ * e Saldo Líquido) e os três MetricAreaCards (Total de Receitas, Total de Despesas, Total de Investimentos).
  *
  * @param {{
  *   eventId: string,
@@ -36,20 +35,20 @@ const EventFinancialCards = ({
         data-testid="event-financial-cards-skeleton"
         className="grid grid-cols-1 gap-6 lg:grid-cols-6"
       >
+        {!hideNetBalance && (
+          <Skeleton className="col-span-full h-72 rounded-xl 2xl:col-span-4" />
+        )}
         {Array.from({ length: 3 }).map((_, index) => (
           <Skeleton
             key={index}
             className="col-span-2 h-32 rounded-xl max-lg:col-span-full"
           />
         ))}
-        {!hideNetBalance && (
-          <Skeleton className="col-span-full h-28 rounded-xl" />
-        )}
       </div>
     );
   }
 
-  const { totals, cards } = buildEventMetricCardsData(transactions);
+  const { cards } = buildEventMetricCardsData(transactions);
 
   return (
     <div
@@ -57,6 +56,7 @@ const EventFinancialCards = ({
       className="grid grid-cols-1 gap-6 lg:grid-cols-6"
     >
       {event && <StatCards event={event} transactions={transactions} />}
+      {!hideNetBalance && <TotalRevenueCard transactions={transactions} />}
 
       {cards.map((card) => (
         <MetricAreaCard
@@ -70,16 +70,6 @@ const EventFinancialCards = ({
           data={card.data}
         />
       ))}
-
-      {!hideNetBalance && (
-        <BalanceItem
-          data-testid="kpi-net-balance"
-          className="col-span-full"
-          label="Saldo Líquido"
-          amount={totals.netBalance}
-          icon={<WalletIcon size={16} />}
-        />
-      )}
     </div>
   );
 };

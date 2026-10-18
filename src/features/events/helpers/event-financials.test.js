@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildEventBalanceOverviewData,
   buildEventMetricCardsData,
   buildEventOperationalStats,
   buildTransactionTypeSeries,
@@ -340,5 +341,75 @@ describe('buildEventOperationalStats', () => {
     expect(avgExpenseCard.value).toMatch(/R\$\s*2\.500,00/);
     expect(maxExpenseCard.value).toMatch(/R\$\s*2\.500,00/);
     expect(maxExpenseCard.badge).toBe('Aluguel do Espaço');
+  });
+});
+
+describe('buildEventBalanceOverviewData', () => {
+  it('returns zero totals, baseline barData, and 0% execution when transactions list is empty', () => {
+    const overview = buildEventBalanceOverviewData([]);
+
+    expect(overview.entradas).toBe(0);
+    expect(overview.saidas).toBe(0);
+    expect(overview.netBalance).toBe(0);
+    expect(overview.executionPercentage).toBe(0);
+    expect(overview.barData).toEqual([
+      { date: '', label: 'Sem registros', entradas: 0, saidas: 0 },
+    ]);
+    expect(overview.pieData).toHaveLength(25);
+  });
+
+  it('groups transactions chronologically into entradas vs saidas and computes consumption gauge ratio', () => {
+    const transactions = [
+      {
+        id: 'tx-2',
+        type: 'EXPENSE',
+        amount: 1500,
+        date: '2026-12-03T12:00:00.000Z',
+      },
+      {
+        id: 'tx-1',
+        type: 'EARNING',
+        amount: 4000,
+        date: '2026-12-01T12:00:00.000Z',
+      },
+      {
+        id: 'tx-3',
+        type: 'INVESTMENT',
+        amount: 500,
+        date: '2026-12-03T15:00:00.000Z',
+      },
+    ];
+
+    const overview = buildEventBalanceOverviewData(transactions);
+
+    // entradas = 4000, saidas = 1500 + 500 = 2000, netBalance = 2000
+    expect(overview.entradas).toBe(4000);
+    expect(overview.saidas).toBe(2000);
+    expect(overview.netBalance).toBe(2000);
+    // 2000 / 4000 = 50%
+    expect(overview.executionPercentage).toBe(50);
+    expect(overview.barData).toEqual([
+      { date: '2026-12-01', label: '01/12', entradas: 4000, saidas: 0 },
+      { date: '2026-12-03', label: '03/12', entradas: 0, saidas: 2000 },
+    ]);
+    expect(overview.pieData).toHaveLength(25);
+  });
+
+  it('clamps executionPercentage to 100 when saidas exceed entradas', () => {
+    const transactions = [
+      {
+        id: 'tx-1',
+        type: 'EXPENSE',
+        amount: 900,
+        date: '2026-12-02T12:00:00.000Z',
+      },
+    ];
+
+    const overview = buildEventBalanceOverviewData(transactions);
+
+    expect(overview.entradas).toBe(0);
+    expect(overview.saidas).toBe(900);
+    expect(overview.netBalance).toBe(-900);
+    expect(overview.executionPercentage).toBe(100);
   });
 });

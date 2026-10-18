@@ -15,6 +15,7 @@ export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
 export { default as MetricAreaCard } from './components/metric-area-card';
 export { default as StatCards } from './components/stat-cards';
+export { default as TotalRevenueCard } from './components/total-revenue-card';
 
 // Hooks & Queries
 export {
@@ -75,6 +76,7 @@ export {
   parseEventDate,
 } from './helpers/event';
 export {
+  buildEventBalanceOverviewData,
   buildEventMetricCardsData,
   buildEventOperationalStats,
   buildTransactionTypeSeries,
