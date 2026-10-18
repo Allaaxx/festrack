@@ -399,7 +399,16 @@ describe('EventDetailPage', () => {
         investmentsCard.querySelector('[data-slot="chart"]')
       ).toBeInTheDocument();
 
-      // Saldo Líquido: 3200 - (1500 + 700) = 1000
+      // Balanço do Evento & Saldo Líquido: 3200 - (1500 + 700) = 1000
+      const balanceOverviewCard = screen.getByTestId(
+        'event-balance-overview-card'
+      );
+      expect(balanceOverviewCard).toHaveTextContent('Balanço do Evento');
+      expect(balanceOverviewCard).toHaveTextContent('Total de Entradas');
+      expect(balanceOverviewCard).toHaveTextContent(/R\$\s*3\.200,00/);
+      expect(balanceOverviewCard).toHaveTextContent('Total de Saídas');
+      expect(balanceOverviewCard).toHaveTextContent(/R\$\s*2\.200,00/);
+
       const netBalanceCard = screen.getByTestId('kpi-net-balance');
       expect(netBalanceCard).toHaveTextContent('Saldo Líquido');
       expect(netBalanceCard).toHaveTextContent(/R\$\s*1\.000,00/);

@@ -200,3 +200,102 @@ export const buildEventMetricCardsData = (transactions = []) => {
   };
 };
 
+/**
+ * Constrói os dados do card "Balanço do Evento" (TotalRevenueCard):
+ * - Totais consolidados de Entradas (EARNING), Saídas (EXPENSE + INVESTMENT) e Saldo Líquido
+ * - Série cronológica de barras ({ date, label, entradas, saidas })
+ * - Percentual e segmentos do medidor circular (gauge) de comprometimento das entradas
+ *
+ * @param {Array<{ date?: string | Date, type: string, amount: number | string }>} [transactions=[]]
+ */
+export const buildEventBalanceOverviewData = (transactions = []) => {
+  const totals = calculateEventFinancialTotals(transactions);
+  const entradas = Math.round(totals.earnings * 100) / 100;
+  const saidas = Math.round((totals.expenses + totals.investments) * 100) / 100;
+  const netBalance = Math.round(totals.netBalance * 100) / 100;
+
+  let executionPercentage = 0;
+  if (entradas > 0) {
+    executionPercentage = Math.min(
+      100,
+      Math.max(0, Math.round((saidas / entradas) * 100))
+    );
+  } else if (saidas > 0) {
+    executionPercentage = 100;
+  }
+
+  const groupedByDate = new Map();
+  if (Array.isArray(transactions)) {
+    for (const transaction of transactions) {
+      const type = String(transaction?.type ?? '').toUpperCase();
+      if (
+        type !== 'EARNING' &&
+        type !== 'EXPENSE' &&
+        type !== 'INVESTMENT'
+      ) {
+        continue;
+      }
+
+      const amount = Number(transaction?.amount) || 0;
+      const parsedDate = parseEventDate(transaction?.date);
+      const sortKey = parsedDate
+        ? format(parsedDate, 'yyyy-MM-dd')
+        : '0000-00-00';
+      const dateValue = parsedDate ? sortKey : '';
+      const label = parsedDate
+        ? format(parsedDate, 'dd/MM', { locale: ptBR })
+        : 'Data';
+
+      if (!groupedByDate.has(sortKey)) {
+        groupedByDate.set(sortKey, {
+          date: dateValue,
+          label,
+          entradas: 0,
+          saidas: 0,
+        });
+      }
+
+      const current = groupedByDate.get(sortKey);
+      if (type === 'EARNING') {
+        current.entradas = Math.round((current.entradas + amount) * 100) / 100;
+      } else {
+        current.saidas = Math.round((current.saidas + amount) * 100) / 100;
+      }
+    }
+  }
+
+  const sortedBarPoints = Array.from(groupedByDate.entries())
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+    .map(([, point]) => point);
+
+  const barData =
+    sortedBarPoints.length > 0
+      ? sortedBarPoints
+      : [{ date: '', label: 'Sem registros', entradas: 0, saidas: 0 }];
+
+  const totalSegments = 25;
+  const activeSegments = Math.round((executionPercentage / 100) * totalSegments);
+  const pieData = Array.from({ length: totalSegments }, (_, index) => {
+    const isFilled = index < activeSegments;
+    const fill = isFilled
+      ? 'var(--primary)'
+      : 'color-mix(in oklab, var(--primary) 12%, var(--background))';
+
+    return {
+      name: `segment-${index}`,
+      value: 1,
+      fill,
+    };
+  });
+
+  return {
+    entradas,
+    saidas,
+    netBalance,
+    executionPercentage,
+    barData,
+    pieData,
+  };
+};
+
+

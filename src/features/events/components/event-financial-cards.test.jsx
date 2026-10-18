@@ -56,7 +56,7 @@ describe('EventFinancialCards', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders all four financial KPI cards with zero values and 0% shares when no transactions exist', () => {
+  it('renders all four financial KPI cards and Balanço do Evento with zero values and 0% shares when no transactions exist', () => {
     useGetTransactions.mockReturnValue({
       data: [],
       isLoading: false,
@@ -65,20 +65,23 @@ describe('EventFinancialCards', () => {
     renderWithClient(<EventFinancialCards eventId="ev-123" />);
 
     expect(screen.getByTestId('event-financial-cards')).toBeInTheDocument();
+    expect(screen.getByText('Balanço do Evento')).toBeInTheDocument();
     expect(screen.getByText('Total de Receitas')).toBeInTheDocument();
     expect(screen.getByText('Total de Despesas')).toBeInTheDocument();
     expect(screen.getByText('Total de Investimentos')).toBeInTheDocument();
     expect(screen.getByText('Saldo Líquido')).toBeInTheDocument();
+    expect(screen.getByText('Total de Entradas')).toBeInTheDocument();
+    expect(screen.getByText('Total de Saídas')).toBeInTheDocument();
 
     const zeroAmounts = screen.getAllByText(/R\$\s*0,00/);
-    expect(zeroAmounts.length).toBe(4);
+    expect(zeroAmounts.length).toBeGreaterThanOrEqual(4);
 
     expect(screen.getByTestId('kpi-earnings')).toHaveTextContent('0%');
     expect(screen.getByTestId('kpi-expenses')).toHaveTextContent('0%');
     expect(screen.getByTestId('kpi-investments')).toHaveTextContent('0%');
   });
 
-  it('calculates and formats four KPI cards, percentage shares, and area charts accurately based on transactions', () => {
+  it('calculates and formats four KPI cards, percentage shares, Balanço do Evento, and area charts accurately based on transactions', () => {
     const mockTransactions = [
       {
         id: '1',
@@ -149,6 +152,15 @@ describe('EventFinancialCards', () => {
     expect(
       investmentsCard.querySelector('[data-slot="chart"]')
     ).toBeInTheDocument();
+
+    const balanceOverviewCard = screen.getByTestId(
+      'event-balance-overview-card'
+    );
+    expect(balanceOverviewCard).toHaveTextContent('Balanço do Evento');
+    expect(balanceOverviewCard).toHaveTextContent('Total de Entradas');
+    expect(balanceOverviewCard).toHaveTextContent(/R\$\s*3\.500,00/);
+    expect(balanceOverviewCard).toHaveTextContent('Total de Saídas');
+    expect(balanceOverviewCard).toHaveTextContent(/R\$\s*2\.300,00/);
 
     const netBalanceCard = screen.getByTestId('kpi-net-balance');
     expect(netBalanceCard).toHaveTextContent('Saldo Líquido');

@@ -14,6 +14,7 @@ export { default as EventTransactionsTable } from './components/event-transactio
 export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
 export { default as MetricAreaCard } from './components/metric-area-card';
+export { default as TotalRevenueCard } from './components/total-revenue-card';
 
 // Hooks & Queries
 export {
@@ -74,9 +75,11 @@ export {
   parseEventDate,
 } from './helpers/event';
 export {
+  buildEventBalanceOverviewData,
   buildEventMetricCardsData,
   buildTransactionTypeSeries,
   calculateEventFinancialTotals,
   formatVolumeShare,
 } from './helpers/event-financials';
+
 
