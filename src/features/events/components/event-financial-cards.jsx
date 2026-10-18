@@ -35,6 +35,9 @@ const EventFinancialCards = ({
         data-testid="event-financial-cards-skeleton"
         className="grid grid-cols-1 gap-6 lg:grid-cols-6"
       >
+        {event && (
+          <Skeleton className="col-span-full h-72 rounded-xl xl:col-span-2" />
+        )}
         {!hideNetBalance && (
           <Skeleton className="col-span-full h-72 rounded-xl 2xl:col-span-4" />
         )}

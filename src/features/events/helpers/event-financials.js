@@ -5,6 +5,11 @@ import { formatCurrency } from '@/helpers/currency';
 
 import { getEventStatus, getEventStatusLabel, parseEventDate } from './event';
 
+const normalizeTransactionType = (rawType) => {
+  const upper = String(rawType ?? '').toUpperCase();
+  return upper === 'INVESTIMENT' ? 'INVESTMENT' : upper;
+};
+
 /**
  * Calcula os totais financeiros (Receitas, Despesas, Investimentos e Saldo Líquido)
  * a partir das transações associadas a um evento.
@@ -28,7 +33,7 @@ export const calculateEventFinancialTotals = (transactions = []) => {
 
   for (const transaction of transactions) {
     const amount = Number(transaction?.amount) || 0;
-    const type = String(transaction?.type ?? '').toUpperCase();
+    const type = normalizeTransactionType(transaction?.type);
 
     if (type === 'EARNING') {
       earnings += amount;
@@ -82,11 +87,11 @@ export const buildTransactionTypeSeries = (transactions = [], targetType) => {
     return baselineEmpty;
   }
 
-  const normalizedTarget = String(targetType).toUpperCase();
+  const normalizedTarget = normalizeTransactionType(targetType);
   const groupedByDate = new Map();
 
   for (const transaction of transactions) {
-    const type = String(transaction?.type ?? '').toUpperCase();
+    const type = normalizeTransactionType(transaction?.type);
     if (type !== normalizedTarget) {
       continue;
     }
@@ -333,7 +338,7 @@ export const buildEventBalanceOverviewData = (transactions = []) => {
   const groupedByDate = new Map();
   if (Array.isArray(transactions)) {
     for (const transaction of transactions) {
-      const type = String(transaction?.type ?? '').toUpperCase();
+      const type = normalizeTransactionType(transaction?.type);
       if (type !== 'EARNING' && type !== 'EXPENSE' && type !== 'INVESTMENT') {
         continue;
       }

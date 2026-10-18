@@ -71,9 +71,9 @@ const StatCards = ({ event, transactions = [], stats }) => {
             <p className="text-foreground flex items-center gap-1 text-sm font-semibold">
               {card.trend}
               {card.trendUp ? (
-                <ChevronUp className="size-4 text-emerald-500" />
+                <ChevronUp className="text-primary-green size-4" />
               ) : (
-                <ChevronDown className="size-4 text-rose-500" />
+                <ChevronDown className="text-primary-red size-4" />
               )}
             </p>
           </div>

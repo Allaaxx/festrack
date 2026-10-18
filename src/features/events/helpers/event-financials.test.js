@@ -105,6 +105,37 @@ describe('calculateEventFinancialTotals', () => {
     expect(result.investments).toBe(500);
     expect(result.netBalance).toBe(500);
   });
+
+  it('normalizes the backend INVESTIMENT alias into INVESTMENT across totals, series, and balance overview', () => {
+    const transactions = [
+      {
+        id: '1',
+        type: 'INVESTIMENT',
+        amount: 600,
+        date: '2026-12-04T12:00:00.000Z',
+      },
+      {
+        id: '2',
+        type: 'EARNING',
+        amount: 1000,
+        date: '2026-12-04T10:00:00.000Z',
+      },
+    ];
+
+    const totals = calculateEventFinancialTotals(transactions);
+    expect(totals.investments).toBe(600);
+    expect(totals.netBalance).toBe(400);
+
+    const series = buildTransactionTypeSeries(transactions, 'INVESTMENT');
+    expect(series).toEqual([
+      { date: '', label: 'Início', amount: 0 },
+      { date: '2026-12-04', label: '04/12', amount: 600 },
+    ]);
+
+    const overview = buildEventBalanceOverviewData(transactions);
+    expect(overview.saidas).toBe(600);
+    expect(overview.netBalance).toBe(400);
+  });
 });
 
 describe('buildTransactionTypeSeries', () => {
