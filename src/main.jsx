@@ -17,6 +17,7 @@ import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthContextProvider } from '@/contexts/auth';
 import { ShopContextProvider } from '@/contexts/shop';
+import AcceptInvitationPage from '@/pages/accept-invitation';
 import EventPage from '@/pages/event';
 import EventDetailPage from '@/pages/event-detail';
 import NotFoundPage from '@/pages/not-found';
@@ -39,6 +40,7 @@ export const AppRoutes = () => {
       {/* Rotas sem sidebar */}
       <Route path="/signin" element={<SignInPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/invite/:token" element={<AcceptInvitationPage />} />
 
       {/* Layout principal da aplicação (rotas autenticadas) */}
       <Route element={<DashboardLayout />}>

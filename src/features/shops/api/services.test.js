@@ -127,4 +127,59 @@ describe('ShopService & constants', () => {
       expect(result).toEqual(deletedShop);
     });
   });
+
+  describe('getInvitationByToken', () => {
+    it('fetches invitation details by string or object token via GET /shops/invitations/:token', async () => {
+      const mockInvitation = {
+        id: 'inv-1',
+        shop_id: 'shop-1',
+        shop: { id: 'shop-1', name: 'Loja Matriz' },
+        email: 'convidado@example.com',
+        role: 'MEMBER',
+        status: 'PENDING',
+        expires_at: '2099-12-31T23:59:59.000Z',
+      };
+      protectedApi.get.mockResolvedValue({ data: mockInvitation });
+
+      const resultByString = await ShopService.getInvitationByToken('tok-123');
+      expect(protectedApi.get).toHaveBeenCalledWith(
+        '/shops/invitations/tok-123'
+      );
+      expect(resultByString).toEqual(mockInvitation);
+
+      const resultByObject = await ShopService.getInvitationByToken({
+        token: 'tok-123',
+      });
+      expect(protectedApi.get).toHaveBeenLastCalledWith(
+        '/shops/invitations/tok-123'
+      );
+      expect(resultByObject).toEqual(mockInvitation);
+    });
+  });
+
+  describe('acceptInvitation', () => {
+    it('accepts an invitation by string or object token via POST /shops/invitations/:token/accept', async () => {
+      const mockMember = {
+        id: 'member-1',
+        shop_id: 'shop-1',
+        user_id: 'user-2',
+        role: 'MEMBER',
+      };
+      protectedApi.post.mockResolvedValue({ data: mockMember });
+
+      const resultByString = await ShopService.acceptInvitation('tok-123');
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/invitations/tok-123/accept'
+      );
+      expect(resultByString).toEqual(mockMember);
+
+      const resultByObject = await ShopService.acceptInvitation({
+        token: 'tok-123',
+      });
+      expect(protectedApi.post).toHaveBeenLastCalledWith(
+        '/shops/invitations/tok-123/accept'
+      );
+      expect(resultByObject).toEqual(mockMember);
+    });
+  });
 });

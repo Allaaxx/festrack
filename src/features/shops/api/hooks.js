@@ -83,3 +83,36 @@ export const useDeleteShop = () => {
     },
   });
 };
+
+export const getInvitationByTokenQueryKey = (input = {}) => {
+  const token = typeof input === 'string' ? input : input?.token;
+  return ['getInvitationByToken', token];
+};
+
+export const useGetInvitationByToken = (input) => {
+  const token = typeof input === 'string' ? input : input?.token;
+  return useQuery({
+    queryKey: getInvitationByTokenQueryKey({ token }),
+    queryFn: () => ShopService.getInvitationByToken(token),
+    enabled: Boolean(token),
+    retry: false,
+  });
+};
+
+export const acceptInvitationMutationKey = ['acceptShopInvitation'];
+export const acceptShopInvitationMutationKey = acceptInvitationMutationKey;
+
+export const useAcceptShopInvitation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: acceptInvitationMutationKey,
+    mutationFn: (input) => ShopService.acceptInvitation(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['getShops'],
+      });
+    },
+  });
+};
+
+export const useAcceptInvitation = useAcceptShopInvitation;

@@ -5,6 +5,11 @@ const resolveShopId = (input) => {
   return input?.shopId ?? input?.id;
 };
 
+const resolveInvitationToken = (input) => {
+  if (typeof input === 'string') return input;
+  return input?.token;
+};
+
 const ShopService = {
   /**
    * Busca todas as lojas das quais o usuário autenticado faz parte.
@@ -65,6 +70,30 @@ const ShopService = {
   delete: async (input) => {
     const shopId = resolveShopId(input);
     const response = await protectedApi.delete(`/shops/${shopId}`);
+    return response.data;
+  },
+
+  /**
+   * Busca os detalhes públicos/prévia de um convite de loja pelo token.
+   * @param {string | { token?: string }} input
+   * @returns {Promise<{ id: string, shop_id?: string, shop_name?: string, shop?: { id: string, name: string, description?: string | null }, email: string, role: 'OWNER' | 'MEMBER', status?: string, expires_at?: string }>}
+   */
+  getInvitationByToken: async (input) => {
+    const token = resolveInvitationToken(input);
+    const response = await protectedApi.get(`/shops/invitations/${token}`);
+    return response.data;
+  },
+
+  /**
+   * Aceita um convite de loja pelo token (requer usuário autenticado com o mesmo e-mail do convite).
+   * @param {string | { token?: string }} input
+   * @returns {Promise<{ id: string, shop_id: string, user_id: string, role: 'OWNER' | 'MEMBER', created_at?: string, updated_at?: string }>}
+   */
+  acceptInvitation: async (input) => {
+    const token = resolveInvitationToken(input);
+    const response = await protectedApi.post(
+      `/shops/invitations/${token}/accept`
+    );
     return response.data;
   },
 };
