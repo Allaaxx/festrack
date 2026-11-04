@@ -477,6 +477,9 @@ describe('EventDetailPage', () => {
       expect(
         tableScope.getByRole('button', { name: /valor/i })
       ).toBeInTheDocument();
+      expect(
+        tableScope.getByRole('button', { name: /autor/i })
+      ).toBeInTheDocument();
       expect(tableScope.getByText('Ações')).toBeInTheDocument();
 
       // Check rows content
