@@ -13,3 +13,17 @@ export const createShopFormSchema = z.object({
     .optional()
     .nullable(),
 });
+
+export const editShopFormSchema = createShopFormSchema;
+
+export const inviteMemberFormSchema = z.object({
+  email: z
+    .email({
+      error: 'O e-mail é inválido.',
+    })
+    .trim()
+    .min(1, {
+      error: 'O e-mail é obrigatório.',
+    }),
+  role: z.enum(['MEMBER', 'OWNER']).default('MEMBER'),
+});

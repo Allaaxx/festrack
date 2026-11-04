@@ -2,10 +2,12 @@ import { useSearchParams } from 'react-router';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AccountSettings, ProfileSettings } from '@/features/settings';
+import { ShopSettings } from '@/features/shops';
 
 const TABS = [
   { name: 'Perfil', value: 'perfil' },
   { name: 'Conta', value: 'conta' },
+  { name: 'Loja', value: 'loja' },
 ];
 
 const VALID_TABS = TABS.map((tab) => tab.value);
@@ -51,6 +53,10 @@ const SettingsPage = () => {
 
           <TabsContent value="conta" className="mt-4">
             <AccountSettings />
+          </TabsContent>
+
+          <TabsContent value="loja" className="mt-4">
+            <ShopSettings />
           </TabsContent>
         </Tabs>
       </div>

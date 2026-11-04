@@ -5,6 +5,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LOCAL_STORAGE_ACTIVE_SHOP_KEY } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
 import { ShopContextProvider, useShopContext } from '@/contexts/shop';
+import {
+  useCreateShopInvitation,
+  useDeleteShop,
+  useGetShopInvitations,
+  useGetShopMembers,
+  useRemoveShopMember,
+  useRevokeShopInvitation,
+  useTransferShopOwnership,
+} from '@/features/shops/api/hooks';
 import ShopService from '@/features/shops/api/services';
 
 vi.mock('@/contexts/auth', () => ({
@@ -18,6 +27,12 @@ vi.mock('@/features/shops/api/services', () => ({
     getById: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    getMembers: vi.fn(),
+    removeMember: vi.fn(),
+    transferOwnership: vi.fn(),
+    getInvitations: vi.fn(),
+    createInvitation: vi.fn(),
+    revokeInvitation: vi.fn(),
   },
 }));
 
@@ -143,5 +158,159 @@ describe('ShopContext', () => {
     expect(result.current.role).toBe('OWNER');
     expect(localStorage.getItem(LOCAL_STORAGE_ACTIVE_SHOP_KEY)).toBe('shop-1');
     expect(invalidateSpy).toHaveBeenCalled();
+  });
+
+  it('automatically falls back to the next shop when the active shop is deleted or left, and clears activeShop when none remain', async () => {
+    ShopService.getAll.mockResolvedValue(mockShops);
+    ShopService.delete.mockResolvedValue({ id: 'shop-1' });
+    ShopService.removeMember.mockResolvedValue({
+      id: 'member-2',
+      shop_id: 'shop-2',
+      user_id: 'user-1',
+    });
+
+    const { result } = renderHook(
+      () => ({
+        context: useShopContext(),
+        deleteShop: useDeleteShop(),
+        removeMember: useRemoveShopMember(),
+      }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.context.activeShop?.id).toBe('shop-1');
+    });
+
+    await act(async () => {
+      await result.current.deleteShop.mutateAsync({ shopId: 'shop-1' });
+    });
+
+    await waitFor(() => {
+      expect(result.current.context.activeShop?.id).toBe('shop-2');
+      expect(result.current.context.role).toBe('MEMBER');
+    });
+    expect(localStorage.getItem(LOCAL_STORAGE_ACTIVE_SHOP_KEY)).toBe('shop-2');
+
+    await act(async () => {
+      await result.current.removeMember.mutateAsync({
+        shopId: 'shop-2',
+        userId: 'user-1',
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.context.shops).toEqual([]);
+      expect(result.current.context.activeShop).toBeNull();
+    });
+    expect(localStorage.getItem(LOCAL_STORAGE_ACTIVE_SHOP_KEY)).toBeNull();
+  });
+
+  it('fetches members, invitations, creates and revokes invitations, and updates role to MEMBER on ownership transfer', async () => {
+    ShopService.getAll.mockResolvedValue(mockShops);
+    ShopService.getMembers.mockResolvedValue([
+      {
+        id: 'm1',
+        shop_id: 'shop-1',
+        user_id: 'user-1',
+        role: 'OWNER',
+        user: { id: 'user-1', name: 'Maria', email: 'maria@example.com' },
+      },
+      {
+        id: 'm2',
+        shop_id: 'shop-1',
+        user_id: 'user-2',
+        role: 'MEMBER',
+        user: { id: 'user-2', name: 'João', email: 'joao@example.com' },
+      },
+    ]);
+    ShopService.getInvitations.mockResolvedValue([
+      {
+        id: 'inv-1',
+        shop_id: 'shop-1',
+        email: 'ana@example.com',
+        role: 'MEMBER',
+        token: 'tok-1',
+        status: 'PENDING',
+      },
+    ]);
+    ShopService.createInvitation.mockResolvedValue({
+      id: 'inv-2',
+      shop_id: 'shop-1',
+      email: 'pedro@example.com',
+      role: 'MEMBER',
+      token: 'tok-2',
+      status: 'PENDING',
+    });
+    ShopService.revokeInvitation.mockResolvedValue({
+      id: 'inv-1',
+      shop_id: 'shop-1',
+      status: 'REVOKED',
+    });
+    ShopService.transferOwnership.mockResolvedValue({
+      id: 'm2',
+      shop_id: 'shop-1',
+      user_id: 'user-2',
+      role: 'OWNER',
+    });
+
+    const { result } = renderHook(
+      () => ({
+        context: useShopContext(),
+        membersQuery: useGetShopMembers(),
+        invitationsQuery: useGetShopInvitations(),
+        createInvitation: useCreateShopInvitation(),
+        revokeInvitation: useRevokeShopInvitation(),
+        transferOwnership: useTransferShopOwnership(),
+      }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.membersQuery.data).toHaveLength(2);
+      expect(result.current.invitationsQuery.data).toHaveLength(1);
+    });
+
+    await act(async () => {
+      await result.current.createInvitation.mutateAsync({
+        shopId: 'shop-1',
+        email: 'pedro@example.com',
+        role: 'MEMBER',
+      });
+    });
+
+    expect(ShopService.createInvitation).toHaveBeenCalledWith({
+      shopId: 'shop-1',
+      email: 'pedro@example.com',
+      role: 'MEMBER',
+    });
+
+    await act(async () => {
+      await result.current.revokeInvitation.mutateAsync({
+        shopId: 'shop-1',
+        invitationId: 'inv-1',
+      });
+    });
+
+    expect(ShopService.revokeInvitation).toHaveBeenCalledWith({
+      shopId: 'shop-1',
+      invitationId: 'inv-1',
+    });
+
+    await act(async () => {
+      await result.current.transferOwnership.mutateAsync({
+        shopId: 'shop-1',
+        newOwnerUserId: 'user-2',
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.context.role).toBe('MEMBER');
+      expect(result.current.context.activeShop?.role).toBe('MEMBER');
+    });
   });
 });
