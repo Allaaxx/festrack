@@ -13,6 +13,35 @@ The primary account entity in Festrack representing an individual managing perso
 
 ---
 
+### Shop
+
+The primary collaborative multi-tenant boundary in Festrack representing a business workspace or organization.
+
+- **Scope:** All events, financial transactions, and aggregate balances belong strictly to a Shop.
+- **Tenancy:** A User can own or belong to multiple Shops, switching active business contexts through the user interface.
+- **Avoid:** Store, Empresa, Organization, Tenant.
+
+---
+
+### Shop Member
+
+A validated association linking a User to a Shop with specific administrative permissions.
+
+- **Roles:** Strictly categorized as `OWNER` (full administrative rights: editing details, deleting the shop, managing invitations, removing members, transferring ownership) or `MEMBER` (collaborator rights: viewing and creating events, transactions, and balances).
+- **Avoid:** Collaborator, Participant.
+
+---
+
+### Shop Invitation
+
+A time-bound authorization token issued to an email address allowing an invitee to join a Shop.
+
+- **Lifecycle:** Issued by an `OWNER`, active for 7 days with status `PENDING`, and transitioning to `ACCEPTED`, `REVOKED`, or `EXPIRED`.
+- **Identity Binding:** Acceptance strictly validates that the authenticated user's email matches the invited email address.
+- **Avoid:** Convite, Invite.
+
+---
+
 ### Session
 
 A continuous period of authenticated interaction between a client device and the Festrack server.
