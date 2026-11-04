@@ -42,6 +42,8 @@ export const ShopContext = createContext({
   role: null,
   isLoading: false,
   setActiveShop: () => {},
+  removeShop: () => {},
+  updateShop: () => {},
   [UNPROVIDED_SHOP_CONTEXT]: true,
 });
 
@@ -57,9 +59,22 @@ export const ShopContextProvider = ({ children }) => {
     getStoredActiveShopId()
   );
   const [createdShops, setCreatedShops] = useState([]);
+  const [removedShops, setRemovedShops] = useState([]);
+  const [updatedShops, setUpdatedShops] = useState([]);
 
   const shops = useMemo(() => {
     if (!userId) return [];
+    const removedIds = new Set(
+      removedShops
+        .filter((entry) => entry.userId === userId)
+        .map((entry) => entry.shopId)
+    );
+    const patchesByShopId = new Map(
+      updatedShops
+        .filter((entry) => entry.userId === userId && entry.shopId)
+        .map((entry) => [entry.shopId, entry.patch])
+    );
+
     const base = Array.isArray(fetchedShops) ? fetchedShops : [];
     const baseIds = new Set(base.map((shop) => shop.id));
     const additional = createdShops
@@ -70,8 +85,14 @@ export const ShopContextProvider = ({ children }) => {
           !baseIds.has(entry.shop.id)
       )
       .map((entry) => entry.shop);
-    return [...base, ...additional];
-  }, [fetchedShops, createdShops, userId]);
+
+    return [...base, ...additional]
+      .filter((shop) => !removedIds.has(shop.id))
+      .map((shop) => {
+        const patch = patchesByShopId.get(shop.id);
+        return patch ? { ...shop, ...patch } : shop;
+      });
+  }, [fetchedShops, createdShops, removedShops, updatedShops, userId]);
 
   const activeShop = useMemo(() => {
     if (!shops.length) return null;
@@ -86,8 +107,10 @@ export const ShopContextProvider = ({ children }) => {
   useEffect(() => {
     if (activeShop?.id) {
       setStoredActiveShopId(activeShop.id);
+    } else if (!isLoading && userId && shops.length === 0) {
+      setStoredActiveShopId(null);
     }
-  }, [activeShop?.id]);
+  }, [activeShop?.id, isLoading, userId, shops.length]);
 
   const setActiveShop = useCallback(
     (shopOrId) => {
@@ -97,6 +120,12 @@ export const ShopContextProvider = ({ children }) => {
         typeof shopOrId === 'string' ? shopOrId : (shopOrId?.id ?? null);
 
       if (!nextShopId) return;
+
+      setRemovedShops((prev) =>
+        prev.filter(
+          (entry) => !(entry.userId === userId && entry.shopId === nextShopId)
+        )
+      );
 
       if (typeof shopOrId === 'object' && shopOrId.name) {
         const normalizedShop = {
@@ -135,6 +164,87 @@ export const ShopContextProvider = ({ children }) => {
     [queryClient, userId]
   );
 
+  const removeShop = useCallback(
+    (shopOrId) => {
+      const targetShopId =
+        typeof shopOrId === 'string' ? shopOrId : (shopOrId?.id ?? null);
+      if (!targetShopId) return;
+
+      setRemovedShops((prev) => {
+        const exists = prev.some(
+          (entry) => entry.userId === userId && entry.shopId === targetShopId
+        );
+        return exists ? prev : [...prev, { userId, shopId: targetShopId }];
+      });
+
+      setCreatedShops((prev) =>
+        prev.filter(
+          (entry) =>
+            !(entry.userId === userId && entry.shop?.id === targetShopId)
+        )
+      );
+
+      queryClient.setQueryData(
+        getShopsQueryKey({ userId }),
+        (previous = []) => {
+          if (!Array.isArray(previous)) return [];
+          return previous.filter((item) => item.id !== targetShopId);
+        }
+      );
+
+      setSelectedShopId((prev) => {
+        const currentStored = getStoredActiveShopId();
+        if (prev === targetShopId || currentStored === targetShopId) {
+          setStoredActiveShopId(null);
+          return null;
+        }
+        return prev;
+      });
+
+      queryClient.invalidateQueries({
+        predicate: (query) => query.queryKey[0] !== 'getShops',
+      });
+    },
+    [queryClient, userId]
+  );
+
+  const updateShop = useCallback(
+    (shopPatch) => {
+      const targetShopId = shopPatch?.shopId ?? shopPatch?.id;
+      if (!targetShopId) return;
+
+      const normalizedPatch = { ...shopPatch, id: targetShopId };
+      delete normalizedPatch.shopId;
+
+      setUpdatedShops((prev) => {
+        const existing = prev.find(
+          (entry) => entry.userId === userId && entry.shopId === targetShopId
+        );
+        const mergedPatch = existing
+          ? { ...existing.patch, ...normalizedPatch }
+          : normalizedPatch;
+        const filtered = prev.filter(
+          (entry) => !(entry.userId === userId && entry.shopId === targetShopId)
+        );
+        return [
+          ...filtered,
+          { userId, shopId: targetShopId, patch: mergedPatch },
+        ];
+      });
+
+      queryClient.setQueryData(
+        getShopsQueryKey({ userId }),
+        (previous = []) => {
+          if (!Array.isArray(previous)) return previous;
+          return previous.map((item) =>
+            item.id === targetShopId ? { ...item, ...normalizedPatch } : item
+          );
+        }
+      );
+    },
+    [queryClient, userId]
+  );
+
   const role = activeShop?.role ?? null;
 
   const contextValue = useMemo(
@@ -144,8 +254,10 @@ export const ShopContextProvider = ({ children }) => {
       role,
       isLoading,
       setActiveShop,
+      removeShop,
+      updateShop,
     }),
-    [shops, activeShop, role, isLoading, setActiveShop]
+    [shops, activeShop, role, isLoading, setActiveShop, removeShop, updateShop]
   );
 
   return (

@@ -67,6 +67,89 @@ const ShopService = {
     const response = await protectedApi.delete(`/shops/${shopId}`);
     return response.data;
   },
+
+  /**
+   * Lista os membros ativos de uma loja específica.
+   * @param {string | { shopId?: string, id?: string }} input
+   * @returns {Promise<Array<{ id: string, shop_id: string, user_id: string, role: 'OWNER' | 'MEMBER', created_at?: string, updated_at?: string, user?: { id: string, name: string, email: string, first_name?: string, last_name?: string, image?: string | null } }>>}
+   */
+  getMembers: async (input) => {
+    const shopId = resolveShopId(input);
+    const response = await protectedApi.get(`/shops/${shopId}/members`);
+    return response.data;
+  },
+
+  /**
+   * Remove um membro de uma loja (ou permite que um membro saia da loja).
+   * @param {{ shopId?: string, id?: string, userId?: string, memberUserId?: string }} input
+   * @returns {Promise<{ id: string, shop_id: string, user_id: string, role: 'OWNER' | 'MEMBER' }>}
+   */
+  removeMember: async (input) => {
+    const shopId = resolveShopId(input);
+    const userId = input?.userId ?? input?.memberUserId ?? input?.memberId;
+    const response = await protectedApi.delete(
+      `/shops/${shopId}/members/${userId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Transfere a propriedade (posse) da loja para outro membro ativo (requer papel OWNER).
+   * @param {{ shopId?: string, id?: string, newOwnerUserId?: string, new_owner_user_id?: string, userId?: string }} input
+   * @returns {Promise<{ id: string, shop_id: string, user_id: string, role: 'OWNER' }>}
+   */
+  transferOwnership: async (input) => {
+    const shopId = resolveShopId(input);
+    const newOwnerUserId =
+      input?.newOwnerUserId ?? input?.new_owner_user_id ?? input?.userId;
+    const response = await protectedApi.post(
+      `/shops/${shopId}/transfer-ownership`,
+      {
+        new_owner_user_id: newOwnerUserId,
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Lista os convites pendentes de uma loja (requer papel OWNER).
+   * @param {string | { shopId?: string, id?: string }} input
+   * @returns {Promise<Array<{ id: string, shop_id: string, email: string, role: 'OWNER' | 'MEMBER', token: string, status: 'PENDING', expires_at?: string, created_at?: string }>>}
+   */
+  getInvitations: async (input) => {
+    const shopId = resolveShopId(input);
+    const response = await protectedApi.get(`/shops/${shopId}/invitations`);
+    return response.data;
+  },
+
+  /**
+   * Cria um novo convite de colaborador para uma loja (requer papel OWNER).
+   * @param {{ shopId?: string, id?: string, email: string, role?: 'OWNER' | 'MEMBER' }} input
+   * @returns {Promise<{ id: string, shop_id: string, email: string, role: 'OWNER' | 'MEMBER', token: string, status: 'PENDING', expires_at?: string }>}
+   */
+  createInvitation: async (input) => {
+    const shopId = resolveShopId(input);
+    const response = await protectedApi.post(`/shops/${shopId}/invitations`, {
+      email: input.email.trim(),
+      role: input.role || 'MEMBER',
+    });
+    return response.data;
+  },
+
+  /**
+   * Revoga um convite pendente de uma loja (requer papel OWNER).
+   * @param {{ shopId?: string, id?: string, invitationId?: string }} input
+   * @returns {Promise<{ id: string, shop_id: string, status: 'REVOKED' }>}
+   */
+  revokeInvitation: async (input) => {
+    const shopId = resolveShopId(input);
+    const invitationId =
+      input?.invitationId ?? (input?.shopId ? input?.id : undefined);
+    const response = await protectedApi.delete(
+      `/shops/${shopId}/invitations/${invitationId}`
+    );
+    return response.data;
+  },
 };
 
 export default ShopService;
