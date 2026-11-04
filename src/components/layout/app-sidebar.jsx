@@ -1,9 +1,4 @@
-import {
-  CalendarDaysIcon,
-  ChartSplineIcon,
-  SettingsIcon,
-  Store,
-} from 'lucide-react';
+import { CalendarDaysIcon, ChartSplineIcon, SettingsIcon } from 'lucide-react';
 import { Link } from 'react-router';
 
 import NavFooter from '@/components/layout/nav-footer';
@@ -23,13 +18,6 @@ import { useAuthContext } from '@/contexts/auth';
 import { useNavMenu } from './hooks/index';
 
 const data = {
-  shops: [
-    {
-      name: 'Loja padrão',
-      logo: Store,
-      plan: 'Empresa',
-    },
-  ],
   navMain: [
     {
       title: 'Financeiro',
@@ -66,7 +54,7 @@ const AppSidebar = ({ ...props }) => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <ShopSwitcher shops={data.shops} />
+            <ShopSwitcher />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

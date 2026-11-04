@@ -31,6 +31,13 @@ vi.mock('@/contexts/auth', () => ({
   })),
 }));
 
+vi.mock('@/contexts/shop', () => ({
+  useShopContext: vi.fn(() => ({
+    activeShop: { id: 'shop-1', name: 'Loja Principal', role: 'OWNER' },
+    shops: [{ id: 'shop-1', name: 'Loja Principal', role: 'OWNER' }],
+  })),
+}));
+
 const mockTransactions = [
   {
     id: 'tx-1',
@@ -38,6 +45,12 @@ const mockTransactions = [
     type: 'EARNING',
     amount: 5000,
     date: '2026-10-01T12:00:00.000Z',
+    author: {
+      id: 'usr-1',
+      name: 'Maria Silva',
+      email: 'maria@festrack.com',
+      image: 'https://example.com/maria.png',
+    },
   },
   {
     id: 'tx-2',
@@ -45,6 +58,13 @@ const mockTransactions = [
     type: 'EXPENSE',
     amount: 650.5,
     date: '2026-10-05T12:00:00.000Z',
+    created_by: {
+      id: 'usr-2',
+      first_name: 'João',
+      last_name: 'Souza',
+      email: 'joao@festrack.com',
+      image: null,
+    },
   },
   {
     id: 'tx-3',
@@ -474,8 +494,82 @@ describe('TransactionsTable Component', () => {
       screen.queryByRole('button', { name: /valor/i })
     ).not.toBeInTheDocument();
 
+    // Restore saved column visibility preferences test
     // "Título" header should still be visible
     expect(screen.getByRole('button', { name: /título/i })).toBeInTheDocument();
+  });
+
+  describe('Author Column ("Autor") (#84)', () => {
+    it('renders Autor column header and collaborator avatar/initials, name, email, and fallback', () => {
+      useGetTransactions.mockReturnValue({
+        data: mockTransactions,
+        isLoading: false,
+        isError: false,
+      });
+
+      renderComponent();
+
+      expect(
+        screen.getByRole('button', { name: /autor/i })
+      ).toBeInTheDocument();
+
+      // Row 1: Maria Silva with email and MS initials
+      expect(screen.getByText('Maria Silva')).toBeInTheDocument();
+      expect(screen.getByText('maria@festrack.com')).toBeInTheDocument();
+      expect(screen.getByText('MS')).toBeInTheDocument();
+
+      // Row 2: João Souza (from created_by first_name + last_name) with JS initials
+      expect(screen.getByText('João Souza')).toBeInTheDocument();
+      expect(screen.getByText('joao@festrack.com')).toBeInTheDocument();
+      expect(screen.getByText('JS')).toBeInTheDocument();
+
+      // Row 3: Fallback when author metadata is absent
+      expect(screen.getByText('Membro')).toBeInTheDocument();
+      expect(screen.getByText('—')).toBeInTheDocument();
+    });
+
+    it('includes Autor in the customize columns dropdown and persists visibility toggle in localStorage', async () => {
+      const user = userEvent.setup();
+      useGetTransactions.mockReturnValue({
+        data: mockTransactions,
+        isLoading: false,
+        isError: false,
+      });
+
+      renderComponent();
+
+      expect(
+        screen.getByRole('button', { name: /autor/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText('Maria Silva')).toBeInTheDocument();
+
+      const customizeBtn = screen.getByRole('button', {
+        name: /personalizar colunas/i,
+      });
+      await user.click(customizeBtn);
+
+      const autorOption = await screen.findByRole('menuitemcheckbox', {
+        name: /autor/i,
+      });
+      await user.click(autorOption);
+
+      expect(
+        screen.queryByRole('button', { name: /autor/i })
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText('Maria Silva')).not.toBeInTheDocument();
+
+      const stored = JSON.parse(
+        localStorage.getItem('festrack:usr-1:finance_table_columns')
+      );
+      expect(stored).toEqual(expect.objectContaining({ author: false }));
+
+      // Toggle back on
+      await user.click(autorOption);
+      expect(
+        await screen.findByRole('button', { name: /autor/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText('Maria Silva')).toBeInTheDocument();
+    });
   });
 
   describe('Event Context Integration (eventId prop)', () => {

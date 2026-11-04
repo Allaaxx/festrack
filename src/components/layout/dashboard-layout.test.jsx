@@ -1,14 +1,35 @@
-import { render, renderHook, screen, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import DashboardLayout from '@/components/layout/dashboard-layout';
 import { useNavMenu } from '@/components/layout/hooks';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { LOCAL_STORAGE_ACTIVE_SHOP_KEY } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
+import { ShopContextProvider } from '@/contexts/shop';
+import ShopService from '@/features/shops/api/services';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
+}));
+
+vi.mock('@/features/shops/api/services', () => ({
+  default: {
+    getAll: vi.fn(),
+    create: vi.fn(),
+    getById: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
 }));
 
 // Mock child layout components to isolate route protection seam
@@ -145,6 +166,74 @@ describe('DashboardLayout Route Protection', () => {
     expect(
       within(footer).getByRole('link', { name: 'LinkedIn' })
     ).toBeInTheDocument();
+  });
+
+  it('enforces mandatory onboarding CreateShopDialog when authenticated user has zero shops and closes it after creating a shop', async () => {
+    const user = userEvent.setup();
+    localStorage.clear();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    useAuthContext.mockReturnValue({
+      user: {
+        id: 'u1',
+        name: 'Maria Silva',
+        firstName: 'Maria',
+        lastName: 'Silva',
+        email: 'maria@example.com',
+      },
+      isInitializing: false,
+    });
+
+    ShopService.getAll.mockResolvedValue([]);
+    ShopService.create.mockResolvedValue({
+      id: 'shop-first',
+      name: 'Minha Primeira Loja',
+      description: 'Criada no onboarding',
+      role: 'OWNER',
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ShopContextProvider>
+          <MemoryRouter initialEntries={['/finances']}>
+            <Routes>
+              <Route element={<DashboardLayout />}>
+                <Route path="/finances" element={<div>Finances View</div>} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </ShopContextProvider>
+      </QueryClientProvider>
+    );
+
+    const dialogHeading = await screen.findByRole('heading', {
+      name: /crie sua primeira loja/i,
+    });
+    expect(dialogHeading).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /cancelar/i })
+    ).not.toBeInTheDocument();
+
+    await user.type(
+      screen.getByLabelText(/nome da loja/i),
+      'Minha Primeira Loja'
+    );
+    await user.click(screen.getByRole('button', { name: /criar loja/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('heading', { name: /crie sua primeira loja/i })
+      ).not.toBeInTheDocument();
+    });
+
+    expect(localStorage.getItem(LOCAL_STORAGE_ACTIVE_SHOP_KEY)).toBe(
+      'shop-first'
+    );
   });
 });
 

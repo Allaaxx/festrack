@@ -6,11 +6,14 @@ import Header from '@/components/layout/header';
 import AuthLoading from '@/components/shared/auth-loading';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
+import { UNPROVIDED_SHOP_CONTEXT, useShopContext } from '@/contexts/shop';
+import { CreateShopDialog } from '@/features/shops';
 
 import { ThemeProvider } from './theme-provider';
 
 const DashboardLayout = () => {
   const { user, isInitializing } = useAuthContext();
+  const shopContext = useShopContext();
   const location = useLocation();
 
   if (isInitializing) {
@@ -20,6 +23,11 @@ const DashboardLayout = () => {
   if (!user) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
+
+  const hasShopContext = !shopContext?.[UNPROVIDED_SHOP_CONTEXT];
+  const { shops = [], isLoading: isShopsLoading } = shopContext || {};
+  const shouldEnforceOnboarding =
+    hasShopContext && !isShopsLoading && shops.length === 0;
 
   return (
     <div className="h-svh overflow-hidden [--header-height:calc(--spacing(14))]">
@@ -59,6 +67,9 @@ const DashboardLayout = () => {
               </footer>
             </SidebarInset>
           </div>
+          {shouldEnforceOnboarding && (
+            <CreateShopDialog open={true} isOnboarding={true} />
+          )}
         </SidebarProvider>
       </ThemeProvider>
     </div>

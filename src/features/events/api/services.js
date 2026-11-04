@@ -12,9 +12,14 @@ const mapEventFromApi = (event) => {
   const allDay = startTime === '00:00' && endTime === '23:59';
   const googleEventId = event.google_event_id ?? event.googleEventId ?? null;
   const syncError = Boolean(event.sync_error ?? event.syncError);
+  const shopId = event.shop_id ?? event.shopId ?? null;
+  const createdByUserId =
+    event.created_by_user_id ?? event.createdByUserId ?? event.user_id ?? null;
 
   return {
     id: event.id,
+    shopId,
+    createdByUserId,
     name: event.name,
     description: event.description ?? null,
     startDate: event.start_date,
@@ -26,30 +31,46 @@ const mapEventFromApi = (event) => {
   };
 };
 
+const resolveShopEventParams = (idOrParams, maybeId) => {
+  if (typeof idOrParams === 'object' && idOrParams !== null) {
+    return {
+      shopId: idOrParams.shopId,
+      id: idOrParams.id ?? idOrParams.eventId,
+    };
+  }
+  return {
+    shopId: idOrParams,
+    id: maybeId,
+  };
+};
+
 const EventService = {
   /**
-   * Busca todos os eventos do usuário autenticado.
-   * @returns {Promise<Array<{ id: string, name: string, description: string | null, startDate: string, endDate: string, allDay: boolean }>>}
+   * Busca todos os eventos da loja ativa.
+   * @param {{ shopId: string }} [input]
+   * @returns {Promise<Array<{ id: string, shopId: string | null, createdByUserId: string | null, name: string, description: string | null, startDate: string, endDate: string, allDay: boolean }>>}
    */
-  getAll: async () => {
-    const response = await protectedApi.get('/events/me');
+  getAll: async ({ shopId } = {}) => {
+    const response = await protectedApi.get(`/shops/${shopId}/events`);
     return response.data.map(mapEventFromApi);
   },
 
   /**
-   * Busca um evento específico pelo ID para o usuário autenticado.
-   * @param {string | { id: string }} input - ID do evento ou objeto contendo o ID.
-   * @returns {Promise<{ id: string, name: string, description: string | null, startDate: string, endDate: string, allDay: boolean, googleEventId: string | null, syncError: boolean }>}
+   * Busca um evento específico pelo ID na loja ativa.
+   * @param {string | { shopId: string, id: string }} idOrParams - ID da loja ou objeto contendo shopId e id.
+   * @param {string} [maybeId] - ID do evento quando o primeiro parâmetro for shopId.
+   * @returns {Promise<{ id: string, shopId: string | null, createdByUserId: string | null, name: string, description: string | null, startDate: string, endDate: string, allDay: boolean, googleEventId: string | null, syncError: boolean }>}
    */
-  getById: async (input) => {
-    const id = typeof input === 'string' ? input : input?.id;
-    const response = await protectedApi.get(`/events/me/${id}`);
+  getById: async (idOrParams, maybeId) => {
+    const { shopId, id } = resolveShopEventParams(idOrParams, maybeId);
+    const response = await protectedApi.get(`/shops/${shopId}/events/${id}`);
     return mapEventFromApi(response.data);
   },
 
   /**
-   * Cria um evento para o usuário autenticado.
+   * Cria um evento na loja ativa.
    * @param {{
+   *   shopId: string,
    *   name: string,
    *   description?: string | null,
    *   startDate: Date | string,
@@ -59,8 +80,8 @@ const EventService = {
    *   endTime?: string,
    * }} input
    */
-  create: async (input) => {
-    const response = await protectedApi.post('/events/me', {
+  create: async ({ shopId, ...input }) => {
+    const response = await protectedApi.post(`/shops/${shopId}/events`, {
       name: input.name,
       description: input.description || null,
       start_date: formatEventDateToApi(
@@ -81,8 +102,9 @@ const EventService = {
   },
 
   /**
-   * Atualiza um evento do usuário autenticado.
+   * Atualiza um evento na loja ativa.
    * @param {{
+   *   shopId: string,
    *   id: string,
    *   name: string,
    *   description?: string | null,
@@ -93,8 +115,8 @@ const EventService = {
    *   endTime?: string,
    * }} input
    */
-  update: async (input) => {
-    const response = await protectedApi.patch(`/events/me/${input.id}`, {
+  update: async ({ shopId, id, ...input }) => {
+    const response = await protectedApi.patch(`/shops/${shopId}/events/${id}`, {
       name: input.name,
       description: input.description || null,
       start_date: formatEventDateToApi(
@@ -115,11 +137,15 @@ const EventService = {
   },
 
   /**
-   * Exclui um evento do usuário autenticado.
-   * @param {{ id: string }} input
+   * Exclui um evento na loja ativa.
+   * @param {{ shopId: string, id: string } | string} idOrParams
+   * @param {string} [maybeId]
    */
-  delete: async (input) => {
-    const response = await protectedApi.delete(`/events/me/${input.id}`);
+  delete: async (idOrParams, maybeId) => {
+    const { shopId, id } = resolveShopEventParams(idOrParams, maybeId);
+    const response = await protectedApi.delete(
+      `/shops/${shopId}/events/${id}`
+    );
     return response.data ? mapEventFromApi(response.data) : null;
   },
 };

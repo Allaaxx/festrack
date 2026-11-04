@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -21,7 +22,79 @@ import EditTransactionButton from '@/features/finances/components/edit-transacti
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
 import { formatCurrency } from '@/helpers/currency';
 
-const parseDateSafely = (dateValue) => {
+export const normalizeTransactionAuthor = (transaction) => {
+  const rawAuthor =
+    transaction?.author ??
+    transaction?.created_by ??
+    transaction?.createdBy ??
+    transaction?.creator ??
+    transaction?.user;
+
+  if (!rawAuthor) {
+    return {
+      name: 'Membro',
+      email: '',
+      avatar: null,
+      initials: '—',
+      hasAuthor: false,
+    };
+  }
+
+  if (typeof rawAuthor === 'string') {
+    const trimmed = rawAuthor.trim();
+    const parts = trimmed.split(/\s+/).filter(Boolean);
+    const initials =
+      parts.length >= 2
+        ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+        : (trimmed.slice(0, 2) || '—').toUpperCase();
+    return {
+      name: trimmed || 'Membro',
+      email: '',
+      avatar: null,
+      initials,
+      hasAuthor: Boolean(trimmed),
+    };
+  }
+
+  const firstName = String(
+    rawAuthor.firstName ?? rawAuthor.first_name ?? ''
+  ).trim();
+  const lastName = String(
+    rawAuthor.lastName ?? rawAuthor.last_name ?? ''
+  ).trim();
+  const joinedName = [firstName, lastName].filter(Boolean).join(' ').trim();
+  const rawName = String(rawAuthor.name ?? '').trim();
+  const email = String(rawAuthor.email ?? '').trim();
+  const avatar = rawAuthor.image || rawAuthor.avatar || null;
+
+  const name =
+    rawName || joinedName || (email ? email.split('@')[0] : '') || 'Membro';
+  const hasAuthor = Boolean(rawName || joinedName || email || avatar);
+
+  let initials = '—';
+  if (firstName && lastName) {
+    initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+  } else {
+    const parts = (rawName || joinedName || email.split('@')[0] || '')
+      .split(/\s+/)
+      .filter(Boolean);
+    if (parts.length >= 2) {
+      initials = `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    } else if (parts.length === 1 && parts[0]) {
+      initials = parts[0].slice(0, 2).toUpperCase();
+    }
+  }
+
+  return {
+    name,
+    email,
+    avatar,
+    initials,
+    hasAuthor,
+  };
+};
+
+export const parseDateSafely = (dateValue) => {
   if (!dateValue) return new Date();
   if (dateValue instanceof Date) return dateValue;
   const str = String(dateValue).trim();
@@ -249,6 +322,64 @@ export const transactionColumns = [
 
     cell: ({ row: { original: transaction } }) => {
       return formatCurrency(transaction.amount);
+    },
+  },
+
+  {
+    id: 'author',
+    accessorFn: (row) => normalizeTransactionAuthor(row).name,
+
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Autor
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+
+    sortFn: (rowA, rowB, columnId) => {
+      const authorA = String(rowA.getValue(columnId) ?? '');
+      const authorB = String(rowB.getValue(columnId) ?? '');
+
+      return authorA.localeCompare(authorB, 'pt-BR', {
+        sensitivity: 'base',
+      });
+    },
+
+    cell: ({ row: { original: transaction } }) => {
+      const {
+        name: authorName,
+        email: authorEmail,
+        avatar: authorAvatar,
+        initials: authorInitials,
+      } = normalizeTransactionAuthor(transaction);
+
+      return (
+        <div className="flex items-center gap-2">
+          <Avatar className="size-8">
+            {authorAvatar && (
+              <AvatarImage src={authorAvatar} alt={authorName} />
+            )}
+            <AvatarFallback className="text-xs">
+              {authorInitials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col text-sm leading-tight">
+            <span className="text-card-foreground font-medium">
+              {authorName}
+            </span>
+            {authorEmail && (
+              <span className="text-muted-foreground text-xs">
+                {authorEmail}
+              </span>
+            )}
+          </div>
+        </div>
+      );
     },
   },
 

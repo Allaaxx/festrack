@@ -1,8 +1,9 @@
 import { format, isValid } from 'date-fns';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { toast } from '@/components/ui/toast';
 import { LOCAL_STORAGE_EVENT_CALENDAR_FILTERS_KEY } from '@/constants/local-storage';
+import { useShopContext } from '@/contexts/shop';
 import {
   mapEventToCalendarItem,
   useEditEvent,
@@ -26,10 +27,24 @@ const getDefaultCalendarParams = () => {
 };
 
 export function useEventCalendarPage() {
+  const { activeShop } = useShopContext() || {};
+  const activeShopId = activeShop?.id ?? null;
   const { data: rawEvents = [], isLoading, isError, refetch } = useGetEvents();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createInitialDate, setCreateInitialDate] = useState(null);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEventEntry, setSelectedEventEntry] = useState(null);
+
+  const selectedEvent =
+    selectedEventEntry && selectedEventEntry.shopId === activeShopId
+      ? selectedEventEntry.event
+      : null;
+
+  const setSelectedEvent = useCallback(
+    (event) => {
+      setSelectedEventEntry(event ? { shopId: activeShopId, event } : null);
+    },
+    [activeShopId]
+  );
 
   const [params, setParams] = useStoredSearchParams(
     LOCAL_STORAGE_EVENT_CALENDAR_FILTERS_KEY,

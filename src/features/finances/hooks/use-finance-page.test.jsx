@@ -9,6 +9,7 @@ import {
   LOCAL_STORAGE_FINANCE_FILTERS_KEY,
 } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
+import { useShopContext } from '@/contexts/shop';
 import { useFinancePage } from '@/features/finances';
 import {
   BalanceService,
@@ -17,6 +18,10 @@ import {
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
+}));
+
+vi.mock('@/contexts/shop', () => ({
+  useShopContext: vi.fn(),
 }));
 
 vi.mock('@/features/finances/api/services', () => ({
@@ -61,6 +66,10 @@ describe('useFinancePage Hook', () => {
     vi.clearAllMocks();
 
     useAuthContext.mockReturnValue({ user: mockUser });
+    useShopContext.mockReturnValue({
+      activeShop: { id: 'shop-1', name: 'Loja Principal', role: 'OWNER' },
+      shops: [{ id: 'shop-1', name: 'Loja Principal', role: 'OWNER' }],
+    });
     BalanceService.getBalance.mockResolvedValue({
       balance: 5000,
       earnings: 8000,
@@ -100,10 +109,12 @@ describe('useFinancePage Hook', () => {
       });
 
       expect(BalanceService.getBalance).toHaveBeenCalledWith({
+        shopId: 'shop-1',
         from: expectedFrom,
         to: expectedTo,
       });
       expect(TransactionService.getAll).toHaveBeenCalledWith({
+        shopId: 'shop-1',
         from: expectedFrom,
         to: expectedTo,
       });
@@ -161,6 +172,7 @@ describe('useFinancePage Hook', () => {
 
       await waitFor(() => {
         expect(BalanceService.getBalance).toHaveBeenCalledWith({
+          shopId: 'shop-1',
           from: '2026-05-01',
           to: '2026-05-31',
         });
