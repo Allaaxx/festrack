@@ -66,7 +66,7 @@ const AppSidebar = ({ ...props }) => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <ShopSwitcher shops={data.shops} />
+            <ShopSwitcher />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

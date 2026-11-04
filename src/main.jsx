@@ -16,6 +16,7 @@ import { DashboardLayout } from '@/components/layout';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthContextProvider } from '@/contexts/auth';
+import { ShopContextProvider } from '@/contexts/shop';
 import EventPage from '@/pages/event';
 import EventDetailPage from '@/pages/event-detail';
 import NotFoundPage from '@/pages/not-found';
@@ -76,9 +77,11 @@ if (rootElement) {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthContextProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
+            <ShopContextProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </ShopContextProvider>
           </AuthContextProvider>
         </TooltipProvider>
 
