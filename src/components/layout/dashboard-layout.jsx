@@ -7,7 +7,7 @@ import AuthLoading from '@/components/shared/auth-loading';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
 import { UNPROVIDED_SHOP_CONTEXT, useShopContext } from '@/contexts/shop';
-import CreateShopDialog from '@/features/shops/components/create-shop-dialog';
+import { CreateShopDialog } from '@/features/shops';
 
 import { ThemeProvider } from './theme-provider';
 

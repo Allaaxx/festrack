@@ -150,7 +150,7 @@ const TransferOwnershipDialog = ({
           </Field>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Não há outros membros ativos nesta loja. Convide outro colaborador e
+            Não há outros membros ativos nesta loja. Convide outro membro e
             aguarde sua entrada antes de transferir a posse.
           </p>
         )}

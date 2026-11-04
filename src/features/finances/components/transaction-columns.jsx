@@ -32,7 +32,7 @@ export const normalizeTransactionAuthor = (transaction) => {
 
   if (!rawAuthor) {
     return {
-      name: 'Colaborador',
+      name: 'Membro',
       email: '',
       avatar: null,
       initials: '—',
@@ -48,7 +48,7 @@ export const normalizeTransactionAuthor = (transaction) => {
         ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
         : (trimmed.slice(0, 2) || '—').toUpperCase();
     return {
-      name: trimmed || 'Colaborador',
+      name: trimmed || 'Membro',
       email: '',
       avatar: null,
       initials,
@@ -68,10 +68,7 @@ export const normalizeTransactionAuthor = (transaction) => {
   const avatar = rawAuthor.image || rawAuthor.avatar || null;
 
   const name =
-    rawName ||
-    joinedName ||
-    (email ? email.split('@')[0] : '') ||
-    'Colaborador';
+    rawName || joinedName || (email ? email.split('@')[0] : '') || 'Membro';
   const hasAuthor = Boolean(rawName || joinedName || email || avatar);
 
   let initials = '—';
@@ -97,7 +94,7 @@ export const normalizeTransactionAuthor = (transaction) => {
   };
 };
 
-const parseDateSafely = (dateValue) => {
+export const parseDateSafely = (dateValue) => {
   if (!dateValue) return new Date();
   if (dateValue instanceof Date) return dateValue;
   const str = String(dateValue).trim();
@@ -364,8 +361,12 @@ export const transactionColumns = [
       return (
         <div className="flex items-center gap-2">
           <Avatar className="size-8">
-            {authorAvatar && <AvatarImage src={authorAvatar} alt={authorName} />}
-            <AvatarFallback className="text-xs">{authorInitials}</AvatarFallback>
+            {authorAvatar && (
+              <AvatarImage src={authorAvatar} alt={authorName} />
+            )}
+            <AvatarFallback className="text-xs">
+              {authorInitials}
+            </AvatarFallback>
           </Avatar>
           <div className="flex flex-col text-sm leading-tight">
             <span className="text-card-foreground font-medium">

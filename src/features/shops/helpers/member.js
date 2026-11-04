@@ -1,3 +1,4 @@
+import { toast as defaultToast } from '@/components/ui/toast';
 import { normalizeUser } from '@/helpers/user';
 
 export const ROLE_LABELS = {
@@ -6,6 +7,39 @@ export const ROLE_LABELS = {
 };
 
 export const getRoleLabel = (role) => ROLE_LABELS[role] || 'Membro';
+
+export const buildInvitationLink = (token) => {
+  if (!token) return '';
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : '';
+  return `${origin}/invite/${token}`;
+};
+
+export const copyInvitationLink = async (
+  token,
+  toastInstance = defaultToast
+) => {
+  const url = buildInvitationLink(token);
+  if (!url) return false;
+  try {
+    await navigator.clipboard?.writeText(url);
+    toastInstance?.add({
+      type: 'success',
+      title: 'Link copiado!',
+      description:
+        'O link de convite foi copiado para a área de transferência.',
+    });
+    return true;
+  } catch {
+    toastInstance?.add({
+      type: 'error',
+      title: 'Não foi possível copiar o link',
+    });
+    return false;
+  }
+};
 
 export const getUserInitials = (userOrName, fallbackEmail = '') => {
   if (!userOrName && !fallbackEmail) return 'U';

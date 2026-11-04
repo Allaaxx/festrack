@@ -10,7 +10,7 @@ import {
 
 import { LOCAL_STORAGE_ACTIVE_SHOP_KEY } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
-import { getShopsQueryKey, useGetShops } from '@/features/shops/api/hooks';
+import { getShopsQueryKey, useGetShops } from '@/features/shops';
 
 const getStoredActiveShopId = () => {
   try {

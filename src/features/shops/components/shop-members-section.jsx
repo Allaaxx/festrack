@@ -57,6 +57,7 @@ import {
 } from '@/features/shops/api/hooks';
 import InviteMemberDialog from '@/features/shops/components/invite-member-dialog';
 import {
+  copyInvitationLink,
   getRoleLabel,
   normalizeShopMember,
 } from '@/features/shops/helpers/member';
@@ -241,22 +242,7 @@ const ShopMembersSection = ({ headerAction, children }) => {
   };
 
   const handleCopyInviteLink = async (invitation) => {
-    if (!invitation?.token) return;
-    const url = `${window.location.origin}/invite/${invitation.token}`;
-    try {
-      await navigator.clipboard?.writeText(url);
-      toast.add({
-        type: 'success',
-        title: 'Link copiado!',
-        description:
-          'O link de convite foi copiado para a área de transferência.',
-      });
-    } catch {
-      toast.add({
-        type: 'error',
-        title: 'Não foi possível copiar o link',
-      });
-    }
+    await copyInvitationLink(invitation?.token, toast);
   };
 
   const pendingInvitations = useMemo(() => {
@@ -564,7 +550,7 @@ const ShopMembersSection = ({ headerAction, children }) => {
                       Convites Pendentes
                     </h4>
                     <p className="text-muted-foreground text-xs">
-                      Convites aguardando aceitação pelos colaboradores.
+                      Convites aguardando aceitação pelos membros.
                     </p>
                   </div>
 
@@ -573,70 +559,82 @@ const ShopMembersSection = ({ headerAction, children }) => {
                       <Skeleton className="h-12 w-full rounded-md" />
                     </div>
                   ) : pendingInvitations.length > 0 ? (
-                    <div className="divide-y rounded-lg border">
-                      {pendingInvitations.map((invitation) => {
-                        const expiresAt =
-                          invitation.expires_at ?? invitation.expiresAt;
-                        return (
-                          <div
-                            key={invitation.id || invitation.email}
-                            data-testid="pending-invitation-row"
-                            className="flex flex-col justify-between gap-3 p-3 sm:flex-row sm:items-center"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
-                                <MailIcon className="size-4" />
-                              </div>
-                              <div className="flex flex-col leading-tight">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">
-                                    {invitation.email}
-                                  </span>
+                    <div className="overflow-hidden rounded-lg border">
+                      <Table>
+                        <TableHeader className="bg-muted">
+                          <TableRow>
+                            <TableHead>E-mail</TableHead>
+                            <TableHead>Função</TableHead>
+                            <TableHead>Expira em</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {pendingInvitations.map((invitation) => {
+                            const expiresAt =
+                              invitation.expires_at ?? invitation.expiresAt;
+                            return (
+                              <TableRow
+                                key={invitation.id || invitation.email}
+                                data-testid="pending-invitation-row"
+                              >
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+                                      <MailIcon className="size-4" />
+                                    </div>
+                                    <span className="text-sm font-medium">
+                                      {invitation.email}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
                                   <Badge variant="outline">
                                     {getRoleLabel(invitation.role)}
                                   </Badge>
-                                </div>
-                                {expiresAt && (
-                                  <span className="text-muted-foreground text-xs">
-                                    Expira em {formatDatePtBr(expiresAt)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {invitation.token && (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  aria-label={`Copiar link de ${invitation.email}`}
-                                  onClick={() =>
-                                    handleCopyInviteLink(invitation)
-                                  }
-                                >
-                                  <CopyIcon className="size-3.5" />
-                                  Copiar link
-                                </Button>
-                              )}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                aria-label={`Revogar convite de ${invitation.email}`}
-                                disabled={isRevoking}
-                                onClick={() =>
-                                  handleRevokeInvitation(invitation)
-                                }
-                              >
-                                <XCircleIcon className="size-3.5" />
-                                Revogar
-                              </Button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground text-xs">
+                                  {expiresAt
+                                    ? `Expira em ${formatDatePtBr(expiresAt)}`
+                                    : '-'}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {invitation.token && (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        aria-label={`Copiar link de ${invitation.email}`}
+                                        onClick={() =>
+                                          handleCopyInviteLink(invitation)
+                                        }
+                                      >
+                                        <CopyIcon className="size-3.5" />
+                                        Copiar link
+                                      </Button>
+                                    )}
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      aria-label={`Revogar convite de ${invitation.email}`}
+                                      disabled={isRevoking}
+                                      onClick={() =>
+                                        handleRevokeInvitation(invitation)
+                                      }
+                                    >
+                                      <XCircleIcon className="size-3.5" />
+                                      Revogar
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
                     </div>
                   ) : (
                     <p className="text-muted-foreground text-xs">

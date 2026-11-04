@@ -30,7 +30,11 @@ import {
 import { toast } from '@/components/ui/toast';
 import { useShopContext } from '@/contexts/shop';
 import { useInviteMemberForm } from '@/features/shops/forms/hooks';
-import { getRoleLabel } from '@/features/shops/helpers/member';
+import {
+  buildInvitationLink,
+  copyInvitationLink,
+  getRoleLabel,
+} from '@/features/shops/helpers/member';
 
 const FORM_ID = 'inviteMemberForm';
 
@@ -87,26 +91,12 @@ const InviteMemberDialog = ({
     }
   };
 
-  const inviteUrl = generatedInvitation?.token
-    ? `${window.location.origin}/invite/${generatedInvitation.token}`
-    : '';
+  const inviteUrl = buildInvitationLink(generatedInvitation?.token);
 
   const handleCopyLink = async () => {
-    if (!inviteUrl) return;
-    try {
-      await navigator.clipboard?.writeText(inviteUrl);
+    const didCopy = await copyInvitationLink(generatedInvitation?.token, toast);
+    if (didCopy) {
       setCopied(true);
-      toast.add({
-        type: 'success',
-        title: 'Link copiado!',
-        description:
-          'O link de convite foi copiado para a área de transferência.',
-      });
-    } catch {
-      toast.add({
-        type: 'error',
-        title: 'Não foi possível copiar o link',
-      });
     }
   };
 
@@ -130,7 +120,7 @@ const InviteMemberDialog = ({
           <DialogDescription>
             {generatedInvitation
               ? 'Compartilhe o link abaixo com a pessoa convidada para que ela possa ingressar na loja.'
-              : 'Envie um convite por e-mail para adicionar um novo colaborador à loja.'}
+              : 'Envie um convite por e-mail para adicionar um novo membro à loja.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -194,7 +184,7 @@ const InviteMemberDialog = ({
                         id="invite-member-email"
                         type="email"
                         aria-invalid={fieldState.invalid}
-                        placeholder="colaborador@exemplo.com"
+                        placeholder="membro@exemplo.com"
                         autoComplete="off"
                         disabled={form.formState.isSubmitting}
                       />
@@ -228,7 +218,6 @@ const InviteMemberDialog = ({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="MEMBER">Membro</SelectItem>
-                          <SelectItem value="OWNER">Proprietário</SelectItem>
                         </SelectContent>
                       </Select>
                       {fieldState.invalid && (

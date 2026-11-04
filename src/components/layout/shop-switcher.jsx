@@ -21,14 +21,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useShopContext } from '@/contexts/shop';
-import CreateShopDialog from '@/features/shops/components/create-shop-dialog';
-
-const ROLE_LABELS = {
-  OWNER: 'Proprietário',
-  MEMBER: 'Membro',
-};
-
-const getRoleLabel = (role) => ROLE_LABELS[role] || '';
+import { CreateShopDialog, getRoleLabel } from '@/features/shops';
 
 const getShopInitial = (name) => {
   if (!name || typeof name !== 'string') return 'L';

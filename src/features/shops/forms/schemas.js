@@ -25,5 +25,5 @@ export const inviteMemberFormSchema = z.object({
     .min(1, {
       error: 'O e-mail é obrigatório.',
     }),
-  role: z.enum(['MEMBER', 'OWNER']).default('MEMBER'),
+  role: z.enum(['MEMBER']).default('MEMBER'),
 });

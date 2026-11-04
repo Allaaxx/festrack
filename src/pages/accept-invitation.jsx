@@ -22,13 +22,10 @@ import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
 import {
+  getRoleLabel,
   useAcceptShopInvitation,
   useGetInvitationByToken,
 } from '@/features/shops';
-
-const getRoleLabel = (role) => {
-  return role === 'OWNER' ? 'Proprietário' : 'Membro';
-};
 
 const isInvitationInvalidOrExpired = (invitation, isError) => {
   if (isError || !invitation) return true;

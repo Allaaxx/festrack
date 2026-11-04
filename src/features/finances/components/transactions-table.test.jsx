@@ -524,7 +524,7 @@ describe('TransactionsTable Component', () => {
       expect(screen.getByText('JS')).toBeInTheDocument();
 
       // Row 3: Fallback when author metadata is absent
-      expect(screen.getByText('Colaborador')).toBeInTheDocument();
+      expect(screen.getByText('Membro')).toBeInTheDocument();
       expect(screen.getByText('—')).toBeInTheDocument();
     });
 

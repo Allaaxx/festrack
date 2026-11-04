@@ -152,7 +152,7 @@ const ShopService = {
   },
 
   /**
-   * Cria um novo convite de colaborador para uma loja (requer papel OWNER).
+   * Cria um novo convite de membro para uma loja (requer papel OWNER).
    * @param {{ shopId?: string, id?: string, email: string, role?: 'OWNER' | 'MEMBER' }} input
    * @returns {Promise<{ id: string, shop_id: string, email: string, role: 'OWNER' | 'MEMBER', token: string, status: 'PENDING', expires_at?: string }>}
    */
