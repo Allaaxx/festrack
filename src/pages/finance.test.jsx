@@ -10,6 +10,7 @@ import {
   LOCAL_STORAGE_FINANCE_FILTERS_KEY,
 } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
+import { useShopContext } from '@/contexts/shop';
 import {
   BalanceService,
   TransactionService,
@@ -18,6 +19,10 @@ import FinancePage from '@/pages/finance';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
+}));
+
+vi.mock('@/contexts/shop', () => ({
+  useShopContext: vi.fn(),
 }));
 
 vi.mock('@/features/events/api/hooks', () => ({
@@ -121,6 +126,10 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
       user: mockUser,
       isInitializing: false,
     });
+    useShopContext.mockReturnValue({
+      activeShop: { id: 'shop-1', name: 'Loja Principal', role: 'OWNER' },
+      shops: [{ id: 'shop-1', name: 'Loja Principal', role: 'OWNER' }],
+    });
 
     BalanceService.getBalance.mockResolvedValue(mockBalance);
     TransactionService.getAll.mockResolvedValue(mockTransactions);
@@ -145,10 +154,12 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
       // Wait for queries to resolve and assert live balance cards
       await waitFor(() => {
         expect(BalanceService.getBalance).toHaveBeenCalledWith({
+          shopId: 'shop-1',
           from: expectedFrom,
           to: expectedTo,
         });
         expect(TransactionService.getAll).toHaveBeenCalledWith({
+          shopId: 'shop-1',
           from: expectedFrom,
           to: expectedTo,
         });
@@ -219,10 +230,12 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
       // Verify queries called with stored date range
       await waitFor(() => {
         expect(BalanceService.getBalance).toHaveBeenCalledWith({
+          shopId: 'shop-1',
           from: '2026-05-01',
           to: '2026-05-31',
         });
         expect(TransactionService.getAll).toHaveBeenCalledWith({
+          shopId: 'shop-1',
           from: '2026-05-01',
           to: '2026-05-31',
         });
@@ -260,6 +273,7 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
 
       await waitFor(() => {
         expect(BalanceService.getBalance).toHaveBeenCalledWith({
+          shopId: 'shop-1',
           from: '2026-08-01',
           to: '2026-08-31',
         });
@@ -297,6 +311,7 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
       });
 
       expect(BalanceService.getBalance).toHaveBeenCalledWith({
+        shopId: 'shop-1',
         from: expectedFrom7d,
         to: expectedTo,
       });
@@ -323,6 +338,7 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
       });
 
       expect(BalanceService.getBalance).toHaveBeenCalledWith({
+        shopId: 'shop-1',
         from: expectedFrom30d,
         to: expectedTo,
       });
@@ -351,6 +367,7 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
       });
 
       expect(BalanceService.getBalance).toHaveBeenCalledWith({
+        shopId: 'shop-1',
         from: expectedFrom90d,
         to: expectedTo,
       });
@@ -483,6 +500,109 @@ describe('FinancePage (End-to-end Cockpit Assembly)', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Salário Mensal')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Active shop switching (#84)', () => {
+    it('dynamically updates balance KPI cards and transactions ledger when activeShop changes', async () => {
+      const expectedFrom = format(startOfMonth(fixedDate), 'yyyy-MM-dd');
+      const expectedTo = format(endOfMonth(fixedDate), 'yyyy-MM-dd');
+
+      BalanceService.getBalance.mockImplementation(async ({ shopId }) => {
+        if (shopId === 'shop-2') {
+          return {
+            balance: 12000,
+            earnings: 15000,
+            expenses: 3000,
+            investiments: 0,
+            earningsPercentage: 80,
+            expensePercentage: 20,
+            investmentsPercentage: 0,
+          };
+        }
+        return mockBalance;
+      });
+
+      TransactionService.getAll.mockImplementation(async ({ shopId }) => {
+        if (shopId === 'shop-2') {
+          return [
+            {
+              id: 'tx-shop-2',
+              name: 'Evento Corporativo VIP',
+              type: 'EARNING',
+              amount: 15000,
+              date: '2026-10-12T12:00:00.000Z',
+              author: {
+                id: 'usr-2',
+                name: 'Ana Costa',
+                email: 'ana@festrack.com',
+              },
+            },
+          ];
+        }
+        return mockTransactions;
+      });
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
+      const { rerender } = render(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={['/finances']}>
+            <FinancePage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('kpi-card-balance')).toHaveTextContent(
+          /R\$\s*4\.349,50/
+        );
+        expect(screen.getByText('Salário Mensal')).toBeInTheDocument();
+      });
+
+      // Switch active shop to shop-2
+      useShopContext.mockReturnValue({
+        activeShop: { id: 'shop-2', name: 'Filial Sul', role: 'MEMBER' },
+        shops: [
+          { id: 'shop-1', name: 'Loja Principal', role: 'OWNER' },
+          { id: 'shop-2', name: 'Filial Sul', role: 'MEMBER' },
+        ],
+      });
+
+      rerender(
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={['/finances']}>
+            <FinancePage />
+          </MemoryRouter>
+        </QueryClientProvider>
+      );
+
+      await waitFor(() => {
+        expect(BalanceService.getBalance).toHaveBeenCalledWith({
+          shopId: 'shop-2',
+          from: expectedFrom,
+          to: expectedTo,
+        });
+        expect(TransactionService.getAll).toHaveBeenCalledWith({
+          shopId: 'shop-2',
+          from: expectedFrom,
+          to: expectedTo,
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('kpi-card-balance')).toHaveTextContent(
+          /R\$\s*12\.000,00/
+        );
+        expect(screen.getByText('Evento Corporativo VIP')).toBeInTheDocument();
+        expect(screen.getByText('Ana Costa')).toBeInTheDocument();
+        expect(screen.getByText('ana@festrack.com')).toBeInTheDocument();
       });
     });
   });

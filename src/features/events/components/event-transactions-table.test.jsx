@@ -138,6 +138,7 @@ describe('EventTransactionsTable', () => {
     expect(screen.getByRole('button', { name: /tipo/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /data/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /valor/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /autor/i })).toBeInTheDocument();
     expect(screen.getByText('Ações')).toBeInTheDocument();
   });
 

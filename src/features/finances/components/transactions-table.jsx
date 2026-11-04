@@ -28,6 +28,7 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { SearchForm } from '@/components/layout';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -71,7 +72,9 @@ import { useGetTransactions } from '@/features/finances/api/hooks';
 import AddTransactionButton from '@/features/finances/components/add-transaction-button';
 import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
 import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
-import transactionColumns from '@/features/finances/components/transaction-columns';
+import transactionColumns, {
+  normalizeTransactionAuthor,
+} from '@/features/finances/components/transaction-columns';
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
 import { formatCurrency } from '@/helpers/currency';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -92,6 +95,7 @@ const columnLabels = {
   type: 'Tipo',
   date: 'Data',
   amount: 'Valor',
+  author: 'Autor',
 };
 
 const parseDateSafely = (dateValue) => {
@@ -700,6 +704,40 @@ export const TransactionsTable = ({
                     )}
                   </span>
                 </div>
+                {(() => {
+                  const author =
+                    normalizeTransactionAuthor(selectedTransaction);
+                  if (!author.hasAuthor) return null;
+                  return (
+                    <>
+                      <Separator />
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Autor</span>
+                        <div className="flex items-center gap-2 text-right">
+                          <Avatar className="size-6">
+                            {author.avatar && (
+                              <AvatarImage
+                                src={author.avatar}
+                                alt={author.name}
+                              />
+                            )}
+                            <AvatarFallback className="text-[10px]">
+                              {author.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col leading-tight">
+                            <span className="font-medium">{author.name}</span>
+                            {author.email && (
+                              <span className="text-muted-foreground text-xs">
+                                {author.email}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
               <Separator />
             </div>
