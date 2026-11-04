@@ -1,35 +1,46 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuthContext } from '@/contexts/auth';
+import { useShopContext } from '@/contexts/shop';
 import EventService from '@/features/events/api/services';
 
-export const getEventsQueryKey = ({ userId }) => ['getEvents', userId];
+export const getEventsQueryKey = ({ shopId, userId } = {}) => [
+  'getEvents',
+  shopId ?? userId,
+];
 
 export const useGetEvents = () => {
-  const { user } = useAuthContext();
+  const { user } = useAuthContext() || {};
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
   return useQuery({
-    queryKey: getEventsQueryKey({ userId: user?.id }),
-    queryFn: () => EventService.getAll(),
-    enabled: Boolean(user?.id),
+    queryKey: getEventsQueryKey({ shopId, userId: user?.id }),
+    queryFn: () => EventService.getAll({ shopId }),
+    enabled: Boolean(user?.id) && Boolean(shopId),
   });
 };
 
-export const getEventQueryKey = ({ userId, eventId }) => [
+export const getEventQueryKey = ({ shopId, userId, eventId } = {}) => [
   'getEvent',
-  userId,
+  shopId ?? userId,
   eventId,
 ];
 
 export const useGetEvent = ({ eventId } = {}) => {
   const queryClient = useQueryClient();
-  const { user } = useAuthContext();
+  const { user } = useAuthContext() || {};
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
   return useQuery({
-    queryKey: getEventQueryKey({ userId: user?.id, eventId }),
-    queryFn: () => EventService.getById(eventId),
-    enabled: Boolean(user?.id) && Boolean(eventId),
+    queryKey: getEventQueryKey({ shopId, userId: user?.id, eventId }),
+    queryFn: () => EventService.getById({ shopId, id: eventId }),
+    enabled: Boolean(user?.id) && Boolean(shopId) && Boolean(eventId),
     initialData: () => {
+      if (!shopId) return undefined;
       const events = queryClient.getQueryData(
-        getEventsQueryKey({ userId: user?.id })
+        getEventsQueryKey({ shopId, userId: user?.id })
       );
       return events?.find((event) => event.id === eventId);
     },
@@ -40,13 +51,21 @@ export const createEventMutationKey = ['createEvent'];
 
 export const useCreateEvent = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuthContext();
+  const { user } = useAuthContext() || {};
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
   return useMutation({
     mutationKey: createEventMutationKey,
-    mutationFn: (input) => EventService.create(input),
-    onSuccess: () => {
+    mutationFn: (input) =>
+      EventService.create({
+        ...input,
+        shopId: input?.shopId ?? shopId,
+      }),
+    onSuccess: (_data, variables) => {
+      const targetShopId = variables?.shopId ?? shopId;
       queryClient.invalidateQueries({
-        queryKey: getEventsQueryKey({ userId: user?.id }),
+        queryKey: getEventsQueryKey({ shopId: targetShopId, userId: user?.id }),
       });
     },
   });
@@ -56,16 +75,25 @@ export const editEventMutationKey = ['editEvent'];
 
 export const useEditEvent = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuthContext();
+  const { user } = useAuthContext() || {};
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
   return useMutation({
     mutationKey: editEventMutationKey,
-    mutationFn: (input) => EventService.update(input),
+    mutationFn: (input) =>
+      EventService.update({
+        ...input,
+        shopId: input?.shopId ?? shopId,
+      }),
     onSuccess: (_data, variables) => {
+      const targetShopId = variables?.shopId ?? shopId;
       queryClient.invalidateQueries({
-        queryKey: getEventsQueryKey({ userId: user?.id }),
+        queryKey: getEventsQueryKey({ shopId: targetShopId, userId: user?.id }),
       });
       queryClient.invalidateQueries({
         queryKey: getEventQueryKey({
+          shopId: targetShopId,
           userId: user?.id,
           eventId: variables?.id,
         }),
@@ -78,18 +106,34 @@ export const deleteEventMutationKey = ['deleteEvent'];
 
 export const useDeleteEvent = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuthContext();
+  const { user } = useAuthContext() || {};
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
   return useMutation({
     mutationKey: deleteEventMutationKey,
-    mutationFn: (input) => EventService.delete(input),
+    mutationFn: (input) => {
+      const normalizedInput =
+        typeof input === 'string' ? { id: input } : { ...input };
+      return EventService.delete({
+        ...normalizedInput,
+        shopId: normalizedInput.shopId ?? shopId,
+      });
+    },
     onSuccess: (_data, variables) => {
+      const eventId = typeof variables === 'string' ? variables : variables?.id;
+      const targetShopId =
+        typeof variables === 'object' && variables !== null
+          ? (variables.shopId ?? shopId)
+          : shopId;
       queryClient.invalidateQueries({
-        queryKey: getEventsQueryKey({ userId: user?.id }),
+        queryKey: getEventsQueryKey({ shopId: targetShopId, userId: user?.id }),
       });
       queryClient.invalidateQueries({
         queryKey: getEventQueryKey({
+          shopId: targetShopId,
           userId: user?.id,
-          eventId: variables?.id,
+          eventId,
         }),
       });
     },

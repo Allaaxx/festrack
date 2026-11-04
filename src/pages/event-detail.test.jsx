@@ -11,9 +11,17 @@ import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import ShopSwitcher from '@/components/layout/shop-switcher';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
-import { useDeleteEvent, useGetEvent } from '@/features/events/api/hooks';
+import { ShopContext } from '@/contexts/shop';
+import {
+  useDeleteEvent,
+  useEditEvent,
+  useGetEvent,
+} from '@/features/events/api/hooks';
+import EventService from '@/features/events/api/services';
 import { useGetTransactions } from '@/features/finances';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';
@@ -40,7 +48,9 @@ vi.mock('@/features/events/api/hooks', async () => {
   const actual = await vi.importActual('@/features/events/api/hooks');
   return {
     ...actual,
+    __actualHooks: actual,
     useGetEvent: vi.fn(),
+    useEditEvent: vi.fn((...args) => actual.useEditEvent(...args)),
     useDeleteEvent: vi.fn(),
   };
 });
@@ -68,8 +78,16 @@ vi.mock('@/components/layout/header', () => ({
   default: () => <div data-testid="header">Header</div>,
 }));
 
+const defaultShop = {
+  id: 'shop-1',
+  name: 'Atelier Central',
+  description: 'Matriz',
+  role: 'OWNER',
+};
+
 const mockEvent = {
   id: 'ev-123',
+  shopId: 'shop-1',
   name: 'Viagem Florianópolis',
   description: 'Férias de verão com amigos',
   startDate: '2026-12-01T00:00:00.000Z',
@@ -79,7 +97,14 @@ const mockEvent = {
   syncError: false,
 };
 
-const renderWithProviders = (ui, { route = '/events/ev-123' } = {}) => {
+const renderWithProviders = (
+  ui,
+  {
+    route = '/events/ev-123',
+    activeShop = defaultShop,
+    shops = [defaultShop],
+  } = {}
+) => {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -87,9 +112,19 @@ const renderWithProviders = (ui, { route = '/events/ev-123' } = {}) => {
     },
   });
 
+  const shopContextValue = {
+    shops,
+    activeShop,
+    role: activeShop?.role ?? null,
+    isLoading: false,
+    setActiveShop: vi.fn(),
+  };
+
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+      <ShopContext.Provider value={shopContextValue}>
+        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+      </ShopContext.Provider>
     </QueryClientProvider>
   );
 };
@@ -681,6 +716,195 @@ describe('EventDetailPage', () => {
       expect(screen.getByTestId('stat-max-expense')).toHaveTextContent(
         'Nenhuma despesa'
       );
+    });
+  });
+
+  describe('Shop-Scoped Event Detail & Shop Switch Integration (#83)', () => {
+    const shop1 = {
+      id: 'shop-1',
+      name: 'Atelier Central',
+      role: 'OWNER',
+    };
+    const shop2 = {
+      id: 'shop-2',
+      name: 'Buffet Jardim',
+      role: 'MEMBER',
+    };
+
+    const shop1Event = {
+      ...mockEvent,
+      id: 'ev-123',
+      shopId: 'shop-1',
+      name: 'Evento Exclusivo Atelier',
+    };
+
+    const shop2Event = {
+      ...mockEvent,
+      id: 'ev-123',
+      shopId: 'shop-2',
+      name: 'Evento Exclusivo Buffet',
+    };
+
+    beforeEach(async () => {
+      const { __actualHooks } = await import('@/features/events/api/hooks');
+      useGetEvent.mockImplementation((...args) =>
+        __actualHooks.useGetEvent(...args)
+      );
+      useEditEvent.mockImplementation((...args) =>
+        __actualHooks.useEditEvent(...args)
+      );
+      useDeleteEvent.mockImplementation((...args) =>
+        __actualHooks.useDeleteEvent(...args)
+      );
+    });
+
+    it('fetches event scoped to activeShop and immediately refetches on ShopSwitcher switch without cross-shop data leaks', async () => {
+      const user = userEvent.setup();
+      const getByIdSpy = vi
+        .spyOn(EventService, 'getById')
+        .mockImplementation(async ({ shopId, id }) => {
+          if (shopId === 'shop-1' && id === 'ev-123') return shop1Event;
+          if (shopId === 'shop-2' && id === 'ev-123') return shop2Event;
+          return null;
+        });
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+
+      const StatefulShopHarness = () => {
+        const [activeShop, setActiveShop] = React.useState(shop1);
+        return (
+          <QueryClientProvider client={queryClient}>
+            <ShopContext.Provider
+              value={{
+                shops: [shop1, shop2],
+                activeShop,
+                role: activeShop.role,
+                isLoading: false,
+                setActiveShop,
+              }}
+            >
+              <MemoryRouter initialEntries={['/events/ev-123']}>
+                <SidebarProvider defaultOpen={true}>
+                  <ShopSwitcher />
+                  <Routes>
+                    <Route
+                      path="/events/:eventId"
+                      element={<EventDetailPage />}
+                    />
+                  </Routes>
+                </SidebarProvider>
+              </MemoryRouter>
+            </ShopContext.Provider>
+          </QueryClientProvider>
+        );
+      };
+
+      render(<StatefulShopHarness />);
+
+      expect(
+        await screen.findByText('Evento Exclusivo Atelier')
+      ).toBeInTheDocument();
+      expect(getByIdSpy).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+        id: 'ev-123',
+      });
+      expect(
+        screen.queryByText('Evento Exclusivo Buffet')
+      ).not.toBeInTheDocument();
+
+      // Switch active shop via ShopSwitcher
+      const switcherBtn = screen.getByRole('button', {
+        name: /atelier central/i,
+      });
+      await user.click(switcherBtn);
+
+      const shop2Item = await screen.findByRole('menuitem', {
+        name: /buffet jardim/i,
+      });
+      await user.click(shop2Item);
+
+      expect(
+        await screen.findByText('Evento Exclusivo Buffet')
+      ).toBeInTheDocument();
+      expect(getByIdSpy).toHaveBeenCalledWith({
+        shopId: 'shop-2',
+        id: 'ev-123',
+      });
+      expect(
+        screen.queryByText('Evento Exclusivo Atelier')
+      ).not.toBeInTheDocument();
+
+      getByIdSpy.mockRestore();
+    });
+
+    it('deletes an event within the active shop and invalidates shop-scoped event queries', async () => {
+      const getByIdSpy = vi
+        .spyOn(EventService, 'getById')
+        .mockResolvedValue(shop1Event);
+      const deleteSpy = vi
+        .spyOn(EventService, 'delete')
+        .mockResolvedValue({ id: 'ev-123', shopId: 'shop-1' });
+
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
+      });
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      render(
+        <QueryClientProvider client={queryClient}>
+          <ShopContext.Provider
+            value={{
+              shops: [shop1],
+              activeShop: shop1,
+              role: 'OWNER',
+              isLoading: false,
+              setActiveShop: vi.fn(),
+            }}
+          >
+            <MemoryRouter initialEntries={['/events/ev-123']}>
+              <Routes>
+                <Route path="/events" element={<div>Calendar View Page</div>} />
+                <Route path="/events/:eventId" element={<EventDetailPage />} />
+              </Routes>
+            </MemoryRouter>
+          </ShopContext.Provider>
+        </QueryClientProvider>
+      );
+
+      expect(
+        await screen.findByText('Evento Exclusivo Atelier')
+      ).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /excluir/i }));
+      const confirmBtn = await screen.findByRole('button', {
+        name: 'Excluir evento',
+      });
+      fireEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(deleteSpy).toHaveBeenCalledWith({
+          id: 'ev-123',
+          shopId: 'shop-1',
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['getEvents', 'shop-1'],
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ['getEvent', 'shop-1', 'ev-123'],
+      });
+
+      getByIdSpy.mockRestore();
+      deleteSpy.mockRestore();
     });
   });
 });
