@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuthContext } from '@/contexts/auth';
+import { useShopContext } from '@/contexts/shop';
 import {
   getEventQueryKey,
   getEventsQueryKey,
@@ -18,6 +19,10 @@ vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
 }));
 
+vi.mock('@/contexts/shop', () => ({
+  useShopContext: vi.fn(),
+}));
+
 vi.mock('@/features/events/api/services', () => ({
   default: {
     getAll: vi.fn(),
@@ -28,7 +33,7 @@ vi.mock('@/features/events/api/services', () => ({
   },
 }));
 
-describe('Events API Hooks - Unauthenticated & Null Safety', () => {
+describe('Events API Hooks - Shop-Scoped Queries, Mutations & Null Safety', () => {
   let queryClient;
 
   const createWrapper = () => {
@@ -46,6 +51,39 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    useShopContext.mockReturnValue({
+      activeShop: { id: 'shop-1', name: 'Atelier Central', role: 'OWNER' },
+      shops: [{ id: 'shop-1', name: 'Atelier Central', role: 'OWNER' }],
+      isLoading: false,
+    });
+  });
+
+  describe('getEventsQueryKey & getEventQueryKey', () => {
+    it('partitions query keys by shopId and falls back to userId when shopId is omitted', () => {
+      expect(getEventsQueryKey({ shopId: 'shop-1' })).toEqual([
+        'getEvents',
+        'shop-1',
+      ]);
+      expect(getEventsQueryKey({ shopId: 'shop-1', userId: 'u1' })).toEqual([
+        'getEvents',
+        'shop-1',
+      ]);
+      expect(getEventsQueryKey({ userId: 'u1' })).toEqual(['getEvents', 'u1']);
+
+      expect(getEventQueryKey({ shopId: 'shop-1', eventId: 'ev-1' })).toEqual([
+        'getEvent',
+        'shop-1',
+        'ev-1',
+      ]);
+      expect(
+        getEventQueryKey({ shopId: 'shop-1', userId: 'u1', eventId: 'ev-1' })
+      ).toEqual(['getEvent', 'shop-1', 'ev-1']);
+      expect(getEventQueryKey({ userId: 'u1', eventId: 'ev-1' })).toEqual([
+        'getEvent',
+        'u1',
+        'ev-1',
+      ]);
+    });
   });
 
   describe('useGetEvents', () => {
@@ -61,9 +99,22 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       expect(EventService.getAll).not.toHaveBeenCalled();
     });
 
-    it('fetches events when user is authenticated', async () => {
+    it('remains disabled when activeShop is null even if user is authenticated', () => {
       useAuthContext.mockReturnValue({ user: { id: 'u1' } });
-      const mockEvents = [{ id: 'ev-1', title: 'Party' }];
+      useShopContext.mockReturnValue({ activeShop: null, shops: [] });
+
+      const { result } = renderHook(() => useGetEvents(), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.status).toBe('pending');
+      expect(EventService.getAll).not.toHaveBeenCalled();
+    });
+
+    it('fetches events for the active shop when user and activeShop are present', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      const mockEvents = [{ id: 'ev-1', shopId: 'shop-1', name: 'Party' }];
       EventService.getAll.mockResolvedValue(mockEvents);
 
       const { result } = renderHook(() => useGetEvents(), {
@@ -71,24 +122,61 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(EventService.getAll).toHaveBeenCalled();
+      expect(EventService.getAll).toHaveBeenCalledWith({ shopId: 'shop-1' });
       expect(result.current.data).toEqual(mockEvents);
     });
-  });
 
-  describe('getEventQueryKey', () => {
-    it('returns query key with userId and eventId', () => {
-      expect(getEventQueryKey({ userId: 'u1', eventId: 'ev-1' })).toEqual([
-        'getEvent',
-        'u1',
-        'ev-1',
-      ]);
+    it('refetches events for the new shop without cross-shop cache leaks when activeShop changes', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      const shop1Events = [
+        { id: 'ev-shop-1', shopId: 'shop-1', name: 'Evento Loja 1' },
+      ];
+      const shop2Events = [
+        { id: 'ev-shop-2', shopId: 'shop-2', name: 'Evento Loja 2' },
+      ];
+
+      EventService.getAll.mockImplementation(({ shopId }) =>
+        Promise.resolve(shopId === 'shop-1' ? shop1Events : shop2Events)
+      );
+
+      let currentShop = { id: 'shop-1', name: 'Loja 1' };
+      useShopContext.mockImplementation(() => ({
+        activeShop: currentShop,
+        shops: [currentShop],
+      }));
+
+      const wrapper = createWrapper();
+      const { result, rerender } = renderHook(() => useGetEvents(), {
+        wrapper,
+      });
+
+      await waitFor(() => expect(result.current.data).toEqual(shop1Events));
+      expect(EventService.getAll).toHaveBeenCalledWith({ shopId: 'shop-1' });
+
+      currentShop = { id: 'shop-2', name: 'Loja 2' };
+      rerender();
+
+      await waitFor(() => expect(result.current.data).toEqual(shop2Events));
+      expect(EventService.getAll).toHaveBeenCalledWith({ shopId: 'shop-2' });
     });
   });
 
   describe('useGetEvent', () => {
     it('does not throw when user is null and query remains disabled', () => {
       useAuthContext.mockReturnValue({ user: null });
+
+      const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
+        wrapper: createWrapper(),
+      });
+
+      expect(result.current.fetchStatus).toBe('idle');
+      expect(result.current.status).toBe('pending');
+      expect(EventService.getById).not.toHaveBeenCalled();
+    });
+
+    it('remains disabled when activeShop is null', () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      useShopContext.mockReturnValue({ activeShop: null });
 
       const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
         wrapper: createWrapper(),
@@ -111,9 +199,9 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       expect(EventService.getById).not.toHaveBeenCalled();
     });
 
-    it('fetches single event when user and eventId are provided', async () => {
+    it('fetches single event scoped to activeShop when user, activeShop, and eventId are provided', async () => {
       useAuthContext.mockReturnValue({ user: { id: 'u1' } });
-      const mockEvent = { id: 'ev-1', name: 'Aniversário' };
+      const mockEvent = { id: 'ev-1', shopId: 'shop-1', name: 'Aniversário' };
       EventService.getById.mockResolvedValue(mockEvent);
 
       const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
@@ -121,27 +209,74 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(EventService.getById).toHaveBeenCalledWith('ev-1');
+      expect(EventService.getById).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+        id: 'ev-1',
+      });
       expect(result.current.data).toEqual(mockEvent);
     });
 
-    it('uses initialData from getEvents query cache if available', () => {
+    it('uses initialData from active shop getEvents query cache and ignores other shops', () => {
       useAuthContext.mockReturnValue({ user: { id: 'u1' } });
-      const mockEvent = { id: 'ev-1', name: 'Aniversário' };
+      const shop1Event = {
+        id: 'ev-1',
+        shopId: 'shop-1',
+        name: 'Aniversário Loja 1',
+      };
+      const shop2Event = {
+        id: 'ev-2',
+        shopId: 'shop-2',
+        name: 'Aniversário Loja 2',
+      };
       const wrapper = createWrapper();
-      queryClient.setQueryData(getEventsQueryKey({ userId: 'u1' }), [mockEvent]);
+      queryClient.setQueryData(getEventsQueryKey({ shopId: 'shop-1' }), [
+        shop1Event,
+      ]);
+      queryClient.setQueryData(getEventsQueryKey({ shopId: 'shop-2' }), [
+        shop2Event,
+      ]);
 
       const { result } = renderHook(() => useGetEvent({ eventId: 'ev-1' }), {
         wrapper,
       });
 
-      expect(result.current.data).toEqual(mockEvent);
+      expect(result.current.data).toEqual(shop1Event);
+
+      const { result: crossShopResult } = renderHook(
+        () => useGetEvent({ eventId: 'ev-2' }),
+        { wrapper }
+      );
+      expect(crossShopResult.current.data).toBeUndefined();
     });
   });
 
-  describe('Events mutations with null safety and cache invalidation', () => {
-    it('useCreateEvent safely invalidates query when user is null', async () => {
+  describe('Events mutations with shop scoping, null safety, and cache invalidation', () => {
+    it('useCreateEvent injects activeShop.id and invalidates shop events query', async () => {
+      useAuthContext.mockReturnValue({ user: { id: 'u1' } });
+      EventService.create.mockResolvedValue({ id: 'ev-1', shopId: 'shop-1' });
+
+      const wrapper = createWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useCreateEvent(), {
+        wrapper,
+      });
+
+      result.current.mutate({ name: 'New Event' });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      expect(EventService.create).toHaveBeenCalledWith({
+        name: 'New Event',
+        shopId: 'shop-1',
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventsQueryKey({ shopId: 'shop-1' }),
+      });
+    });
+
+    it('useCreateEvent safely invalidates query when user and activeShop are null', async () => {
       useAuthContext.mockReturnValue({ user: null });
+      useShopContext.mockReturnValue({ activeShop: null });
       EventService.create.mockResolvedValue({ id: 'ev-1' });
 
       const wrapper = createWrapper();
@@ -155,12 +290,13 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventsQueryKey({ userId: undefined }),
+        queryKey: getEventsQueryKey({ shopId: undefined, userId: undefined }),
       });
     });
 
-    it('useEditEvent safely invalidates query when user is null', async () => {
+    it('useEditEvent safely invalidates query when user and activeShop are null', async () => {
       useAuthContext.mockReturnValue({ user: null });
+      useShopContext.mockReturnValue({ activeShop: null });
       EventService.update.mockResolvedValue({ id: 'ev-1' });
 
       const wrapper = createWrapper();
@@ -174,16 +310,24 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventsQueryKey({ userId: undefined }),
+        queryKey: getEventsQueryKey({ shopId: undefined, userId: undefined }),
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventQueryKey({ userId: undefined, eventId: 'ev-1' }),
+        queryKey: getEventQueryKey({
+          shopId: undefined,
+          userId: undefined,
+          eventId: 'ev-1',
+        }),
       });
     });
 
-    it('useEditEvent invalidates both events list and single event when authenticated', async () => {
+    it('useEditEvent injects activeShop.id and invalidates both shop events list and single event', async () => {
       useAuthContext.mockReturnValue({ user: { id: 'u1' } });
-      EventService.update.mockResolvedValue({ id: 'ev-1', title: 'Updated' });
+      EventService.update.mockResolvedValue({
+        id: 'ev-1',
+        shopId: 'shop-1',
+        title: 'Updated',
+      });
 
       const wrapper = createWrapper();
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
@@ -195,16 +339,22 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       result.current.mutate({ id: 'ev-1', title: 'Updated' });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventsQueryKey({ userId: 'u1' }),
+      expect(EventService.update).toHaveBeenCalledWith({
+        id: 'ev-1',
+        title: 'Updated',
+        shopId: 'shop-1',
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventQueryKey({ userId: 'u1', eventId: 'ev-1' }),
+        queryKey: getEventsQueryKey({ shopId: 'shop-1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventQueryKey({ shopId: 'shop-1', eventId: 'ev-1' }),
       });
     });
 
-    it('useDeleteEvent safely invalidates query when user is null', async () => {
+    it('useDeleteEvent safely invalidates query when user and activeShop are null', async () => {
       useAuthContext.mockReturnValue({ user: null });
+      useShopContext.mockReturnValue({ activeShop: null });
       EventService.delete.mockResolvedValue({ success: true });
 
       const wrapper = createWrapper();
@@ -218,14 +368,18 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventsQueryKey({ userId: undefined }),
+        queryKey: getEventsQueryKey({ shopId: undefined, userId: undefined }),
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventQueryKey({ userId: undefined, eventId: 'ev-1' }),
+        queryKey: getEventQueryKey({
+          shopId: undefined,
+          userId: undefined,
+          eventId: 'ev-1',
+        }),
       });
     });
 
-    it('useDeleteEvent invalidates both events list and single event when authenticated', async () => {
+    it('useDeleteEvent injects activeShop.id and invalidates both shop events list and single event', async () => {
       useAuthContext.mockReturnValue({ user: { id: 'u1' } });
       EventService.delete.mockResolvedValue({ success: true });
 
@@ -239,11 +393,15 @@ describe('Events API Hooks - Unauthenticated & Null Safety', () => {
       result.current.mutate({ id: 'ev-1' });
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-      expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventsQueryKey({ userId: 'u1' }),
+      expect(EventService.delete).toHaveBeenCalledWith({
+        id: 'ev-1',
+        shopId: 'shop-1',
       });
       expect(invalidateSpy).toHaveBeenCalledWith({
-        queryKey: getEventQueryKey({ userId: 'u1', eventId: 'ev-1' }),
+        queryKey: getEventsQueryKey({ shopId: 'shop-1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getEventQueryKey({ shopId: 'shop-1', eventId: 'ev-1' }),
       });
     });
   });
