@@ -6,7 +6,7 @@ import { AuthSplitLayout } from '@/components/layout';
 import AuthLoading from '@/components/shared/auth-loading';
 import { useAuthContext } from '@/contexts/auth';
 import { useSignUpForm } from '@/forms/hooks/auth';
-import { getOAuthErrorMessage } from '@/helpers/auth';
+import { getAuthErrorMessage, getOAuthErrorMessage } from '@/helpers/auth';
 import { getRedirectDestination } from '@/helpers/url';
 
 const SignUpPage = () => {
@@ -33,7 +33,7 @@ const SignUpPage = () => {
     try {
       await signup(data);
     } catch (error) {
-      const message = error?.message || 'Erro ao criar conta.';
+      const message = error?.message || '';
       if (
         message.toLowerCase().includes('email') ||
         error?.code === 'USER_ALREADY_EXISTS'
@@ -43,7 +43,7 @@ const SignUpPage = () => {
         });
       } else {
         form.setError('root', {
-          message,
+          message: getAuthErrorMessage(error, 'Erro ao criar conta.'),
         });
       }
     }
@@ -55,9 +55,10 @@ const SignUpPage = () => {
       await signInWithGoogle({ callbackURL: redirectTo });
     } catch (error) {
       form.setError('root', {
-        message:
-          error?.message ||
-          'Erro ao criar conta com Google. Tente novamente mais tarde.',
+        message: getAuthErrorMessage(
+          error,
+          'Erro ao criar conta com Google. Tente novamente mais tarde.'
+        ),
       });
       setIsGoogleLoading(false);
     }

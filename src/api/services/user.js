@@ -9,17 +9,22 @@ export const UserService = {
    * @param {string} [input.lastName] - Sobrenome.
    * @param {string} [input.first_name] - Primeiro nome (snake_case).
    * @param {string} [input.last_name] - Sobrenome (snake_case).
+   * @param {string} [input.email] - Endereço de e-mail.
+   * @param {boolean} [input.google_calendar_sync_enabled] - Sincronização com Google Agenda.
+   * @param {boolean} [input.googleCalendarSyncEnabled] - Sincronização com Google Agenda (camelCase).
    * @returns {Promise<object>} Usuário atualizado normalizado.
    */
   updateProfile: async (input) => {
     const firstName = input.firstName ?? input.first_name;
     const lastName = input.lastName ?? input.last_name;
+    const email = input.email;
     const googleCalendarSyncEnabled =
       input.google_calendar_sync_enabled ?? input.googleCalendarSyncEnabled;
 
     const payload = {};
     if (firstName !== undefined) payload.first_name = firstName;
     if (lastName !== undefined) payload.last_name = lastName;
+    if (email !== undefined) payload.email = email;
     if (googleCalendarSyncEnabled !== undefined) {
       payload.google_calendar_sync_enabled = Boolean(googleCalendarSyncEnabled);
     }

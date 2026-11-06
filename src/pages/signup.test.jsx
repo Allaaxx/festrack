@@ -275,6 +275,56 @@ describe('SignUpPage', () => {
     });
   });
 
+  it('displays friendly network error message when signup fails due to server connectivity', async () => {
+    mockSignup.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signup: mockSignup,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signup']}>
+        <Routes>
+          <Route path="/signup" element={<SignUpPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Digite seu nome'), {
+      target: { value: 'John' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Digite seu sobrenome'), {
+      target: { value: 'Doe' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Digite seu email'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Digite sua senha'), {
+      target: { value: 'password123' },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Digite sua senha novamente'),
+      {
+        target: { value: 'password123' },
+      }
+    );
+
+    const checkbox = screen.getByRole('checkbox');
+    fireEvent.click(checkbox);
+
+    fireEvent.click(screen.getByRole('button', { name: /criar conta/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
   it('renders Google sign-up button and separator', () => {
     useAuthContext.mockReturnValue({
       user: null,

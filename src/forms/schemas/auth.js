@@ -10,7 +10,7 @@ export const signInFormSchema = z.object({
       error: 'O e-mail é obrigatório.',
     }),
   password: z.string().trim().min(6, {
-    error: 'A senha deve ter no minímo 6 caracteres.',
+    error: 'A senha deve ter no mínimo 6 caracteres.',
   }),
 });
 
@@ -31,7 +31,7 @@ export const signUpFormSchema = z
         error: 'O e-mail é obrigatório.',
       }),
     password: z.string().trim().min(6, {
-      error: 'A senha deve ter no minímo 6 caracteres.',
+      error: 'A senha deve ter no mínimo 6 caracteres.',
     }),
     passwordConfirmation: z.string().trim().min(6, {
       error: 'A confirmação de senha é obrigatória.',

@@ -57,6 +57,8 @@ The confidential identity proofs supplied by a user to authenticate against the 
 
 - **Usage:** Primarily email address and plaintext password submitted over HTTPS during sign-up or sign-in.
 - **Handling:** Passwords are never stored on the client and are securely hashed on the server. Client-side authentication hooks handle credentials only in memory during form submission.
+- **Credential Provisioning:** Users who register or sign in via an external OAuth identity provider (e.g., Google) initially lack a password credential. Festrack enables on-demand credential provisioning (`setPassword`), allowing users to create a password without needing a previous one and transitioning the account to support dual authentication methods (SSO and password).
+- **Credential Rotation:** Users with an existing password credential must provide their active password alongside their replacement secret (`changePassword`) to verify account ownership prior to updating credentials.
 
 ---
 
@@ -110,6 +112,7 @@ The automated service bridging Festrack events with an external calendar service
 
 - **Direction:** Export-oriented (Festrack ➡️ Google Calendar), pushing scheduled budget and occasion events to the user's external calendar.
 - **Trigger:** Automated synchronization on event lifecycle mutations (creation, modification, and removal).
+- **Interface Decoupling:** Synchronization preference is configured exclusively within user settings (`Settings > Connected Accounts`). The calendar view is decoupled from sync preference controls, operating purely as an event planning surface while honoring the background sync preference.
 
 ---
 

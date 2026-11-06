@@ -2,11 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CalendarHeader } from '@/features/events/components/calendar-header';
-import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calendar-sync';
-
-vi.mock('@/features/events/hooks/use-google-calendar-sync', () => ({
-  useGoogleCalendarSync: vi.fn(),
-}));
 
 describe('CalendarHeader Component', () => {
   const defaultProps = {
@@ -31,68 +26,47 @@ describe('CalendarHeader Component', () => {
     vi.clearAllMocks();
   });
 
-  it('renders active Google Calendar sync indicator when synchronization is enabled', () => {
-    useGoogleCalendarSync.mockReturnValue({
-      isGoogleConnected: true,
-      isSyncEnabled: true,
-      isConnecting: false,
-      toggleSync: vi.fn(),
-    });
+  it('renders today button and invokes onToday when clicked', () => {
+    render(<CalendarHeader {...defaultProps} />);
 
+    const todayBtn = screen.getByRole('button', { name: /hoje/i });
+    expect(todayBtn).toBeInTheDocument();
+    fireEvent.click(todayBtn);
+    expect(defaultProps.onToday).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders navigation buttons and invokes onPrevious and onNext', () => {
+    render(<CalendarHeader {...defaultProps} />);
+
+    const prevBtn = screen.getByRole('button', { name: /anterior/i });
+    const nextBtn = screen.getByRole('button', { name: /próximo/i });
+
+    fireEvent.click(prevBtn);
+    expect(defaultProps.onPrevious).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(nextBtn);
+    expect(defaultProps.onNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders new event button and invokes onEventCreate when clicked', () => {
+    render(<CalendarHeader {...defaultProps} />);
+
+    const createBtn = screen.getByRole('button', { name: /novo evento/i });
+    expect(createBtn).toBeInTheDocument();
+    fireEvent.click(createBtn);
+    expect(defaultProps.onEventCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render Google Calendar sync button in the header', () => {
     render(<CalendarHeader {...defaultProps} />);
 
     expect(
-      screen.getByRole('button', { name: /sincronização google agenda ativa/i })
-    ).toBeInTheDocument();
-  });
-
-  it('renders sync prompt button when Google Calendar sync is disabled', () => {
-    useGoogleCalendarSync.mockReturnValue({
-      isGoogleConnected: false,
-      isSyncEnabled: false,
-      isConnecting: false,
-      toggleSync: vi.fn(),
-    });
-
-    render(<CalendarHeader {...defaultProps} />);
-
+      screen.queryByRole('button', { name: /sincronizar com google agenda/i })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /sincronizar com google agenda/i })
-    ).toBeInTheDocument();
-  });
-
-  it('invokes toggleSync when clicking the sync button', () => {
-    const mockToggle = vi.fn();
-    useGoogleCalendarSync.mockReturnValue({
-      isGoogleConnected: true,
-      isSyncEnabled: false,
-      isConnecting: false,
-      toggleSync: mockToggle,
-    });
-
-    render(<CalendarHeader {...defaultProps} />);
-
-    const syncBtn = screen.getByRole('button', {
-      name: /sincronizar com google agenda/i,
-    });
-    fireEvent.click(syncBtn);
-
-    expect(mockToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('disables sync button when synchronization is connecting or mutating', () => {
-    useGoogleCalendarSync.mockReturnValue({
-      isGoogleConnected: false,
-      isSyncEnabled: false,
-      isConnecting: true,
-      toggleSync: vi.fn(),
-    });
-
-    render(<CalendarHeader {...defaultProps} />);
-
-    const syncBtn = screen.getByRole('button', {
-      name: /sincronizar com google agenda/i,
-    });
-    expect(syncBtn).toBeDisabled();
+      screen.queryByRole('button', {
+        name: /sincronização google agenda ativa/i,
+      })
+    ).not.toBeInTheDocument();
   });
 });

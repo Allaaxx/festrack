@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { getOAuthErrorMessage, OAUTH_ERROR_MESSAGES } from '@/helpers/auth';
+import {
+  getAuthErrorMessage,
+  getOAuthErrorMessage,
+  OAUTH_ERROR_MESSAGES,
+} from '@/helpers/auth';
 
 describe('OAuth Error Helpers', () => {
   describe('OAUTH_ERROR_MESSAGES', () => {
@@ -85,6 +89,46 @@ describe('OAuth Error Helpers', () => {
         'Falha temporária de comunicação com o Google.'
       );
       expect(message).toBe('Falha temporária de comunicação com o Google.');
+    });
+  });
+
+  describe('getAuthErrorMessage', () => {
+    it('translates "Failed to fetch" into a friendly Portuguese network message', () => {
+      expect(getAuthErrorMessage(new Error('Failed to fetch'))).toBe(
+        'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+      );
+      expect(getAuthErrorMessage({ message: 'failed to fetch' })).toBe(
+        'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+      );
+    });
+
+    it('translates generic network errors into a friendly message', () => {
+      expect(
+        getAuthErrorMessage('NetworkError when attempting to fetch resource.')
+      ).toBe(
+        'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+      );
+      expect(getAuthErrorMessage({ message: 'ERR_CONNECTION_REFUSED' })).toBe(
+        'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+      );
+    });
+
+    it('preserves specific domain error messages', () => {
+      expect(
+        getAuthErrorMessage(new Error('E-mail ou senha incorretos.'))
+      ).toBe('E-mail ou senha incorretos.');
+      expect(getAuthErrorMessage('Este e-mail já está em uso.')).toBe(
+        'Este e-mail já está em uso.'
+      );
+    });
+
+    it('falls back to custom fallback or default message when error is empty', () => {
+      expect(
+        getAuthErrorMessage(null, 'Mensagem customizada de fallback')
+      ).toBe('Mensagem customizada de fallback');
+      expect(getAuthErrorMessage(undefined)).toBe(
+        'Ocorreu um erro ao processar sua solicitação. Tente novamente.'
+      );
     });
   });
 });
