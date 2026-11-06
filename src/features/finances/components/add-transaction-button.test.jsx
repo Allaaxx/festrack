@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useGetEvents } from '@/features/events/api/hooks';
+import { useGetEvents } from '@/features/events';
 import { useCreateTransaction } from '@/features/finances/api/hooks';
 import AddTransactionButton from '@/features/finances/components/add-transaction-button';
 import { getDefaultTransactionValues } from '@/features/finances/forms/hooks';

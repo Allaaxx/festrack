@@ -28,6 +28,10 @@ export {
   useGetTransactions,
   useGetUserBalance,
 } from './api/hooks';
+export {
+  BalanceService,
+  TransactionService,
+} from './api/services';
 export { useFinancePage } from './hooks/use-finance-page';
 
 // Forms

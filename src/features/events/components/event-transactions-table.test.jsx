@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAuthContext } from '@/contexts/auth';
-import { useGetTransactions } from '@/features/finances/api/hooks';
+import { useGetTransactions } from '@/features/finances';
 
 import EventTransactionsTable from './event-transactions-table';
 
