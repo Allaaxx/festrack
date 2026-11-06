@@ -33,7 +33,7 @@ const EventFinancialCards = ({
     return (
       <div
         data-testid="event-financial-cards-skeleton"
-        className="grid grid-cols-1 gap-6 lg:grid-cols-6"
+        className="grid grid-cols-1 gap-4 lg:grid-cols-6"
       >
         {event && (
           <Skeleton className="col-span-full h-72 rounded-xl xl:col-span-2" />
@@ -44,7 +44,7 @@ const EventFinancialCards = ({
         {Array.from({ length: 3 }).map((_, index) => (
           <Skeleton
             key={index}
-            className="col-span-2 h-32 rounded-xl max-lg:col-span-full"
+            className="col-span-2 h-44 rounded-xl max-lg:col-span-full"
           />
         ))}
       </div>
@@ -56,7 +56,7 @@ const EventFinancialCards = ({
   return (
     <div
       data-testid="event-financial-cards"
-      className="grid grid-cols-1 gap-6 lg:grid-cols-6"
+      className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs lg:grid-cols-6"
     >
       {event && <StatCards event={event} transactions={transactions} />}
       {!hideNetBalance && <TotalRevenueCard transactions={transactions} />}

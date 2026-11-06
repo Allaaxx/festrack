@@ -1,8 +1,17 @@
+import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
 import { useId, useMemo } from 'react';
 import { Area, AreaChart } from 'recharts';
 
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   ChartContainer,
   ChartTooltip,
@@ -14,40 +23,49 @@ import { cn } from '@/lib/utils';
 const VARIANT_CONFIG = {
   earning: {
     label: 'Receitas',
-    color: 'var(--color-primary-green)',
-    badgeClassName:
-      'bg-primary-green/10 text-primary-green hover:bg-primary-green/20',
+    color: 'var(--chart-1)',
+    trendLabel: 'Volume de receitas',
   },
   EARNING: {
     label: 'Receitas',
-    color: 'var(--color-primary-green)',
-    badgeClassName:
-      'bg-primary-green/10 text-primary-green hover:bg-primary-green/20',
+    color: 'var(--chart-1)',
+    trendLabel: 'Volume de receitas',
   },
   expense: {
     label: 'Despesas',
-    color: 'var(--color-primary-red)',
-    badgeClassName:
-      'bg-primary-red/10 text-primary-red hover:bg-primary-red/20',
+    color: 'var(--chart-2)',
+    trendLabel: 'Volume de despesas',
   },
   EXPENSE: {
     label: 'Despesas',
-    color: 'var(--color-primary-red)',
-    badgeClassName:
-      'bg-primary-red/10 text-primary-red hover:bg-primary-red/20',
+    color: 'var(--chart-2)',
+    trendLabel: 'Volume de despesas',
   },
   investment: {
     label: 'Investimentos',
-    color: 'var(--color-primary-blue)',
-    badgeClassName:
-      'bg-primary-blue/10 text-primary-blue hover:bg-primary-blue/20',
+    color: 'var(--primary)',
+    trendLabel: 'Volume de investimentos',
   },
   INVESTMENT: {
     label: 'Investimentos',
-    color: 'var(--color-primary-blue)',
-    badgeClassName:
-      'bg-primary-blue/10 text-primary-blue hover:bg-primary-blue/20',
+    color: 'var(--primary)',
+    trendLabel: 'Volume de investimentos',
   },
+};
+
+/**
+ * Determines whether a percentage or trend indicator string is positive or negative.
+ *
+ * @param {string | number | null | undefined} badge
+ * @returns {boolean}
+ */
+const isPositiveTrend = (badge) => {
+  if (badge === null || badge === undefined) return true;
+  const str = String(badge).trim();
+  if (str.startsWith('-')) return false;
+  const num = parseFloat(str.replace('%', '').replace('+', ''));
+  if (Number.isNaN(num)) return true;
+  return num >= 0;
 };
 
 /**
@@ -63,6 +81,7 @@ const VARIANT_CONFIG = {
  *   color?: string,
  *   data?: Array<{ date?: string, label?: string, amount?: number, v?: number }>,
  *   className?: string,
+ *   footer?: React.ReactNode,
  *   'data-testid'?: string,
  * }} props
  */
@@ -76,6 +95,7 @@ export function MetricAreaCard({
   color,
   data = [],
   className,
+  footer,
   ...props
 }) {
   const gradientId = useId().replace(/:/g, '');
@@ -83,6 +103,7 @@ export function MetricAreaCard({
   const resolvedColor = color ?? variantConfig?.color ?? 'var(--primary)';
   const displayValue =
     value ?? (amount !== undefined ? formatCurrency(amount) : formatCurrency(0));
+  const isPositive = isPositiveTrend(badge);
 
   const chartConfig = useMemo(
     () => ({
@@ -106,37 +127,32 @@ export function MetricAreaCard({
   return (
     <Card
       className={cn(
-        'col-span-2 flex flex-col max-lg:col-span-full *:data-[slot=card-content]:lg:max-xl:flex-col *:data-[slot=card-content]:lg:max-xl:pr-6',
+        '@container/card col-span-2 flex flex-col justify-between max-lg:col-span-full',
         className
       )}
       {...props}
     >
-      <CardContent className="flex flex-1 items-center justify-between gap-4 pr-0">
-        <div className="flex shrink-0 flex-col justify-between gap-6">
-          <div className="flex flex-col gap-1">
-            <span className="text-muted-foreground text-sm">{title}</span>
-            <span className="text-3xl font-semibold">{displayValue}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge
-              className={cn(
-                'bg-primary/10 text-primary hover:bg-primary/20 h-6 rounded-sm px-3 py-1',
-                variantConfig?.badgeClassName
-              )}
-            >
-              {badge}
-            </Badge>
-            <span className="text-muted-foreground text-sm">{comparison}</span>
-          </div>
-        </div>
+      <CardHeader className="flex flex-col sm:grid md:flex-row">
+        <CardDescription>{title}</CardDescription>
+        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+          {displayValue}
+        </CardTitle>
+        <CardAction>
+          <Badge variant="outline">
+            {isPositive ? <TrendingUpIcon /> : <TrendingDownIcon />}
+            {badge}
+          </Badge>
+        </CardAction>
+      </CardHeader>
 
+      <CardContent className="px-(--card-spacing) py-0">
         <ChartContainer
           config={chartConfig}
-          className="aspect-video max-h-26.5 w-full max-w-70 flex-1 max-sm:max-w-35"
+          className="aspect-auto h-16 w-full"
         >
           <AreaChart
             data={normalizedData}
-            margin={{ top: 4, right: 0, left: 4, bottom: 0 }}
+            margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
           >
             <defs>
               <linearGradient
@@ -146,8 +162,8 @@ export function MetricAreaCard({
                 x2="0"
                 y2="1"
               >
-                <stop offset="10%" stopColor={resolvedColor} stopOpacity={1} />
-                <stop offset="90%" stopColor={resolvedColor} stopOpacity={0} />
+                <stop offset="10%" stopColor={resolvedColor} stopOpacity={0.8} />
+                <stop offset="90%" stopColor={resolvedColor} stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <ChartTooltip
@@ -167,13 +183,27 @@ export function MetricAreaCard({
               dataKey="amount"
               type="monotone"
               fill={`url(#fill-${gradientId})`}
-              fillOpacity={0.6}
+              fillOpacity={0.4}
               stroke={resolvedColor}
               strokeWidth={2}
             />
           </AreaChart>
         </ChartContainer>
       </CardContent>
+
+      {footer ?? (
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="line-clamp-1 flex gap-2 font-medium">
+            {variantConfig?.trendLabel ?? 'Volume no período'}{' '}
+            {isPositive ? (
+              <TrendingUpIcon className="size-4" />
+            ) : (
+              <TrendingDownIcon className="size-4" />
+            )}
+          </div>
+          <div className="text-muted-foreground">{comparison}</div>
+        </CardFooter>
+      )}
     </Card>
   );
 }
