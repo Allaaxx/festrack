@@ -17,11 +17,11 @@ import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { ShopContext } from '@/contexts/shop';
 import {
+  EventService,
   useDeleteEvent,
   useEditEvent,
   useGetEvent,
-} from '@/features/events/api/hooks';
-import EventService from '@/features/events/api/services';
+} from '@/features/events';
 import { useGetTransactions } from '@/features/finances';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';

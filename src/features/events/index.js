@@ -31,6 +31,7 @@ export {
   useGetEvent,
   useGetEvents,
 } from './api/hooks';
+export { default as EventService } from './api/services';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';
 export { useCalendarNavigation } from './hooks/use-calendar-navigation';
 export { useEventCalendarPage } from './hooks/use-event-calendar-page';

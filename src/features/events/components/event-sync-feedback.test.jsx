@@ -214,5 +214,91 @@ describe('Event Lifecycle Mutations - Google Calendar Sync Feedback', () => {
         );
       });
     });
+
+    it('shows standard success toast when event deletion succeeds without sync error', async () => {
+      const onSuccess = vi.fn();
+      mockDeleteMutateAsync.mockResolvedValueOnce({
+        id: 'ev-1',
+        syncError: false,
+      });
+
+      render(
+        <DeleteEventButton
+          event={{ id: 'ev-1', name: 'Evento Teste' }}
+          onSuccess={onSuccess}
+        />
+      );
+
+      const deleteTrigger = screen.getByRole('button', {
+        name: /excluir evento/i,
+      });
+      fireEvent.click(deleteTrigger);
+
+      const confirmButtons = screen.getAllByRole('button', {
+        name: /excluir evento/i,
+      });
+      fireEvent.click(confirmButtons[confirmButtons.length - 1]);
+
+      await waitFor(() => {
+        expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ id: 'ev-1' });
+        expect(onSuccess).toHaveBeenCalled();
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'success',
+            title: 'Evento excluído com sucesso!',
+          })
+        );
+      });
+    });
+
+    it('shows error toast when event deletion throws an error', async () => {
+      mockDeleteMutateAsync.mockRejectedValueOnce(new Error('Network error'));
+
+      render(
+        <DeleteEventButton
+          event={{ id: 'ev-1', name: 'Evento Teste' }}
+          onSuccess={vi.fn()}
+        />
+      );
+
+      const deleteTrigger = screen.getByRole('button', {
+        name: /excluir evento/i,
+      });
+      fireEvent.click(deleteTrigger);
+
+      const confirmButtons = screen.getAllByRole('button', {
+        name: /excluir evento/i,
+      });
+      fireEvent.click(confirmButtons[confirmButtons.length - 1]);
+
+      await waitFor(() => {
+        expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ id: 'ev-1' });
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'error',
+            title: 'Não foi possível excluir o evento.',
+            description: 'Tente novamente mais tarde.',
+          })
+        );
+      });
+    });
+
+    it('renders custom trigger and uses fallback description when event name is absent', async () => {
+      render(
+        <DeleteEventButton
+          event={{ id: 'ev-no-name' }}
+          trigger={<button>Custom Delete</button>}
+        />
+      );
+
+      const customTrigger = screen.getByRole('button', {
+        name: /custom delete/i,
+      });
+      fireEvent.click(customTrigger);
+
+      expect(
+        screen.getByText('Esta ação não poderá ser desfeita.')
+      ).toBeInTheDocument();
+    });
   });
 });

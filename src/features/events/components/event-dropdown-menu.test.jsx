@@ -15,7 +15,7 @@ import {
   useGetEvents,
 } from '@/features/events/api/hooks';
 import EventDropdownMenu from '@/features/events/components/event-dropdown-menu';
-import { useCreateTransaction } from '@/features/finances/api/hooks';
+import { useCreateTransaction } from '@/features/finances';
 
 vi.mock('@/components/ui/toast', () => ({
   toast: {

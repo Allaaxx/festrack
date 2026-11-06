@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup:worktree": "node -e \"const fs = require('fs'), path = require('path'), { execSync } = require('child_process'); if (!fs.existsSync('node_modules')) { const gitCommon = execSync('git rev-parse --path-format=absolute --git-common-dir').toString().trim(); const mainRoot = path.resolve(gitCommon, '..'); const target = path.join(mainRoot, 'node_modules'); if (fs.existsSync(target)) { fs.symlinkSync(target, 'node_modules', 'junction'); console.log('node_modules symlinked from', target); } }\""
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
