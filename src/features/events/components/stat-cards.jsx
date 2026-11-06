@@ -1,10 +1,10 @@
 import {
   BookMarked,
-  ChevronDown,
-  ChevronUp,
   DollarSign,
   ShoppingCart,
   TicketCheck,
+  TrendingDownIcon,
+  TrendingUpIcon,
 } from 'lucide-react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -52,13 +52,13 @@ const StatCards = ({ event, transactions = [], stats }) => {
   return (
     <div
       data-testid="event-stat-cards"
-      className="grid gap-6 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:col-span-2"
+      className="grid gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-2 xl:col-span-2"
     >
       {cards.map((card) => (
         <Card
           key={card.id}
           data-testid={card.testId}
-          className="border-border bg-card flex flex-col justify-between rounded-xl border p-5 shadow-xs"
+          className="@container/card flex flex-col justify-between rounded-xl p-5"
         >
           {/* Card Top: Icon & Trend */}
           <div className="flex items-center justify-between pb-4">
@@ -71,26 +71,29 @@ const StatCards = ({ event, transactions = [], stats }) => {
             <p className="text-foreground flex items-center gap-1 text-sm font-semibold">
               {card.trend}
               {card.trendUp ? (
-                <ChevronUp className="text-primary-green size-4" />
+                <TrendingUpIcon className="text-primary size-4" />
               ) : (
-                <ChevronDown className="text-primary-red size-4" />
+                <TrendingDownIcon className="text-muted-foreground size-4" />
               )}
             </p>
           </div>
 
           {/* Card Body: Value & Title */}
           <div className="flex flex-1 flex-col justify-between gap-4">
-            <p className="flex flex-col gap-1">
-              <span className="text-foreground text-xl font-bold tracking-tight">
+            <div className="flex flex-col gap-1">
+              <span className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
                 {card.value}
               </span>
               <span className="text-muted-foreground text-sm">
                 {card.title}
               </span>
-            </p>
+            </div>
 
             {/* Timeframe / Detail Badge */}
-            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 w-fit max-w-full truncate rounded-md px-2.5 py-0.5 text-xs font-medium">
+            <Badge
+              variant="outline"
+              className="w-fit max-w-full truncate rounded-md px-2.5 py-0.5 text-xs font-medium"
+            >
               {card.badge}
             </Badge>
           </div>

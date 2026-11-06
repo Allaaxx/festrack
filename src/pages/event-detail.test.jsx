@@ -17,11 +17,11 @@ import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { ShopContext } from '@/contexts/shop';
 import {
+  EventService,
   useDeleteEvent,
   useEditEvent,
   useGetEvent,
-} from '@/features/events/api/hooks';
-import EventService from '@/features/events/api/services';
+} from '@/features/events';
 import { useGetTransactions } from '@/features/finances';
 import { AppRoutes } from '@/main';
 import EventDetailPage from '@/pages/event-detail';
@@ -220,13 +220,27 @@ describe('EventDetailPage', () => {
     );
 
     expect(screen.getByTestId('event-header-card')).toBeInTheDocument();
-    expect(screen.getByTestId('event-header-date-badge')).toHaveTextContent(
-      'DEZ'
+    const dateBadge = screen.getByTestId('event-header-date-badge');
+    expect(dateBadge).toHaveTextContent('DEZ');
+    expect(dateBadge).toHaveTextContent('01');
+    const dayNumber = within(dateBadge).getByText('01');
+    expect(dayNumber).toHaveClass(
+      'font-semibold',
+      'tracking-tight',
+      'text-foreground'
     );
-    expect(screen.getByTestId('event-header-date-badge')).toHaveTextContent(
-      '01'
+
+    const title = screen.getByRole('heading', {
+      level: 1,
+      name: 'Viagem Florianópolis',
+    });
+    expect(title).toBeInTheDocument();
+    expect(title).toHaveClass(
+      'font-semibold',
+      'tracking-tight',
+      'text-foreground'
     );
-    expect(screen.getByText('Viagem Florianópolis')).toBeInTheDocument();
+
     expect(screen.getByText('Férias de verão com amigos')).toBeInTheDocument();
     expect(
       screen.getByText(/01\/12\/2026 até 10\/12\/2026/)
@@ -235,6 +249,9 @@ describe('EventDetailPage', () => {
     expect(
       screen.getAllByText(/agendado|em andamento|finalizado/i).length
     ).toBeGreaterThan(0);
+
+    const contentWrapper = screen.getByTestId('event-detail-content');
+    expect(contentWrapper).toHaveClass('flex', 'flex-col', 'gap-4', 'md:gap-6');
   });
 
   it('renders "Dia único" badge when event starts and ends on the same day', () => {
@@ -291,7 +308,7 @@ describe('EventDetailPage', () => {
     expect(screen.getByText('Calendar View Page')).toBeInTheDocument();
   });
 
-  it('renders quick action buttons: Nova transação, Editar, and Excluir', () => {
+  it('renders quick action buttons: Nova transação, Editar, and Excluir with standardized h-9 and semantic destructive styling', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
       isLoading: false,
@@ -304,13 +321,23 @@ describe('EventDetailPage', () => {
       </Routes>
     );
 
-    expect(
-      screen.getByRole('button', { name: /nova transação/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /editar/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /excluir/i })
-    ).toBeInTheDocument();
+    const addBtn = screen.getByRole('button', { name: /nova transação/i });
+    const editBtn = screen.getByRole('button', { name: /editar/i });
+    const deleteBtn = screen.getByRole('button', { name: /excluir/i });
+
+    expect(addBtn).toBeInTheDocument();
+    expect(editBtn).toBeInTheDocument();
+    expect(deleteBtn).toBeInTheDocument();
+
+    expect(addBtn).toHaveClass('h-9', 'gap-1.5');
+    expect(editBtn).toHaveClass('h-9', 'gap-1.5');
+    expect(deleteBtn).toHaveClass(
+      'h-9',
+      'gap-1.5',
+      'border-destructive/20',
+      'text-destructive'
+    );
+    expect(deleteBtn.className).not.toContain('rose-500');
   });
 
   it('smoothly redirects to /events with success toast upon deleting event', async () => {

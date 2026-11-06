@@ -14,7 +14,7 @@ import { useShopContext } from '@/contexts/shop';
 import {
   BalanceService,
   TransactionService,
-} from '@/features/finances/api/services';
+} from '@/features/finances';
 import FinancePage from '@/pages/finance';
 
 vi.mock('@/contexts/auth', () => ({

@@ -142,7 +142,7 @@ const EventDetailHeader = ({
                 <span className="text-[10px] font-bold tracking-wider uppercase opacity-80">
                   {month}
                 </span>
-                <span className="text-foreground text-xl leading-none font-bold tracking-tight">
+                <span className="text-foreground text-xl leading-none font-semibold tracking-tight">
                   {day}
                 </span>
               </div>
@@ -150,7 +150,7 @@ const EventDetailHeader = ({
               <div className="flex flex-col gap-2">
                 {/* Título e Badge de Status */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
+                  <h1 className="text-foreground text-2xl font-semibold tracking-tight sm:text-3xl">
                     {eventName}
                   </h1>
                   <EventStatusBadge event={event} />
@@ -182,7 +182,10 @@ const EventDetailHeader = ({
 
             {/* Direita: Botões de Ação */}
             <div className="flex shrink-0 flex-wrap items-center gap-2.5 sm:flex-nowrap">
-              <AddTransactionButton initialEventId={event.id} />
+              <AddTransactionButton
+                initialEventId={event.id}
+                className="h-9 gap-1.5"
+              />
 
               <Separator
                 orientation="vertical"
@@ -211,7 +214,7 @@ const EventDetailHeader = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-1.5 border-rose-500/20 bg-rose-500/5 text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/10 hover:text-rose-400"
+                    className="h-9 gap-1.5 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
                   >
                     <Trash2Icon className="size-3.5" />
                     <span>Excluir</span>
@@ -226,7 +229,7 @@ const EventDetailHeader = ({
             <div className="border-border bg-muted/20 divide-border grid grid-cols-1 divide-y border-t sm:grid-cols-3 sm:divide-x sm:divide-y-0">
               <div className="flex items-center gap-3 px-6 py-3.5">
                 <Avatar className="size-9 rounded-sm after:border-0">
-                  <AvatarFallback className="bg-primary-green/10 text-primary-green size-9 shrink-0 rounded-sm">
+                  <AvatarFallback className="bg-primary/5 text-primary size-9 shrink-0 rounded-sm">
                     <TrendingUpIcon className="size-4" />
                   </AvatarFallback>
                 </Avatar>
@@ -242,7 +245,7 @@ const EventDetailHeader = ({
 
               <div className="flex items-center gap-3 px-6 py-3.5">
                 <Avatar className="size-9 rounded-sm after:border-0">
-                  <AvatarFallback className="bg-primary-red/10 text-primary-red size-9 shrink-0 rounded-sm">
+                  <AvatarFallback className="bg-primary/5 text-primary size-9 shrink-0 rounded-sm">
                     <TrendingDownIcon className="size-4" />
                   </AvatarFallback>
                 </Avatar>
@@ -259,7 +262,7 @@ const EventDetailHeader = ({
               <div className="flex items-center justify-between px-6 py-3.5">
                 <div className="flex items-center gap-3">
                   <Avatar className="size-9 rounded-sm after:border-0">
-                    <AvatarFallback className="bg-primary/10 text-primary size-9 shrink-0 rounded-sm">
+                    <AvatarFallback className="bg-primary/5 text-primary size-9 shrink-0 rounded-sm">
                       <WalletIcon className="size-4" />
                     </AvatarFallback>
                   </Avatar>
@@ -274,7 +277,7 @@ const EventDetailHeader = ({
                 </div>
 
                 {event.transactionsCount !== undefined && (
-                  <Badge className="bg-primary/10 text-primary rounded-md px-2 py-0.5 text-xs font-medium">
+                  <Badge className="bg-primary/5 text-primary rounded-md px-2 py-0.5 text-xs font-medium">
                     {event.transactionsCount === 1
                       ? '1 transação'
                       : `${event.transactionsCount} transações`}

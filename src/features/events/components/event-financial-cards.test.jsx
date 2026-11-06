@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useGetTransactions } from '@/features/finances/api/hooks';
+import { useGetTransactions } from '@/features/finances';
 
 import EventFinancialCards from './event-financial-cards';
 
@@ -65,6 +65,10 @@ describe('EventFinancialCards', () => {
     renderWithClient(<EventFinancialCards eventId="ev-123" />);
 
     expect(screen.getByTestId('event-financial-cards')).toBeInTheDocument();
+    expect(screen.getByTestId('event-financial-cards')).toHaveClass(
+      'gap-4',
+      '*:data-[slot=card]:bg-linear-to-t'
+    );
     expect(screen.getByText('Balanço do Evento')).toBeInTheDocument();
     expect(screen.getByText('Total de Receitas')).toBeInTheDocument();
     expect(screen.getByText('Total de Despesas')).toBeInTheDocument();
@@ -134,6 +138,12 @@ describe('EventFinancialCards', () => {
     expect(
       earningsCard.querySelector('[data-slot="chart"]')
     ).toBeInTheDocument();
+    expect(
+      earningsCard.querySelector('[data-slot="card-title"]')
+    ).toHaveClass('tabular-nums');
+    const earningsBadge = earningsCard.querySelector('[data-slot="badge"]');
+    expect(earningsBadge).toBeInTheDocument();
+    expect(earningsBadge.querySelector('svg')).toHaveClass('lucide-trending-up');
 
     const expensesCard = screen.getByTestId('kpi-expenses');
     expect(expensesCard).toHaveTextContent('Total de Despesas');
@@ -165,6 +175,37 @@ describe('EventFinancialCards', () => {
     const netBalanceCard = screen.getByTestId('kpi-net-balance');
     expect(netBalanceCard).toHaveTextContent('Saldo Líquido');
     expect(netBalanceCard).toHaveTextContent(/R\$\s*1\.200,00/);
+    expect(within(netBalanceCard).getByText(/R\$\s*1\.200,00/)).toHaveClass(
+      'tabular-nums'
+    );
+  });
+
+  it('renders operational StatCards with gap-4 and tabular-nums when event prop is present', () => {
+    const mockEvent = {
+      id: 'ev-1',
+      startDate: '2026-12-01T00:00:00.000Z',
+      endDate: '2026-12-10T23:59:59.000Z',
+    };
+    const mockTransactions = [
+      { id: '1', type: 'EXPENSE', amount: 500, name: 'Transporte' },
+    ];
+
+    useGetTransactions.mockReturnValue({
+      data: mockTransactions,
+      isLoading: false,
+    });
+
+    renderWithClient(
+      <EventFinancialCards eventId="ev-1" event={mockEvent} />
+    );
+
+    const statCardsContainer = screen.getByTestId('event-stat-cards');
+    expect(statCardsContainer).toHaveClass('gap-4');
+
+    const avgCard = screen.getByTestId('stat-average-expense');
+    expect(within(avgCard).getByText(/R\$\s*500,00/)).toHaveClass(
+      'tabular-nums'
+    );
   });
 
   it('calculates negative net balance when expenses and investments exceed earnings', () => {

@@ -16,7 +16,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { LOCAL_STORAGE_ACTIVE_SHOP_KEY } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
 import { ShopContextProvider } from '@/contexts/shop';
-import ShopService from '@/features/shops/api/services';
+import { ShopService } from '@/features/shops';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),

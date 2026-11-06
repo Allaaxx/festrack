@@ -172,12 +172,17 @@ describe('TransactionActionsCell & Modal Isolation', () => {
     // Delete dialog should be visible
     expect(
       await screen.findByRole('heading', {
-        name: /deletar "aluguel escritório"/i,
+        name: /excluir transação\?/i,
       })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /você está prestes a excluir a transação "aluguel escritório"\. esta ação não poderá ser desfeita\./i
+      )
     ).toBeInTheDocument();
 
     // Interacting inside the dialog does not bubble to row
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const cancelButton = screen.getByRole('button', { name: /cancelar/i });
     await user.click(cancelButton);
 
     expect(handleRowClick).not.toHaveBeenCalled();
@@ -247,7 +252,7 @@ describe('TransactionActionsCell & Modal Isolation', () => {
 
     expect(
       screen.queryByRole('heading', {
-        name: /deletar "aluguel escritório"/i,
+        name: /excluir transação\?/i,
       })
     ).not.toBeInTheDocument();
 
@@ -280,7 +285,7 @@ describe('TransactionActionsCell & Modal Isolation', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: /deletar "aluguel escritório"/i,
+        name: /excluir transação\?/i,
       })
     ).toBeInTheDocument();
   });

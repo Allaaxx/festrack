@@ -9,7 +9,7 @@ import ShopSwitcher from '@/components/layout/shop-switcher';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuthContext } from '@/contexts/auth';
 import { ShopContextProvider } from '@/contexts/shop';
-import ShopService from '@/features/shops/api/services';
+import { ShopService } from '@/features/shops';
 import protectedApi from '@/lib/axios';
 import EventPage from '@/pages/event';
 
