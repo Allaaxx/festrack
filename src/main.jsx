@@ -13,6 +13,7 @@ import {
 } from 'react-router';
 
 import { DashboardLayout } from '@/components/layout';
+import { ThemeProvider } from '@/components/layout/theme-provider';
 import { Toaster } from '@/components/ui/toast';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthContextProvider } from '@/contexts/auth';
@@ -76,20 +77,27 @@ const rootElement = document.getElementById('root');
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AuthContextProvider>
-            <ShopContextProvider>
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
-            </ShopContextProvider>
-          </AuthContextProvider>
-        </TooltipProvider>
+      <ThemeProvider defaultTheme="system" storageKey="festrack-ui-theme">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <AuthContextProvider>
+              <ShopContextProvider>
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </ShopContextProvider>
+            </AuthContextProvider>
+          </TooltipProvider>
 
-        <Toaster />
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+          <Toaster />
+          {import.meta.env.DEV && (
+            <ReactQueryDevtools
+              initialIsOpen={false}
+              buttonPosition="bottom-left"
+            />
+          )}
+        </QueryClientProvider>
+      </ThemeProvider>
     </StrictMode>
   );
 }
