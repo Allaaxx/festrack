@@ -23,22 +23,22 @@ import { cn } from '@/lib/utils';
 const VARIANT_CONFIG = {
   earning: {
     label: 'Receitas',
-    color: 'var(--chart-1)',
+    color: 'var(--primary)',
     trendLabel: 'Volume de receitas',
   },
   EARNING: {
     label: 'Receitas',
-    color: 'var(--chart-1)',
+    color: 'var(--primary)',
     trendLabel: 'Volume de receitas',
   },
   expense: {
     label: 'Despesas',
-    color: 'var(--chart-2)',
+    color: 'var(--primary)',
     trendLabel: 'Volume de despesas',
   },
   EXPENSE: {
     label: 'Despesas',
-    color: 'var(--chart-2)',
+    color: 'var(--primary)',
     trendLabel: 'Volume de despesas',
   },
   investment: {
@@ -102,7 +102,8 @@ export function MetricAreaCard({
   const variantConfig = variant ? VARIANT_CONFIG[variant] : undefined;
   const resolvedColor = color ?? variantConfig?.color ?? 'var(--primary)';
   const displayValue =
-    value ?? (amount !== undefined ? formatCurrency(amount) : formatCurrency(0));
+    value ??
+    (amount !== undefined ? formatCurrency(amount) : formatCurrency(0));
   const isPositive = isPositiveTrend(badge);
 
   const chartConfig = useMemo(
@@ -162,8 +163,16 @@ export function MetricAreaCard({
                 x2="0"
                 y2="1"
               >
-                <stop offset="10%" stopColor={resolvedColor} stopOpacity={0.8} />
-                <stop offset="90%" stopColor={resolvedColor} stopOpacity={0.1} />
+                <stop
+                  offset="10%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="90%"
+                  stopColor={resolvedColor}
+                  stopOpacity={0.1}
+                />
               </linearGradient>
             </defs>
             <ChartTooltip
