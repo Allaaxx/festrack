@@ -134,15 +134,15 @@ function ToastIcon({ type }) {
   let icon = null;
 
   if (type === 'success') {
-    icon = <CircleCheckIcon aria-hidden="true" />;
+    icon = <CircleCheckIcon className="text-primary" aria-hidden="true" />;
   }
 
   if (type === 'info') {
-    icon = <InfoIcon aria-hidden="true" />;
+    icon = <InfoIcon className="text-muted-foreground" aria-hidden="true" />;
   }
 
   if (type === 'warning') {
-    icon = <TriangleAlertIcon aria-hidden="true" />;
+    icon = <TriangleAlertIcon className="text-foreground" aria-hidden="true" />;
   }
 
   if (type === 'error') {
@@ -150,7 +150,12 @@ function ToastIcon({ type }) {
   }
 
   if (type === 'loading') {
-    icon = <Loader2Icon className="animate-spin" aria-hidden="true" />;
+    icon = (
+      <Loader2Icon
+        className="text-muted-foreground animate-spin"
+        aria-hidden="true"
+      />
+    );
   }
 
   if (!icon) {
@@ -210,6 +215,7 @@ export {
   ToastContent,
   ToastDescription,
   Toaster,
+  ToastIcon,
   ToastPortal,
   ToastProvider,
   ToastTitle,

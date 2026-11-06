@@ -35,7 +35,6 @@ const SignupForm = ({
   redirectState,
   location,
 }) => {
-
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
@@ -162,7 +161,7 @@ const SignupForm = ({
                 />
                 <FieldLabel
                   htmlFor="terms"
-                  className="text-muted-foreground text-xs leading-normal font-normal select-none"
+                  className="text-muted-foreground block cursor-pointer text-xs leading-normal font-normal select-none"
                 >
                   Ao clicar em &quot;Criar conta&quot;, você aceita{' '}
                   <a

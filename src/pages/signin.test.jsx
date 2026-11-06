@@ -255,6 +255,41 @@ describe('SignInPage', () => {
     });
   });
 
+  it('displays friendly network error message when server connection fails', async () => {
+    mockSignin.mockRejectedValueOnce(new Error('Failed to fetch'));
+
+    useAuthContext.mockReturnValue({
+      user: null,
+      isInitializing: false,
+      signin: mockSignin,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/signin']}>
+        <Routes>
+          <Route path="/signin" element={<SignInPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    fireEvent.change(screen.getByPlaceholderText('Digite seu email'), {
+      target: { value: 'user@example.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText('Digite sua senha'), {
+      target: { value: 'password123' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /fazer login/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.'
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
   it('renders Google sign-in button and separator', () => {
     useAuthContext.mockReturnValue({
       user: null,

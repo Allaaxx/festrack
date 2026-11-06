@@ -1,4 +1,6 @@
 import { PanelLeftIcon } from 'lucide-react';
+import { Fragment } from 'react';
+import { Link, useLocation } from 'react-router';
 
 import { LogoIcon } from '@/assets/images';
 import { ModeToggle } from '@/components/layout/mode-toggle';
@@ -15,8 +17,33 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSidebar } from '@/components/ui/sidebar';
 
+const getBreadcrumbs = (pathname) => {
+  if (pathname.startsWith('/events/')) {
+    return [
+      { label: 'Eventos', to: '/events' },
+      { label: 'Detalhes do Evento' },
+    ];
+  }
+
+  if (pathname.startsWith('/events')) {
+    return [{ label: 'Eventos' }];
+  }
+
+  if (pathname.startsWith('/finances')) {
+    return [{ label: 'Finanças' }];
+  }
+
+  if (pathname.startsWith('/settings')) {
+    return [{ label: 'Configurações' }];
+  }
+
+  return [];
+};
+
 const Header = () => {
   const { toggleSidebar } = useSidebar();
+  const location = useLocation();
+  const breadcrumbs = getBreadcrumbs(location.pathname);
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -38,12 +65,31 @@ const Header = () => {
         <Breadcrumb className="hidden sm:block">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="#">Build Your Application</BreadcrumbLink>
+              {breadcrumbs.length > 0 ? (
+                <BreadcrumbLink render={<Link to="/" />}>
+                  Festrack
+                </BreadcrumbLink>
+              ) : (
+                <BreadcrumbPage>Festrack</BreadcrumbPage>
+              )}
             </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-            </BreadcrumbItem>
+            {breadcrumbs.map((crumb, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <Fragment key={crumb.label}>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {isLast || !crumb.to ? (
+                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink render={<Link to={crumb.to} />}>
+                        {crumb.label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </Fragment>
+              );
+            })}
           </BreadcrumbList>
         </Breadcrumb>
         <SearchForm

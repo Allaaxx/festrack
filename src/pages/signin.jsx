@@ -6,7 +6,7 @@ import { AuthSplitLayout } from '@/components/layout';
 import AuthLoading from '@/components/shared/auth-loading';
 import { useAuthContext } from '@/contexts/auth';
 import { useSignInForm } from '@/forms/hooks/auth';
-import { getOAuthErrorMessage } from '@/helpers/auth';
+import { getAuthErrorMessage, getOAuthErrorMessage } from '@/helpers/auth';
 import { getRedirectDestination } from '@/helpers/url';
 
 const SignInPage = () => {
@@ -34,9 +34,10 @@ const SignInPage = () => {
       await signin(data);
     } catch (error) {
       form.setError('root', {
-        message:
-          error?.message ||
-          'E-mail ou senha incorretos. Verifique suas credenciais.',
+        message: getAuthErrorMessage(
+          error,
+          'E-mail ou senha incorretos. Verifique suas credenciais.'
+        ),
       });
     }
   };
@@ -47,9 +48,10 @@ const SignInPage = () => {
       await signInWithGoogle({ callbackURL: redirectTo });
     } catch (error) {
       form.setError('root', {
-        message:
-          error?.message ||
-          'Erro ao entrar com Google. Tente novamente mais tarde.',
+        message: getAuthErrorMessage(
+          error,
+          'Erro ao entrar com Google. Tente novamente mais tarde.'
+        ),
       });
       setIsGoogleLoading(false);
     }

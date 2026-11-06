@@ -3,9 +3,10 @@ import { forwardRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 const PasswordInput = forwardRef(
-  ({ placeholder = 'Digite sua senha', ...props }, ref) => {
+  ({ className, placeholder = 'Digite sua senha', ...props }, ref) => {
     const [passwordIsVisible, setPasswordIsVisible] = useState(false);
     return (
       <div className="relative">
@@ -13,6 +14,7 @@ const PasswordInput = forwardRef(
           type={passwordIsVisible ? 'text' : 'password'}
           placeholder={placeholder}
           ref={ref}
+          className={cn('pr-10', className)}
           {...props}
         />
         <Button

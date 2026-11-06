@@ -37,3 +37,34 @@ export const getOAuthErrorMessage = (error, errorDescription) => {
 
   return 'Ocorreu um erro durante a autenticação social. Por favor, tente novamente.';
 };
+
+/**
+ * Traduz falhas técnicas de rede ou erros de autenticação em mensagens amigáveis em Português (BR).
+ *
+ * @param {Error|{ message?: string, code?: string, statusText?: string }|string|null} [error] - Objeto ou mensagem de erro capturado.
+ * @param {string} [fallbackMessage] - Mensagem padrão em caso de erro desconhecido.
+ * @returns {string} Mensagem amigável localizada para exibição ao usuário.
+ */
+export const getAuthErrorMessage = (
+  error,
+  fallbackMessage = 'Ocorreu um erro ao processar sua solicitação. Tente novamente.'
+) => {
+  const message =
+    typeof error === 'string'
+      ? error
+      : error?.message || error?.statusText || '';
+
+  const normalized = message.trim().toLowerCase();
+
+  if (
+    normalized.includes('failed to fetch') ||
+    normalized.includes('networkerror') ||
+    normalized.includes('network error') ||
+    normalized.includes('err_connection') ||
+    normalized.includes('load failed')
+  ) {
+    return 'Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.';
+  }
+
+  return message || fallbackMessage;
+};
