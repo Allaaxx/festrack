@@ -27,11 +27,11 @@ import { cn } from '@/lib/utils';
 const barChartConfig = {
   entradas: {
     label: 'Entradas',
-    color: 'var(--color-primary-green)',
+    color: 'var(--chart-1)',
   },
   saidas: {
     label: 'Saídas',
-    color: 'var(--color-primary-red)',
+    color: 'var(--chart-2)',
   },
 };
 
@@ -66,7 +66,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
     <Card
       data-testid="event-balance-overview-card"
       className={cn(
-        'col-span-full grid flex-col lg:grid-cols-5 2xl:col-span-4',
+        '@container/card col-span-full grid flex-col lg:grid-cols-5 2xl:col-span-4',
         className
       )}
       {...props}
@@ -137,7 +137,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
         <CardHeader className="lg:pl-0">
           <div
             data-testid="kpi-net-balance"
-            className="border-border bg-muted/30 flex w-full items-center justify-between rounded-lg border px-3 py-2"
+            className="border-border bg-muted/30 flex w-full items-center justify-between rounded-lg border px-3 py-2 shadow-xs"
           >
             <div className="flex items-center gap-2">
               <Wallet className="text-muted-foreground size-4" />
@@ -145,7 +145,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
                 Saldo Líquido
               </span>
             </div>
-            <span className="text-base font-semibold">
+            <span className="text-base font-semibold tabular-nums">
               {formatCurrency(netBalance)}
             </span>
           </div>
@@ -187,7 +187,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
                             <tspan
                               x={viewBox.cx}
                               y={(viewBox.cy || 0) - 7}
-                              className="fill-card-foreground text-2xl font-semibold"
+                              className="fill-card-foreground text-2xl font-semibold tabular-nums"
                             >
                               {executionPercentage}%
                             </tspan>
@@ -216,7 +216,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
           <div className="flex items-center justify-between gap-4 md:max-lg:gap-0">
             <div className="flex items-center gap-2 p-2">
               <Avatar size="lg" className="rounded-sm after:border-0">
-                <AvatarFallback className="bg-primary-green/10 text-primary-green shrink-0 rounded-sm">
+                <AvatarFallback className="bg-chart-1/10 text-chart-1 shrink-0 rounded-sm">
                   <ArrowUpRight className="size-5" />
                 </AvatarFallback>
               </Avatar>
@@ -224,7 +224,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
                 <span className="text-muted-foreground text-sm">
                   Total de Entradas
                 </span>
-                <span className="text-base font-medium">
+                <span className="text-base font-medium tabular-nums">
                   {formatCurrency(entradas)}
                 </span>
               </div>
@@ -232,7 +232,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
 
             <div className="flex items-center gap-2 p-2">
               <Avatar size="lg" className="rounded-sm after:border-0">
-                <AvatarFallback className="bg-primary-red/10 text-primary-red shrink-0 rounded-sm">
+                <AvatarFallback className="bg-chart-2/10 text-chart-2 shrink-0 rounded-sm">
                   <ArrowDownRight className="size-5" />
                 </AvatarFallback>
               </Avatar>
@@ -240,7 +240,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
                 <span className="text-muted-foreground text-sm">
                   Total de Saídas
                 </span>
-                <span className="text-base font-medium">
+                <span className="text-base font-medium tabular-nums">
                   {formatCurrency(saidas)}
                 </span>
               </div>

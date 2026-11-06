@@ -21,7 +21,7 @@ const EventDetailPage = () => {
 
   if (isError) {
     return (
-      <div className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border py-16 text-center">
+      <div className="mx-4 my-2 flex flex-col items-center justify-center gap-4 rounded-xl border py-16 text-center">
         <CalendarXIcon className="text-muted-foreground size-10" />
         <div className="space-y-1">
           <p className="text-lg font-medium">
@@ -43,7 +43,7 @@ const EventDetailPage = () => {
 
   if (!event) {
     return (
-      <div className="m-6 flex flex-col items-center justify-center gap-4 rounded-xl border py-16 text-center">
+      <div className="mx-4 my-2 flex flex-col items-center justify-center gap-4 rounded-xl border py-16 text-center">
         <CalendarXIcon className="text-muted-foreground size-10" />
         <div className="space-y-1">
           <p className="text-lg font-medium">Evento não encontrado</p>
@@ -59,15 +59,25 @@ const EventDetailPage = () => {
   }
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-6">
-      <EventDetailHeader
-        event={event}
-        onDeleteSuccess={() => navigate('/events')}
-      />
-
-      <div data-testid="event-detail-content" className="space-y-6">
-        <EventFinancialCards eventId={event.id} event={event} />
-        <EventTransactionsTable eventId={event.id} />
+    <div className="@container/main flex flex-1 flex-col gap-2">
+      <div className="flex flex-col gap-4 py-1 md:gap-6 md:py-4">
+        <div className="px-4">
+          <EventDetailHeader
+            event={event}
+            onDeleteSuccess={() => navigate('/events')}
+          />
+        </div>
+        <div
+          data-testid="event-detail-content"
+          className="flex flex-col gap-4 md:gap-6"
+        >
+          <div className="px-4">
+            <EventFinancialCards eventId={event.id} event={event} />
+          </div>
+          <div className="px-4">
+            <EventTransactionsTable eventId={event.id} />
+          </div>
+        </div>
       </div>
     </div>
   );
