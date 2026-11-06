@@ -1,5 +1,4 @@
 import { Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
 
 import ConfirmDeleteDialog from '@/components/shared/confirm-delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -20,22 +19,12 @@ import { useDeleteTransaction } from '@/features/finances/api/hooks';
 const DeleteTransactionButton = ({
   transaction,
   onSuccess,
-  open: controlledOpen,
+  open,
   onOpenChange,
   trigger,
   render,
 }) => {
-  const isControlled = controlledOpen !== undefined;
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = isControlled ? controlledOpen : internalOpen;
-
-  const handleOpenChange = (nextOpen) => {
-    if (!isControlled) {
-      setInternalOpen(nextOpen);
-    }
-    onOpenChange?.(nextOpen);
-  };
-
+  const isControlled = open !== undefined;
   const actionTrigger = trigger !== undefined ? trigger : render;
   const hasTrigger =
     actionTrigger !== null && (!isControlled || Boolean(actionTrigger));
@@ -59,7 +48,6 @@ const DeleteTransactionButton = ({
     if (!transaction?.id) return;
     try {
       await deleteTransaction({ id: transaction.id });
-      handleOpenChange(false);
       onSuccess?.();
       toast.add({
         type: 'success',
@@ -81,7 +69,7 @@ const DeleteTransactionButton = ({
   return (
     <ConfirmDeleteDialog
       open={open}
-      onOpenChange={handleOpenChange}
+      onOpenChange={onOpenChange}
       trigger={resolvedTrigger}
       title="Excluir transação?"
       description={description}

@@ -1,7 +1,6 @@
 import { Trash2Icon } from 'lucide-react';
-import { useState } from 'react';
 
-import { ConfirmDeleteDialog } from '@/components/shared/confirm-delete-dialog';
+import ConfirmDeleteDialog from '@/components/shared/confirm-delete-dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { useDeleteEvent } from '@/features/events/api/hooks';
@@ -20,24 +19,16 @@ import { useDeleteEvent } from '@/features/events/api/hooks';
 const DeleteEventButton = ({
   event,
   onSuccess,
-  open: controlledOpen,
+  open,
   onOpenChange,
   trigger,
 }) => {
-  const isControlled = controlledOpen !== undefined;
-  const [internalOpen, setInternalOpen] = useState(false);
-
-  const handleOpenChange = (open) => {
-    if (!isControlled) setInternalOpen(open);
-    onOpenChange?.(open);
-  };
-
+  const isControlled = open !== undefined;
   const { mutateAsync: deleteEvent, isPending } = useDeleteEvent();
 
   const handleDelete = async () => {
     try {
-      const deleted = await deleteEvent({ id: event.id });
-      handleOpenChange(false);
+      const deleted = await deleteEvent({ id: event?.id });
       onSuccess?.();
       if (deleted?.syncError) {
         toast.add({
@@ -81,8 +72,8 @@ const DeleteEventButton = ({
 
   return (
     <ConfirmDeleteDialog
-      open={isControlled ? controlledOpen : internalOpen}
-      onOpenChange={handleOpenChange}
+      open={open}
+      onOpenChange={onOpenChange}
       trigger={dialogTrigger}
       title="Excluir evento?"
       description={description}

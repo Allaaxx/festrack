@@ -96,5 +96,4 @@ function ConfirmDeleteDialog({
   );
 }
 
-export { ConfirmDeleteDialog };
 export default ConfirmDeleteDialog;
