@@ -6,6 +6,7 @@ import { LOCAL_STORAGE_ACTIVE_SHOP_KEY } from '@/constants/local-storage';
 import { useAuthContext } from '@/contexts/auth';
 import { ShopContextProvider, useShopContext } from '@/contexts/shop';
 import {
+  ShopService,
   useCreateShopInvitation,
   useDeleteShop,
   useGetShopInvitations,
@@ -13,8 +14,7 @@ import {
   useRemoveShopMember,
   useRevokeShopInvitation,
   useTransferShopOwnership,
-} from '@/features/shops/api/hooks';
-import ShopService from '@/features/shops/api/services';
+} from '@/features/shops';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),

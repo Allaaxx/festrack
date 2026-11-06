@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useGetTransactions } from '@/features/finances/api/hooks';
+import { useGetTransactions } from '@/features/finances';
 
 import EventFinancialCards from './event-financial-cards';
 
