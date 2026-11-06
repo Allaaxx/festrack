@@ -14,12 +14,14 @@ export const UserService = {
   updateProfile: async (input) => {
     const firstName = input.firstName ?? input.first_name;
     const lastName = input.lastName ?? input.last_name;
+    const email = input.email;
     const googleCalendarSyncEnabled =
       input.google_calendar_sync_enabled ?? input.googleCalendarSyncEnabled;
 
     const payload = {};
     if (firstName !== undefined) payload.first_name = firstName;
     if (lastName !== undefined) payload.last_name = lastName;
+    if (email !== undefined) payload.email = email;
     if (googleCalendarSyncEnabled !== undefined) {
       payload.google_calendar_sync_enabled = Boolean(googleCalendarSyncEnabled);
     }

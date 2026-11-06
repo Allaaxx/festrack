@@ -152,6 +152,46 @@ export const AuthService = {
 
     return response?.data;
   },
+
+  /**
+   * Define uma senha para um usuário que se autenticou via provedor externo e ainda não tem senha.
+   * @param {{ newPassword: string }} input
+   * @returns {Promise<object>}
+   */
+  setPassword: async ({ newPassword }) => {
+    const response = await authClient.setPassword({
+      newPassword,
+    });
+
+    if (response?.error) {
+      throw response.error;
+    }
+
+    return response?.data;
+  },
+
+  /**
+   * Altera a senha existente do usuário autenticado.
+   * @param {{ currentPassword: string, newPassword: string, revokeOtherSessions?: boolean }} input
+   * @returns {Promise<object>}
+   */
+  changePassword: async ({
+    currentPassword,
+    newPassword,
+    revokeOtherSessions = false,
+  }) => {
+    const response = await authClient.changePassword({
+      currentPassword,
+      newPassword,
+      revokeOtherSessions,
+    });
+
+    if (response?.error) {
+      throw response.error;
+    }
+
+    return response?.data;
+  },
 };
 
 export default AuthService;
