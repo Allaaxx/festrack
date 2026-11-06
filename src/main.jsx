@@ -90,12 +90,7 @@ if (rootElement) {
           </TooltipProvider>
 
           <Toaster />
-          {import.meta.env.DEV && (
-            <ReactQueryDevtools
-              initialIsOpen={false}
-              buttonPosition="bottom-left"
-            />
-          )}
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
         </QueryClientProvider>
       </ThemeProvider>
     </StrictMode>
