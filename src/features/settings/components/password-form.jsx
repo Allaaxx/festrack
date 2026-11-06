@@ -33,6 +33,51 @@ const requirements = [
   },
 ];
 
+const PasswordInputField = ({
+  id,
+  value,
+  onChange,
+  placeholder,
+  className,
+  ariaLabelToggle,
+  required = true,
+}) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  return (
+    <InputGroup className={className}>
+      <InputGroupInput
+        id={id}
+        type={isVisible ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        required={required}
+      />
+      <InputGroupAddon align="inline-end" className="pr-1.5">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setIsVisible((prev) => !prev)}
+          className="text-muted-foreground focus-visible:ring-ring/50 rounded-l-none hover:bg-transparent"
+          aria-label={
+            isVisible
+              ? `Ocultar ${ariaLabelToggle}`
+              : `Exibir ${ariaLabelToggle}`
+          }
+        >
+          {isVisible ? (
+            <EyeOffIcon className="size-4" />
+          ) : (
+            <EyeIcon className="size-4" />
+          )}
+        </Button>
+      </InputGroupAddon>
+    </InputGroup>
+  );
+};
+
 const PasswordForm = () => {
   const { data: accounts = [], isLoading } = useGetAccounts();
   const setPasswordMutation = useSetPassword();
@@ -40,15 +85,10 @@ const PasswordForm = () => {
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [isVisibleCurrent, setIsVisibleCurrent] = useState(false);
-  const [isVisibleNew, setIsVisibleNew] = useState(false);
 
   const hasCredential = accounts.some((acc) => acc.providerId === 'credential');
   const isPending =
     setPasswordMutation.isPending || changePasswordMutation.isPending;
-
-  const toggleVisibilityCurrent = () => setIsVisibleCurrent((prev) => !prev);
-  const toggleVisibilityNew = () => setIsVisibleNew((prev) => !prev);
 
   const strength = requirements.map((req) => ({
     met: req.regex.test(newPassword),
@@ -177,36 +217,13 @@ const PasswordForm = () => {
               <Label htmlFor="current-password" className="gap-1">
                 Senha atual<span className="text-destructive">*</span>
               </Label>
-              <InputGroup>
-                <InputGroupInput
-                  id="current-password"
-                  type={isVisibleCurrent ? 'text' : 'password'}
-                  placeholder="Digite sua senha atual"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                />
-                <InputGroupAddon align="inline-end" className="pr-1.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={toggleVisibilityCurrent}
-                    className="text-muted-foreground focus-visible:ring-ring/50 rounded-l-none hover:bg-transparent"
-                    aria-label={
-                      isVisibleCurrent
-                        ? 'Ocultar senha atual'
-                        : 'Exibir senha atual'
-                    }
-                  >
-                    {isVisibleCurrent ? (
-                      <EyeOffIcon className="size-4" />
-                    ) : (
-                      <EyeIcon className="size-4" />
-                    )}
-                  </Button>
-                </InputGroupAddon>
-              </InputGroup>
+              <PasswordInputField
+                id="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Digite sua senha atual"
+                ariaLabelToggle="senha atual"
+              />
             </div>
           )}
 
@@ -215,38 +232,18 @@ const PasswordForm = () => {
               {hasCredential ? 'Nova senha' : 'Senha'}
               <span className="text-destructive">*</span>
             </Label>
-            <InputGroup className="mb-3">
-              <InputGroupInput
-                id="new-password"
-                type={isVisibleNew ? 'text' : 'password'}
-                placeholder={
-                  hasCredential
-                    ? 'Digite a nova senha'
-                    : 'Digite uma senha segura'
-                }
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-              />
-              <InputGroupAddon align="inline-end" className="pr-1.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={toggleVisibilityNew}
-                  className="text-muted-foreground focus-visible:ring-ring/50 rounded-l-none hover:bg-transparent"
-                  aria-label={
-                    isVisibleNew ? 'Ocultar nova senha' : 'Exibir nova senha'
-                  }
-                >
-                  {isVisibleNew ? (
-                    <EyeOffIcon className="size-4" />
-                  ) : (
-                    <EyeIcon className="size-4" />
-                  )}
-                </Button>
-              </InputGroupAddon>
-            </InputGroup>
+            <PasswordInputField
+              id="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder={
+                hasCredential
+                  ? 'Digite a nova senha'
+                  : 'Digite uma senha segura'
+              }
+              className="mb-3"
+              ariaLabelToggle="nova senha"
+            />
 
             <div className="mb-4 flex h-1 w-full gap-1">
               {Array.from({ length: 5 }).map((_, index) => (

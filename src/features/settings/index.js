@@ -2,7 +2,6 @@ export { default as AccountSettings } from './components/account-settings';
 export { default as ConnectedAccountsCard } from './components/connected-accounts-card';
 export { default as DangerZoneCard } from './components/danger-zone-card';
 export { default as EmailForm } from './components/email-form';
-export { default as EmailPasswordForm } from './components/email-password-form';
 export { default as PasswordForm } from './components/password-form';
 export { default as PersonalInfoForm } from './components/personal-info-form';
 export { default as ProfileSettings } from './components/profile-settings';

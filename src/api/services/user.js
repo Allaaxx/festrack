@@ -9,6 +9,9 @@ export const UserService = {
    * @param {string} [input.lastName] - Sobrenome.
    * @param {string} [input.first_name] - Primeiro nome (snake_case).
    * @param {string} [input.last_name] - Sobrenome (snake_case).
+   * @param {string} [input.email] - Endereço de e-mail.
+   * @param {boolean} [input.google_calendar_sync_enabled] - Sincronização com Google Agenda.
+   * @param {boolean} [input.googleCalendarSyncEnabled] - Sincronização com Google Agenda (camelCase).
    * @returns {Promise<object>} Usuário atualizado normalizado.
    */
   updateProfile: async (input) => {

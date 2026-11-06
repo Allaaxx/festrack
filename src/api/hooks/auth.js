@@ -35,9 +35,7 @@ export const useSetPassword = () => {
 
   return useMutation({
     mutationKey: setPasswordMutationKey,
-    mutationFn: async (variables) => {
-      return await AuthService.setPassword(variables);
-    },
+    mutationFn: (variables) => AuthService.setPassword(variables),
     onSuccess: () => {
       if (user?.id) {
         queryClient.invalidateQueries({
@@ -51,8 +49,6 @@ export const useSetPassword = () => {
 export const useChangePassword = () => {
   return useMutation({
     mutationKey: changePasswordMutationKey,
-    mutationFn: async (variables) => {
-      return await AuthService.changePassword(variables);
-    },
+    mutationFn: (variables) => AuthService.changePassword(variables),
   });
 };
