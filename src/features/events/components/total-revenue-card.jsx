@@ -216,7 +216,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
           <div className="flex items-center justify-between gap-4 md:max-lg:gap-0">
             <div className="flex items-center gap-2 p-2">
               <Avatar size="lg" className="rounded-sm after:border-0">
-                <AvatarFallback className="bg-chart-1/10 text-chart-1 shrink-0 rounded-sm">
+                <AvatarFallback className="bg-primary/10 text-primary shrink-0 rounded-sm">
                   <ArrowUpRight className="size-5" />
                 </AvatarFallback>
               </Avatar>
@@ -232,7 +232,7 @@ export function TotalRevenueCard({ transactions = [], className, ...props }) {
 
             <div className="flex items-center gap-2 p-2">
               <Avatar size="lg" className="rounded-sm after:border-0">
-                <AvatarFallback className="bg-chart-2/10 text-chart-2 shrink-0 rounded-sm">
+                <AvatarFallback className="bg-primary/10 text-primary shrink-0 rounded-sm">
                   <ArrowDownRight className="size-5" />
                 </AvatarFallback>
               </Avatar>
