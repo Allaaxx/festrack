@@ -4,7 +4,7 @@
  *
  * @param {number|null|undefined} bytes - File size in bytes
  * @param {number} [decimals=1] - Number of decimal places
- * @returns {string} e.g. "0 B", "373 KB", "1.3 MB", "25 MB"
+ * @returns {string} e.g. "0 B", "373 KB", "1,3 MB", "25 MB"
  */
 export function formatFileSize(bytes, decimals = 1) {
   if (bytes === null || bytes === undefined || isNaN(bytes) || bytes <= 0) {
@@ -19,11 +19,25 @@ export function formatFileSize(bytes, decimals = 1) {
   const unitIndex = Math.min(i, sizes.length - 1);
   const value = bytes / Math.pow(k, unitIndex);
 
-  // If value has no decimal part or is whole integer, avoid trailing zeroes like .0
+  // If value has no decimal part or is whole integer, avoid trailing zeroes like ,0
   const formatted =
-    value % 1 === 0 ? value.toFixed(0) : parseFloat(value.toFixed(dm)).toString();
+    value % 1 === 0
+      ? value.toFixed(0)
+      : parseFloat(value.toFixed(dm)).toString().replace('.', ',');
 
   return `${formatted} ${sizes[unitIndex]}`;
+}
+
+/**
+ * Generates a synthetic identifier for a file based on name, size, and lastModified.
+ *
+ * @param {File|Object} file
+ * @param {number} [index=0]
+ * @returns {string}
+ */
+export function getFileId(file, index = 0) {
+  if (!file) return String(index);
+  return `${file.name}-${file.size}-${file.lastModified || index}`;
 }
 
 /**

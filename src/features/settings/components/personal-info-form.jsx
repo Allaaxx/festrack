@@ -17,6 +17,7 @@ const PersonalInfoForm = () => {
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [prevUser, setPrevUser] = useState(user);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   if (user !== prevUser) {
     setPrevUser(user);
@@ -62,6 +63,7 @@ const PersonalInfoForm = () => {
             <Label>Seu Avatar</Label>
             <Dropzone
               multiple={false}
+              value={avatarFile}
               accept={{
                 'image/jpeg': ['.jpg', '.jpeg'],
                 'image/png': ['.png'],
@@ -73,17 +75,23 @@ const PersonalInfoForm = () => {
               isUploading={uploadAvatarMutation.isPending}
               disabled={uploadAvatarMutation.isPending}
               onChange={async (selectedFile) => {
-                if (!selectedFile) return;
+                if (!selectedFile) {
+                  setAvatarFile(null);
+                  return;
+                }
+                setAvatarFile(selectedFile);
                 try {
                   const updatedUser =
                     await uploadAvatarMutation.mutateAsync(selectedFile);
                   updateUser(updatedUser);
+                  setAvatarFile(null);
                   toast.add({
                     type: 'success',
                     title: 'Avatar atualizado com sucesso!',
                     description: 'Sua foto de perfil foi alterada.',
                   });
                 } catch (error) {
+                  setAvatarFile(null);
                   console.error(error);
                   toast.add({
                     type: 'error',
@@ -95,6 +103,7 @@ const PersonalInfoForm = () => {
                 }
               }}
               onError={({ message }) => {
+                setAvatarFile(null);
                 toast.add({
                   type: 'error',
                   title: 'Arquivo inválido',

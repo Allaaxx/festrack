@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatFileSize, getFileCategory } from '@/helpers/file';
+import { formatFileSize, getFileCategory, getFileId } from '@/helpers/file';
 
 describe('formatFileSize', () => {
   it('returns "0 B" for non-positive or falsy values', () => {
@@ -26,21 +26,38 @@ describe('formatFileSize', () => {
   it('formats megabytes correctly with decimal places when appropriate', () => {
     expect(formatFileSize(1024 * 1024)).toBe('1 MB');
     expect(formatFileSize(25 * 1024 * 1024)).toBe('25 MB');
-    // 1.3 MB approx
-    expect(formatFileSize(1.3 * 1024 * 1024)).toBe('1.3 MB');
+    // 1,3 MB approx
+    expect(formatFileSize(1.3 * 1024 * 1024)).toBe('1,3 MB');
   });
 
   it('formats gigabytes and terabytes', () => {
     expect(formatFileSize(1024 * 1024 * 1024)).toBe('1 GB');
-    expect(formatFileSize(1.5 * 1024 * 1024 * 1024)).toBe('1.5 GB');
+    expect(formatFileSize(1.5 * 1024 * 1024 * 1024)).toBe('1,5 GB');
     expect(formatFileSize(1024 * 1024 * 1024 * 1024)).toBe('1 TB');
   });
 
   it('respects the decimals parameter', () => {
     const bytes = 1.256 * 1024 * 1024;
-    expect(formatFileSize(bytes, 2)).toBe('1.26 MB');
+    expect(formatFileSize(bytes, 2)).toBe('1,26 MB');
     expect(formatFileSize(bytes, 0)).toBe('1 MB');
     expect(formatFileSize(bytes, -1)).toBe('1 MB');
+  });
+});
+
+describe('getFileId', () => {
+  it('generates a synthetic id using name, size, and lastModified', () => {
+    const file = { name: 'document.pdf', size: 1024, lastModified: 1700000000 };
+    expect(getFileId(file)).toBe('document.pdf-1024-1700000000');
+  });
+
+  it('falls back to index if lastModified is missing', () => {
+    const file = { name: 'photo.png', size: 2048 };
+    expect(getFileId(file, 3)).toBe('photo.png-2048-3');
+  });
+
+  it('handles falsy file gracefully', () => {
+    expect(getFileId(null, 5)).toBe('5');
+    expect(getFileId(undefined, 0)).toBe('0');
   });
 });
 

@@ -201,7 +201,7 @@ describe('PersonalInfoForm Component', () => {
       });
     });
 
-    it('shows error toast when avatar upload mutation fails', async () => {
+    it('shows error toast and resets preview when avatar upload mutation fails', async () => {
       const validFile = new File(['image-bytes'], 'avatar.jpg', {
         type: 'image/jpeg',
       });
@@ -222,6 +222,50 @@ describe('PersonalInfoForm Component', () => {
           })
         );
       });
+
+      // Verify broken file does not remain stuck in the preview
+      expect(screen.queryByText('avatar.jpg')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Arraste e solte seu arquivo aqui')
+      ).toBeInTheDocument();
+    });
+
+    it('restores previous avatar image when new avatar upload fails', async () => {
+      useAuthContext.mockReturnValue({
+        user: {
+          ...mockUser,
+          image: 'https://s3.amazonaws.com/festrack/avatars/user-1.png',
+        },
+        updateUser: mockUpdateUser,
+      });
+
+      const validFile = new File(['image-bytes'], 'new-avatar.jpg', {
+        type: 'image/jpeg',
+      });
+      mockUploadAvatarMutateAsync.mockRejectedValueOnce(
+        new Error('Falha no upload')
+      );
+
+      const { container } = render(<PersonalInfoForm />);
+      const fileInput = container.querySelector('input[type="file"]');
+
+      fireEvent.change(fileInput, { target: { files: [validFile] } });
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'error',
+            title: 'Erro ao enviar avatar',
+          })
+        );
+      });
+
+      expect(screen.queryByText('new-avatar.jpg')).not.toBeInTheDocument();
+      const restoredImg = screen.getByAltText('Avatar do usuário');
+      expect(restoredImg).toHaveAttribute(
+        'src',
+        'https://s3.amazonaws.com/festrack/avatars/user-1.png'
+      );
     });
 
     it('shows validation error toast when selected file exceeds 5MB', async () => {

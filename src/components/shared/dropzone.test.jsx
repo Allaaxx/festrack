@@ -114,7 +114,7 @@ describe('Dropzone Component (Single-Item)', () => {
         expect(screen.getByText('relatorio.pdf')).toBeInTheDocument();
       });
 
-      expect(screen.getByText('1.5 MB')).toBeInTheDocument();
+      expect(screen.getByText('1,5 MB')).toBeInTheDocument();
       expect(screen.queryByRole('img')).not.toBeInTheDocument();
     });
   });
@@ -263,6 +263,12 @@ describe('Dropzone Component (Single-Item)', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            code: 'file-too-large',
+            file: largeFile,
+          }),
+        ],
         expect.objectContaining({
           code: 'file-too-large',
           file: largeFile,
@@ -298,6 +304,12 @@ describe('Dropzone Component (Single-Item)', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            code: 'file-invalid-type',
+            file: textFile,
+          }),
+        ],
         expect.objectContaining({
           code: 'file-invalid-type',
           file: textFile,
@@ -333,6 +345,44 @@ describe('Dropzone Component (Single-Item)', () => {
         expect(screen.getByText('avatar.png')).toBeInTheDocument();
       });
     });
+
+    it('passes array of all rejections and first rejection for backward compatibility in onError', async () => {
+      const onError = vi.fn();
+      const { container } = render(
+        <Dropzone
+          maxSize={1024}
+          onError={onError}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const largeFile = new File(['12345'], 'big.png', { type: 'image/png' });
+      Object.defineProperty(largeFile, 'size', { value: 5000 });
+
+      fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+      await waitFor(() => {
+        expect(onError).toHaveBeenCalled();
+      });
+
+      const [rejections, firstRejection] = onError.mock.calls[0];
+      expect(Array.isArray(rejections)).toBe(true);
+      expect(rejections[0]).toEqual(
+        expect.objectContaining({
+          code: 'file-too-large',
+          file: largeFile,
+        })
+      );
+      expect(firstRejection).toEqual(
+        expect.objectContaining({
+          code: 'file-too-large',
+          file: largeFile,
+        })
+      );
+      // Legacy first arg property access
+      expect(rejections.code).toBe('file-too-large');
+      expect(rejections.message).toBeTruthy();
+    });
   });
 
   describe('Controlled value mode', () => {
@@ -360,6 +410,23 @@ describe('Dropzone Component (Single-Item)', () => {
       expect(
         screen.getByTestId('dropzone-loading-spinner')
       ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /substituir/i })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /remover/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it('displays progress indicator and percentage when progress prop is provided during upload', () => {
+      const file = new File(['test'], 'profile.png', { type: 'image/png' });
+      render(<Dropzone value={file} isUploading={true} progress={65.4} />);
+
+      expect(screen.getByText('65%')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('dropzone-loading-spinner')
+      ).toBeInTheDocument();
+      expect(screen.getByRole('progressbar')).toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /substituir/i })
       ).not.toBeInTheDocument();
@@ -449,6 +516,32 @@ describe('Dropzone Component (Single-Item)', () => {
         'blob:http://localhost/unmount.png'
       );
     });
+
+    it('does not create duplicate or unrevoked secondary object URLs in single-item onFilesChange', async () => {
+      const onFilesChange = vi.fn();
+      const { container, unmount } = render(
+        <Dropzone onFilesChange={onFilesChange} />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file = new File(['content'], 'avatar.png', { type: 'image/png' });
+
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(onFilesChange).toHaveBeenCalledTimes(1);
+      });
+
+      // createObjectURL is called exactly once for this file
+      expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+      const generatedUrl = onFilesChange.mock.calls[0][0][0].preview;
+      expect(generatedUrl).toBe('blob:http://localhost/avatar.png');
+
+      unmount();
+
+      // That same URL is revoked upon unmount
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(generatedUrl);
+    });
   });
 
   describe('Dropzone Component (Multi-Item Folding)', () => {
@@ -494,6 +587,7 @@ describe('Dropzone Component (Single-Item)', () => {
       expect(screen.getByText('2 arquivos')).toBeInTheDocument();
       expect(screen.getByText('photo1.jpg')).toBeInTheDocument();
       expect(screen.getByText('photo2.jpg')).toBeInTheDocument();
+      expect(screen.getAllByText('.jpg').length).toBe(2);
       expect(screen.getByText('373 KB')).toBeInTheDocument();
       expect(screen.getByText('337 KB')).toBeInTheDocument();
 
@@ -716,6 +810,12 @@ describe('Dropzone Component (Single-Item)', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            code: 'too-many-files',
+            message: 'Número máximo de arquivos atingido (máximo: 2).',
+          }),
+        ],
         expect.objectContaining({
           code: 'too-many-files',
           message: 'Número máximo de arquivos atingido (máximo: 2).',
@@ -751,6 +851,11 @@ describe('Dropzone Component (Single-Item)', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            code: 'too-many-files',
+          }),
+        ],
         expect.objectContaining({
           code: 'too-many-files',
         })
@@ -785,6 +890,11 @@ describe('Dropzone Component (Single-Item)', () => {
       });
 
       expect(onError).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            code: 'total-size-too-large',
+          }),
+        ],
         expect.objectContaining({
           code: 'total-size-too-large',
         })
@@ -806,6 +916,19 @@ describe('Dropzone Component (Single-Item)', () => {
       expect(
         screen.getByText('Arraste e solte seus arquivos aqui')
       ).toBeInTheDocument();
+    });
+
+    it('renders file extension badges next to file names in multi-item file list', () => {
+      const file1 = new File(['1'], 'planilha.xlsx', {
+        type: 'application/vnd.ms-excel',
+      });
+      const file2 = new File(['2'], 'documento.pdf', {
+        type: 'application/pdf',
+      });
+      render(<Dropzone multiple={true} value={[file1, file2]} />);
+
+      expect(screen.getByText('.xlsx')).toBeInTheDocument();
+      expect(screen.getByText('.pdf')).toBeInTheDocument();
     });
 
     it('revokes generated object URLs for all files when component unmounts', async () => {

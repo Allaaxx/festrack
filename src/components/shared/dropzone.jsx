@@ -10,7 +10,7 @@ import {
   DropzoneSinglePreview,
   DropzoneZone,
 } from '@/components/ui/dropzone';
-import { formatFileSize, getFileCategory } from '@/helpers/file';
+import { formatFileSize, getFileCategory, getFileId } from '@/helpers/file';
 
 /**
  * Maps react-dropzone rejection errors to localized Portuguese (BR) messages.
@@ -36,7 +36,7 @@ function getLocalizedErrorMessage(
     case 'total-size-too-large':
       return `O tamanho total dos arquivos excede o limite de ${formatFileSize(totalSizeLimit)}.`;
     default:
-      return error.message || 'Arquivo inválido.';
+      return 'Arquivo não suportado ou inválido.';
   }
 }
 
@@ -60,6 +60,7 @@ function Dropzone({
   multiple = false,
   disabled = false,
   isUploading = false,
+  progress,
   initialPreviewUrl,
   previewAlt = 'Imagem atual',
   title,
@@ -104,8 +105,7 @@ function Dropzone({
         : [];
     initialList.forEach((file) => {
       if (
-        (getFileCategory(file) === 'image' ||
-          file.type?.startsWith('image/')) &&
+        getFileCategory(file) === 'image' &&
         typeof URL !== 'undefined' &&
         typeof URL.createObjectURL === 'function'
       ) {
@@ -145,30 +145,38 @@ function Dropzone({
     }
   }, []);
 
-  // Single file preview URL
-  const objectUrl = useMemo(() => {
-    if (
-      !multiple &&
-      currentFile &&
-      (getFileCategory(currentFile) === 'image' ||
-        currentFile.type?.startsWith('image/'))
-    ) {
-      return typeof URL !== 'undefined' &&
-        typeof URL.createObjectURL === 'function'
-        ? URL.createObjectURL(currentFile)
-        : null;
-    }
-    return null;
-  }, [currentFile, multiple]);
-
-  // Clean single objectUrl
+  // Sync controlled single-file preview and revoke old previews
+  const prevCurrentFileRef = useRef(currentFile);
   useEffect(() => {
-    return () => {
-      if (objectUrl) {
-        revokeUrl(objectUrl);
+    if (!multiple) {
+      if (
+        prevCurrentFileRef.current &&
+        prevCurrentFileRef.current !== currentFile
+      ) {
+        const oldFile = prevCurrentFileRef.current;
+        if (previewMapRef.current.has(oldFile)) {
+          revokeUrl(previewMapRef.current.get(oldFile));
+          setPreviewMap((prev) => {
+            const next = new Map(prev);
+            next.delete(oldFile);
+            return next;
+          });
+        }
       }
-    };
-  }, [objectUrl, revokeUrl]);
+      prevCurrentFileRef.current = currentFile;
+
+      if (
+        currentFile &&
+        getFileCategory(currentFile) === 'image' &&
+        typeof URL !== 'undefined' &&
+        typeof URL.createObjectURL === 'function' &&
+        !previewMapRef.current.has(currentFile)
+      ) {
+        const url = URL.createObjectURL(currentFile);
+        setPreviewMap((prev) => new Map(prev).set(currentFile, url));
+      }
+    }
+  }, [currentFile, multiple, revokeUrl]);
 
   // Clean all preview URLs on unmount
   useEffect(() => {
@@ -179,32 +187,47 @@ function Dropzone({
     };
   }, [revokeUrl]);
 
+  const notifyChange = useCallback(
+    (files) => {
+      onChange?.(files);
+      onFileSelect?.(files);
+    },
+    [onChange, onFileSelect]
+  );
+
   const onDrop = useCallback(
     (acceptedFiles, fileRejections) => {
       if (fileRejections && fileRejections.length > 0) {
-        const firstRejection = fileRejections[0];
-        const firstError = firstRejection.errors[0] || {
-          code: 'unknown',
-          message: 'Arquivo inválido',
-        };
-        const localizedMsg = getLocalizedErrorMessage(
-          firstError,
-          firstRejection.file,
-          {
-            maxSize,
-            minSize,
-            maxFiles: multiple ? maxFiles : 1,
-            totalSizeLimit,
-            accept,
-          }
+        const rejections = fileRejections.flatMap((rejection) =>
+          rejection.errors.map((err) => ({
+            code: err.code,
+            message: getLocalizedErrorMessage(err, rejection.file, {
+              maxSize,
+              minSize,
+              maxFiles: multiple ? maxFiles : 1,
+              totalSizeLimit,
+              accept,
+            }),
+            file: rejection.file,
+          }))
         );
 
-        setErrorMessage(localizedMsg);
-        onError?.({
-          code: firstError.code,
-          message: localizedMsg,
-          file: firstRejection.file,
-        });
+        const firstError = rejections[0] || {
+          code: 'unknown',
+          message: 'Arquivo não suportado ou inválido.',
+          file: fileRejections[0]?.file,
+        };
+
+        if (firstError) {
+          Object.defineProperties(rejections, {
+            code: { value: firstError.code, enumerable: false, configurable: true },
+            message: { value: firstError.message, enumerable: false, configurable: true },
+            file: { value: firstError.file, enumerable: false, configurable: true },
+          });
+        }
+
+        setErrorMessage(firstError.message);
+        onError?.(rejections, firstError);
         return;
       }
 
@@ -217,11 +240,18 @@ function Dropzone({
           ) {
             const localizedMsg = `Número máximo de arquivos atingido (máximo: ${maxFiles}).`;
             setErrorMessage(localizedMsg);
-            onError?.({
+            const rejection = {
               code: 'too-many-files',
               message: localizedMsg,
               file: acceptedFiles[0],
+            };
+            const rejections = [rejection];
+            Object.defineProperties(rejections, {
+              code: { value: rejection.code, enumerable: false, configurable: true },
+              message: { value: rejection.message, enumerable: false, configurable: true },
+              file: { value: rejection.file, enumerable: false, configurable: true },
             });
+            onError?.(rejections, rejection);
             return;
           }
 
@@ -238,11 +268,18 @@ function Dropzone({
             if (currentTotal + incomingTotal > totalSizeLimit) {
               const localizedMsg = `O tamanho total dos arquivos excede o limite de ${formatFileSize(totalSizeLimit)}.`;
               setErrorMessage(localizedMsg);
-              onError?.({
+              const rejection = {
                 code: 'total-size-too-large',
                 message: localizedMsg,
                 file: acceptedFiles[0],
+              };
+              const rejections = [rejection];
+              Object.defineProperties(rejections, {
+                code: { value: rejection.code, enumerable: false, configurable: true },
+                message: { value: rejection.message, enumerable: false, configurable: true },
+                file: { value: rejection.file, enumerable: false, configurable: true },
               });
+              onError?.(rejections, rejection);
               return;
             }
           }
@@ -250,10 +287,7 @@ function Dropzone({
           // Generate preview URLs for newly accepted image files
           const nextPreviews = new Map(previewMap);
           acceptedFiles.forEach((file) => {
-            if (
-              getFileCategory(file) === 'image' ||
-              file.type?.startsWith('image/')
-            ) {
+            if (getFileCategory(file) === 'image') {
               if (
                 typeof URL !== 'undefined' &&
                 typeof URL.createObjectURL === 'function' &&
@@ -275,7 +309,7 @@ function Dropzone({
           }
 
           const enrichedItems = updatedFiles.map((file, idx) => ({
-            id: `${file.name}-${file.size}-${file.lastModified || idx}`,
+            id: getFileId(file, idx),
             file,
             preview: nextPreviews.get(file) || null,
             name: file.name,
@@ -283,35 +317,38 @@ function Dropzone({
             type: file.type,
           }));
 
-          onChange?.(updatedFiles);
-          onFileSelect?.(updatedFiles);
+          notifyChange(updatedFiles);
           onFilesChange?.(enrichedItems);
         } else {
           const file = acceptedFiles[0];
-          if (objectUrl) {
-            revokeUrl(objectUrl);
+          if (currentFile && previewMap.has(currentFile)) {
+            revokeUrl(previewMap.get(currentFile));
           }
+          let filePreview = null;
+          const nextPreviews = new Map(previewMap);
+          if (
+            getFileCategory(file) === 'image' &&
+            typeof URL !== 'undefined' &&
+            typeof URL.createObjectURL === 'function'
+          ) {
+            filePreview = URL.createObjectURL(file);
+            nextPreviews.set(file, filePreview);
+          }
+          setPreviewMap(nextPreviews);
+
           setErrorMessage(null);
           setHasClearedInitial(false);
 
           if (!isControlled) {
             setInternalFile(file);
           }
-          onChange?.(file);
-          onFileSelect?.(file);
+          notifyChange(file);
 
           const singleEnriched = [
             {
-              id: `${file.name}-${file.size}-${file.lastModified || 0}`,
+              id: getFileId(file, 0),
               file,
-              preview:
-                getFileCategory(file) === 'image' ||
-                file.type?.startsWith('image/')
-                  ? typeof URL !== 'undefined' &&
-                    typeof URL.createObjectURL === 'function'
-                    ? URL.createObjectURL(file)
-                    : null
-                  : null,
+              preview: filePreview,
               name: file.name,
               size: file.size,
               type: file.type,
@@ -323,16 +360,15 @@ function Dropzone({
     },
     [
       accept,
+      currentFile,
       currentFiles,
       isControlled,
       maxFiles,
       maxSize,
       minSize,
       multiple,
-      objectUrl,
-      onChange,
+      notifyChange,
       onError,
-      onFileSelect,
       onFilesChange,
       previewMap,
       revokeUrl,
@@ -370,8 +406,11 @@ function Dropzone({
 
   const handleRemove = (e) => {
     e?.stopPropagation?.();
-    if (objectUrl) {
-      revokeUrl(objectUrl);
+    if (currentFile && previewMap.has(currentFile)) {
+      revokeUrl(previewMap.get(currentFile));
+      const nextPreviews = new Map(previewMap);
+      nextPreviews.delete(currentFile);
+      setPreviewMap(nextPreviews);
     }
     setErrorMessage(null);
     setHasClearedInitial(true);
@@ -379,8 +418,7 @@ function Dropzone({
     if (!isControlled) {
       setInternalFile(null);
     }
-    onChange?.(null);
-    onFileSelect?.(null);
+    notifyChange(null);
     onFilesChange?.([]);
   };
 
@@ -407,7 +445,7 @@ function Dropzone({
       }
 
       const enrichedItems = updatedFiles.map((file, idx) => ({
-        id: `${file.name}-${file.size}-${file.lastModified || idx}`,
+        id: getFileId(file, idx),
         file,
         preview: nextPreviews.get(file) || null,
         name: file.name,
@@ -415,15 +453,13 @@ function Dropzone({
         type: file.type,
       }));
 
-      onChange?.(updatedFiles);
-      onFileSelect?.(updatedFiles);
+      notifyChange(updatedFiles);
       onFilesChange?.(enrichedItems);
     },
     [
       currentFiles,
       isControlled,
-      onChange,
-      onFileSelect,
+      notifyChange,
       onFilesChange,
       previewMap,
       revokeUrl,
@@ -440,17 +476,9 @@ function Dropzone({
     if (!isControlled) {
       setInternalFiles([]);
     }
-    onChange?.([]);
-    onFileSelect?.([]);
+    notifyChange([]);
     onFilesChange?.([]);
-  }, [
-    isControlled,
-    onChange,
-    onFileSelect,
-    onFilesChange,
-    previewMap,
-    revokeUrl,
-  ]);
+  }, [isControlled, notifyChange, onFilesChange, previewMap, revokeUrl]);
 
   const computedHint =
     hint ||
@@ -477,7 +505,8 @@ function Dropzone({
       ? { name: previewAlt, size: 0, type: 'image/jpeg' }
       : null);
 
-  const activePreviewUrl = objectUrl || initialPreviewUrl;
+  const activePreviewUrl =
+    (currentFile ? previewMap.get(currentFile) : null) || initialPreviewUrl;
 
   return (
     <DropzoneRoot className={className} {...props}>
@@ -511,7 +540,7 @@ function Dropzone({
             >
               {currentFiles.map((file, index) => (
                 <DropzoneFileItem
-                  key={`${file.name}-${file.size}-${file.lastModified || index}`}
+                  key={getFileId(file, index)}
                   file={file}
                   previewUrl={previewMap.get(file)}
                   onRemove={() => handleRemoveFile(index)}
@@ -547,6 +576,7 @@ function Dropzone({
           onRemove={handleRemove}
           disabled={disabled || isUploading}
           isUploading={isUploading}
+          progress={progress}
         />
       ) : (
         <DropzoneZone
@@ -576,5 +606,4 @@ function Dropzone({
   );
 }
 
-export { Dropzone };
 export default Dropzone;

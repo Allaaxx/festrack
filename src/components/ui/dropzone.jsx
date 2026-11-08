@@ -10,6 +10,7 @@ import {
   XIcon,
 } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { formatFileSize, getFileCategory } from '@/helpers/file';
@@ -227,8 +228,10 @@ function DropzoneFileItem({
   ...props
 }) {
   const category = getFileCategory(file);
-  const isImage =
-    (category === 'image' || file?.type?.startsWith('image/')) && !!previewUrl;
+  const isImage = category === 'image' && !!previewUrl;
+  const ext = file?.name?.includes('.')
+    ? file.name.split('.').pop()?.toLowerCase()
+    : '';
 
   return (
     <div
@@ -252,12 +255,22 @@ function DropzoneFileItem({
           )}
         </div>
         <div className="min-w-0">
-          <p
-            className="truncate text-sm font-medium text-foreground"
-            title={file?.name}
-          >
-            {file?.name || 'Arquivo'}
-          </p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <p
+              className="truncate text-sm font-medium text-foreground"
+              title={file?.name}
+            >
+              {file?.name || 'Arquivo'}
+            </p>
+            {ext && (
+              <Badge
+                variant="outline"
+                className="h-4 shrink-0 px-1 py-0 text-[10px] uppercase font-mono"
+              >
+                .{ext}
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground">
             {formatFileSize(file?.size)}
           </p>
@@ -366,13 +379,18 @@ function DropzoneSinglePreview({
   onRemove,
   disabled = false,
   isUploading = false,
+  progress,
   replaceLabel = 'Substituir',
   removeLabel = 'Remover',
   className,
   ...props
 }) {
   const category = getFileCategory(file);
-  const isImage = (category === 'image' || file?.type?.startsWith('image/')) && !!previewUrl;
+  const isImage = category === 'image' && !!previewUrl;
+  const hasProgress = progress !== undefined && progress !== null;
+  const clampedProgress = hasProgress
+    ? Math.min(100, Math.max(0, Math.round(progress)))
+    : null;
 
   return (
     <div
@@ -412,9 +430,18 @@ function DropzoneSinglePreview({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2Icon
               data-testid="dropzone-loading-spinner"
-              className="size-4 animate-spin"
+              className="size-4 animate-spin text-primary"
             />
-            <span>Enviando...</span>
+            {hasProgress ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground">
+                  {clampedProgress}%
+                </span>
+                <Progress value={clampedProgress} className="h-1.5 w-16" />
+              </div>
+            ) : (
+              <span>Enviando...</span>
+            )}
           </div>
         ) : (
           <>
