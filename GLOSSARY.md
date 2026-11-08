@@ -150,5 +150,16 @@ An HTTP cookie transmitted in requests traversing distinct domain or origin boun
 - **Production Requirements:** Modern web browsers enforce strict third-party cookie restrictions. In cross-domain deployments, authentication and state verification cookies must configure `SameSite=None`, `Secure=true`, and `HttpOnly=true` so they are not rejected during cross-site redirects.
 - **Development Parity:** In local development environments running over unencrypted HTTP (`localhost`), cookies use `SameSite=Lax` and `Secure=false` to support local workflows without requiring TLS certificates.
 
+---
+
+### Attachment
+
+A digital file (receipt, invoice, product image, or document) associated with a domain entity (Event, Transaction, Shop, Product, or User).
+
+- **Scope:** In current iterations, file handling is specialized around User [`Avatar`](#avatar). Future capabilities expand attachments to Shop branding, Product catalogs, and Event documentation.
+- **Handling:** Upload logic is decoupled from UI presentation; components handle local file selection, validation, and previews, delegating persistence to dedicated entity mutation endpoints.
+- **Avoid:** FileAsset, UploadFile, MediaItem.
+
+
 
 
