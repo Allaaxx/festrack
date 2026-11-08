@@ -358,11 +358,69 @@ describe('Dropzone Component (Single-Item)', () => {
 
       expect(screen.getByText('Enviando...')).toBeInTheDocument();
       expect(
+        screen.getByTestId('dropzone-loading-spinner')
+      ).toBeInTheDocument();
+      expect(
         screen.queryByRole('button', { name: /substituir/i })
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /remover/i })
       ).not.toBeInTheDocument();
+    });
+
+    it('disables replace and remove buttons when disabled is true in single-item mode', () => {
+      const file = new File(['test'], 'profile.png', { type: 'image/png' });
+      render(<Dropzone value={file} disabled={true} />);
+
+      const replaceBtn = screen.getByRole('button', { name: /substituir/i });
+      const removeBtn = screen.getByRole('button', { name: /remover/i });
+
+      expect(replaceBtn).toBeDisabled();
+      expect(removeBtn).toBeDisabled();
+    });
+
+    it('disables dropzone area and shows upload spinner when isUploading is true in empty state', () => {
+      const { container } = render(<Dropzone isUploading={true} />);
+
+      expect(screen.getByText('Enviando arquivo...')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('dropzone-loading-spinner')
+      ).toBeInTheDocument();
+
+      const dropzone = container.querySelector('[data-slot="dropzone-zone"]');
+      expect(dropzone).toHaveAttribute('data-disabled');
+    });
+
+    it('disables folded strip, item remove buttons, and clear all button when isUploading is true in multi-item mode', () => {
+      const file1 = new File(['1'], 'file1.png', { type: 'image/png' });
+      const file2 = new File(['2'], 'file2.png', { type: 'image/png' });
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          value={[file1, file2]}
+          isUploading={true}
+        />
+      );
+
+      const foldedStrip = container.querySelector(
+        '[data-slot="dropzone-folded-strip"]'
+      );
+      expect(foldedStrip).toHaveAttribute('data-disabled');
+
+      const addMoreBtn = screen.getByRole('button', { name: /adicionar mais/i });
+      expect(addMoreBtn).toBeDisabled();
+
+      const clearAllBtn = screen.getByRole('button', { name: /limpar tudo/i });
+      expect(clearAllBtn).toBeDisabled();
+
+      const removeBtns = screen.getAllByRole('button', { name: /^Remover/ });
+      expect(removeBtns.length).toBe(2);
+      removeBtns.forEach((btn) => {
+        expect(btn).toBeDisabled();
+      });
+
+      const spinners = screen.getAllByTestId('file-item-spinner');
+      expect(spinners.length).toBe(2);
     });
 
     it('disables dropzone interaction when disabled is true', () => {

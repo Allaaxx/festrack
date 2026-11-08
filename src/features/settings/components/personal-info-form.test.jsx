@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useUpdateProfile, useUploadAvatar } from '@/api/hooks/user';
 import { toast } from '@/components/ui/toast';
@@ -39,6 +39,10 @@ describe('PersonalInfoForm Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn((file) => `blob:http://localhost/${file.name}`),
+      revokeObjectURL: vi.fn(),
+    });
     useAuthContext.mockReturnValue({
       user: mockUser,
       updateUser: mockUpdateUser,
@@ -51,6 +55,10 @@ describe('PersonalInfoForm Component', () => {
       mutateAsync: mockUploadAvatarMutateAsync,
       isPending: false,
     });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('correctly populates first name and last name from normalized user', () => {
@@ -154,45 +162,16 @@ describe('PersonalInfoForm Component', () => {
     expect(submitBtn).toBeDisabled();
   });
 
-  describe('Avatar upload', () => {
-    it('shows error toast when selected file exceeds 5MB', () => {
-      const { container } = render(<PersonalInfoForm />);
-      const fileInput = container.querySelector('input[type="file"]');
+  describe('Avatar upload via Dropzone', () => {
+    it('renders empty dropzone state when user has no existing avatar image', () => {
+      render(<PersonalInfoForm />);
 
-      const largeFile = new File(['x'.repeat(6 * 1024 * 1024)], 'large.png', {
-        type: 'image/png',
-      });
-      Object.defineProperty(largeFile, 'size', { value: 6 * 1024 * 1024 });
-
-      fireEvent.change(fileInput, { target: { files: [largeFile] } });
-
-      expect(toast.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'error',
-          title: 'Arquivo muito grande',
-          description: 'A imagem deve ter no máximo 5MB.',
-        })
-      );
-      expect(mockUploadAvatarMutateAsync).not.toHaveBeenCalled();
-    });
-
-    it('shows error toast when selected file has unsupported MIME type', () => {
-      const { container } = render(<PersonalInfoForm />);
-      const fileInput = container.querySelector('input[type="file"]');
-
-      const pdfFile = new File(['pdf-content'], 'doc.pdf', {
-        type: 'application/pdf',
-      });
-
-      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
-
-      expect(toast.add).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'error',
-          title: 'Formato inválido',
-        })
-      );
-      expect(mockUploadAvatarMutateAsync).not.toHaveBeenCalled();
+      expect(
+        screen.getByText('Arraste e solte seu arquivo aqui')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('ou clique para navegar no computador')
+      ).toBeInTheDocument();
     });
 
     it('uploads valid file immediately and updates user on success', async () => {
@@ -245,7 +224,78 @@ describe('PersonalInfoForm Component', () => {
       });
     });
 
-    it('renders loading spinner when avatar is uploading', () => {
+    it('shows validation error toast when selected file exceeds 5MB', async () => {
+      const { container } = render(<PersonalInfoForm />);
+      const fileInput = container.querySelector('input[type="file"]');
+
+      const largeFile = new File(['x'.repeat(6 * 1024 * 1024)], 'large.png', {
+        type: 'image/png',
+      });
+      Object.defineProperty(largeFile, 'size', { value: 6 * 1024 * 1024 });
+
+      fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'error',
+            title: 'Arquivo inválido',
+            description: expect.stringContaining(
+              'excede o tamanho máximo de 5 MB'
+            ),
+          })
+        );
+      });
+      expect(mockUploadAvatarMutateAsync).not.toHaveBeenCalled();
+    });
+
+    it('shows validation error toast when selected file has unsupported MIME type', async () => {
+      const { container } = render(<PersonalInfoForm />);
+      const fileInput = container.querySelector('input[type="file"]');
+
+      const pdfFile = new File(['pdf-content'], 'doc.pdf', {
+        type: 'application/pdf',
+      });
+
+      fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'error',
+            title: 'Arquivo inválido',
+            description: expect.stringContaining('Formato não suportado'),
+          })
+        );
+      });
+      expect(mockUploadAvatarMutateAsync).not.toHaveBeenCalled();
+    });
+
+    it('renders loading spinner and disables dropzone controls when avatar upload is pending in empty state', () => {
+      useUploadAvatar.mockReturnValue({
+        mutateAsync: mockUploadAvatarMutateAsync,
+        isPending: true,
+      });
+
+      const { container } = render(<PersonalInfoForm />);
+
+      expect(
+        screen.getByTestId('dropzone-loading-spinner')
+      ).toBeInTheDocument();
+      expect(screen.getByText('Enviando arquivo...')).toBeInTheDocument();
+
+      const dropzone = container.querySelector('[data-slot="dropzone-zone"]');
+      expect(dropzone).toHaveAttribute('data-disabled');
+    });
+
+    it('renders loading indicator and disables action buttons when user has avatar and upload is pending', () => {
+      useAuthContext.mockReturnValue({
+        user: {
+          ...mockUser,
+          image: 'https://s3.amazonaws.com/festrack/avatars/user-1.png',
+        },
+        updateUser: mockUpdateUser,
+      });
       useUploadAvatar.mockReturnValue({
         mutateAsync: mockUploadAvatarMutateAsync,
         isPending: true,
@@ -253,14 +303,16 @@ describe('PersonalInfoForm Component', () => {
 
       render(<PersonalInfoForm />);
 
-      expect(screen.getByTestId('avatar-loading-spinner')).toBeInTheDocument();
-    });
-
-    it('disables the remove button when no pending file is selected', () => {
-      render(<PersonalInfoForm />);
-
-      const removeBtn = screen.getByRole('button', { name: /remover avatar/i });
-      expect(removeBtn).toBeDisabled();
+      expect(screen.getByText('Enviando...')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('dropzone-loading-spinner')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /substituir/i })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /remover/i })
+      ).not.toBeInTheDocument();
     });
   });
 });

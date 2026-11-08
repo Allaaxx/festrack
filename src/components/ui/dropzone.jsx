@@ -64,6 +64,7 @@ function DropzoneEmptyState({
   hint,
   isDragActive = false,
   isDragReject = false,
+  isUploading = false,
   icon: Icon = UploadCloudIcon,
   className,
   ...props
@@ -81,21 +82,32 @@ function DropzoneEmptyState({
           isDragReject && 'bg-destructive/10 text-destructive'
         )}
       >
-        <Icon className="size-6" />
+        {isUploading ? (
+          <Loader2Icon
+            data-testid="dropzone-loading-spinner"
+            className="size-6 animate-spin text-primary"
+          />
+        ) : (
+          <Icon className="size-6" />
+        )}
       </div>
 
       <div className="space-y-1">
         <p className="text-sm font-medium text-foreground">
-          {isDragReject
-            ? 'Formato de arquivo não suportado'
-            : isDragActive
-              ? 'Solte para selecionar o arquivo'
-              : title}
+          {isUploading
+            ? 'Enviando arquivo...'
+            : isDragReject
+              ? 'Formato de arquivo não suportado'
+              : isDragActive
+                ? 'Solte para selecionar o arquivo'
+                : title}
         </p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-xs text-muted-foreground">
+          {isUploading ? 'Por favor, aguarde...' : description}
+        </p>
       </div>
 
-      {hint && (
+      {!isUploading && hint && (
         <p className="text-xs text-muted-foreground/80">{hint}</p>
       )}
     </div>
@@ -110,6 +122,7 @@ function DropzoneFoldedStrip({
   isDragActive = false,
   isDragReject = false,
   isDragAccept = false,
+  isUploading = false,
   buttonLabel = 'Adicionar mais',
   icon: Icon = UploadIcon,
   className,
@@ -141,19 +154,28 @@ function DropzoneFoldedStrip({
             isDragReject && 'bg-destructive/10 text-destructive'
           )}
         >
-          <Icon className="size-5" />
+          {isUploading ? (
+            <Loader2Icon
+              data-testid="folded-strip-spinner"
+              className="size-5 animate-spin text-primary"
+            />
+          ) : (
+            <Icon className="size-5" />
+          )}
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-foreground">
-            {isDragReject
-              ? 'Formato de arquivo não suportado'
-              : isDragActive
-                ? 'Solte para adicionar os arquivos'
-                : title}
+            {isUploading
+              ? 'Enviando arquivos...'
+              : isDragReject
+                ? 'Formato de arquivo não suportado'
+                : isDragActive
+                  ? 'Solte para adicionar os arquivos'
+                  : title}
           </p>
           {description && (
             <p className="truncate text-xs text-muted-foreground">
-              {description}
+              {isUploading ? 'Por favor, aguarde...' : description}
             </p>
           )}
         </div>
@@ -199,6 +221,7 @@ function DropzoneFileItem({
   previewUrl,
   onRemove,
   disabled = false,
+  isUploading = false,
   removeLabel = 'Remover arquivo',
   className,
   ...props
@@ -241,19 +264,27 @@ function DropzoneFileItem({
         </div>
       </div>
 
-      {onRemove && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="size-8 text-muted-foreground hover:bg-muted hover:text-foreground"
-          onClick={onRemove}
-          disabled={disabled}
-          aria-label={file?.name ? `Remover ${file.name}` : removeLabel}
-        >
-          <XIcon className="size-4" />
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        {isUploading && (
+          <Loader2Icon
+            data-testid="file-item-spinner"
+            className="size-4 animate-spin text-muted-foreground"
+          />
+        )}
+        {onRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="size-8 text-muted-foreground hover:bg-muted hover:text-foreground"
+            onClick={onRemove}
+            disabled={disabled}
+            aria-label={file?.name ? `Remover ${file.name}` : removeLabel}
+          >
+            <XIcon className="size-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -368,16 +399,21 @@ function DropzoneSinglePreview({
           <p className="truncate text-sm font-medium text-foreground">
             {file?.name || 'Arquivo selecionado'}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {formatFileSize(file?.size)}
-          </p>
+          {file?.size ? (
+            <p className="text-xs text-muted-foreground">
+              {formatFileSize(file?.size)}
+            </p>
+          ) : null}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         {isUploading ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2Icon className="size-4 animate-spin" />
+            <Loader2Icon
+              data-testid="dropzone-loading-spinner"
+              className="size-4 animate-spin"
+            />
             <span>Enviando...</span>
           </div>
         ) : (

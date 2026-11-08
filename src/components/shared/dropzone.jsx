@@ -61,6 +61,7 @@ function Dropzone({
   disabled = false,
   isUploading = false,
   initialPreviewUrl,
+  previewAlt = 'Imagem atual',
   title,
   description,
   hint,
@@ -76,6 +77,14 @@ function Dropzone({
   // Single-file state
   const [internalFile, setInternalFile] = useState(defaultValue || null);
   const [hasClearedInitial, setHasClearedInitial] = useState(false);
+  const prevInitialUrlRef = useRef(initialPreviewUrl);
+
+  useEffect(() => {
+    if (prevInitialUrlRef.current !== initialPreviewUrl) {
+      prevInitialUrlRef.current = initialPreviewUrl;
+      setHasClearedInitial(false);
+    }
+  }, [initialPreviewUrl]);
 
   // Multi-file state
   const [internalFiles, setInternalFiles] = useState(() => {
@@ -465,7 +474,7 @@ function Dropzone({
   const activeFile =
     currentFile ||
     (initialPreviewUrl
-      ? { name: 'Imagem atual', size: 0, type: 'image/jpeg' }
+      ? { name: previewAlt, size: 0, type: 'image/jpeg' }
       : null);
 
   const activePreviewUrl = objectUrl || initialPreviewUrl;
@@ -489,6 +498,7 @@ function Dropzone({
               isDragReject={isDragReject}
               isDragAccept={isDragAccept}
               disabled={disabled || isUploading}
+              isUploading={isUploading}
             />
             <DropzoneFileList
               title={folderTitle}
@@ -506,6 +516,7 @@ function Dropzone({
                   previewUrl={previewMap.get(file)}
                   onRemove={() => handleRemoveFile(index)}
                   disabled={disabled || isUploading}
+                  isUploading={isUploading}
                 />
               ))}
             </DropzoneFileList>
@@ -524,6 +535,7 @@ function Dropzone({
               hint={computedHint}
               isDragActive={isDragActive}
               isDragReject={isDragReject}
+              isUploading={isUploading}
             />
           </DropzoneZone>
         )
@@ -533,7 +545,7 @@ function Dropzone({
           previewUrl={activePreviewUrl}
           onReplace={handleReplace}
           onRemove={handleRemove}
-          disabled={disabled}
+          disabled={disabled || isUploading}
           isUploading={isUploading}
         />
       ) : (
@@ -550,6 +562,7 @@ function Dropzone({
             hint={computedHint}
             isDragActive={isDragActive}
             isDragReject={isDragReject}
+            isUploading={isUploading}
           />
         </DropzoneZone>
       )}
