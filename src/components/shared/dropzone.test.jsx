@@ -392,4 +392,435 @@ describe('Dropzone Component (Single-Item)', () => {
       );
     });
   });
+
+  describe('Dropzone Component (Multi-Item Folding)', () => {
+    it('renders spacious empty dropzone when initialized with multiple=true and no files', () => {
+      render(<Dropzone multiple={true} />);
+
+      expect(
+        screen.getByText('Arraste e solte seus arquivos aqui')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('ou clique para navegar no computador')
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Na pasta')).not.toBeInTheDocument();
+      expect(screen.queryByText('Adicionar mais')).not.toBeInTheDocument();
+    });
+
+    it('transitions to folded strip and file list when multiple files are selected', async () => {
+      const onChange = vi.fn();
+      const onFilesChange = vi.fn();
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          totalSizeLimit={25 * 1024 * 1024}
+          onChange={onChange}
+          onFilesChange={onFilesChange}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file1 = new File(['img1'], 'photo1.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(file1, 'size', { value: 373 * 1024 });
+      const file2 = new File(['img2'], 'photo2.jpg', { type: 'image/jpeg' });
+      Object.defineProperty(file2, 'size', { value: 337 * 1024 });
+
+      fireEvent.change(fileInput, { target: { files: [file1, file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('Arraste mais arquivos aqui')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Adicionar mais')).toBeInTheDocument();
+      expect(screen.getByText('Na pasta')).toBeInTheDocument();
+      expect(screen.getByText('2 arquivos')).toBeInTheDocument();
+      expect(screen.getByText('photo1.jpg')).toBeInTheDocument();
+      expect(screen.getByText('photo2.jpg')).toBeInTheDocument();
+      expect(screen.getByText('373 KB')).toBeInTheDocument();
+      expect(screen.getByText('337 KB')).toBeInTheDocument();
+
+      // Folded description with total quota
+      expect(screen.getByText(/25 MB no total/i)).toBeInTheDocument();
+
+      // Footer summary & Clear all button
+      expect(screen.getByText(/2 arquivos, 710 KB de 25 MB/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /limpar tudo/i })).toBeInTheDocument();
+
+      // Callbacks
+      expect(onChange).toHaveBeenCalledWith([file1, file2]);
+      expect(onFilesChange).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            file: file1,
+            name: 'photo1.jpg',
+            size: 373 * 1024,
+            preview: 'blob:http://localhost/photo1.jpg',
+          }),
+          expect.objectContaining({
+            file: file2,
+            name: 'photo2.jpg',
+            size: 337 * 1024,
+            preview: 'blob:http://localhost/photo2.jpg',
+          }),
+        ])
+      );
+    });
+
+    it('allows adding more files via the folded strip, appending to existing list', async () => {
+      const onChange = vi.fn();
+      const onFilesChange = vi.fn();
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          onChange={onChange}
+          onFilesChange={onFilesChange}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const clickSpy = vi.spyOn(fileInput, 'click');
+
+      const file1 = new File(['1'], 'doc1.pdf', { type: 'application/pdf' });
+      fireEvent.change(fileInput, { target: { files: [file1] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('doc1.pdf')).toBeInTheDocument();
+      });
+      expect(screen.getByText('1 arquivo')).toBeInTheDocument();
+
+      // Clicking "Adicionar mais" button triggers file picker
+      const addMoreButton = screen.getByRole('button', { name: /adicionar mais/i });
+      fireEvent.click(addMoreButton);
+      expect(clickSpy).toHaveBeenCalled();
+
+      // Add a second file
+      const file2 = new File(['2'], 'doc2.pdf', { type: 'application/pdf' });
+      fireEvent.change(fileInput, { target: { files: [file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('doc2.pdf')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('doc1.pdf')).toBeInTheDocument();
+      expect(screen.getByText('2 arquivos')).toBeInTheDocument();
+
+      expect(onChange).toHaveBeenLastCalledWith([file1, file2]);
+      expect(onFilesChange).toHaveBeenLastCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'doc1.pdf' }),
+          expect.objectContaining({ name: 'doc2.pdf' }),
+        ])
+      );
+    });
+
+    it('removes an individual file without affecting other files in the list', async () => {
+      const onChange = vi.fn();
+      const onFilesChange = vi.fn();
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          onChange={onChange}
+          onFilesChange={onFilesChange}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file1 = new File(['1'], 'first.png', { type: 'image/png' });
+      const file2 = new File(['2'], 'second.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [file1, file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('first.png')).toBeInTheDocument();
+        expect(screen.getByText('second.png')).toBeInTheDocument();
+      });
+
+      // Find remove button specifically for first.png
+      const removeFirstBtn = screen.getByRole('button', {
+        name: 'Remover first.png',
+      });
+      fireEvent.click(removeFirstBtn);
+
+      // Verify first.png object URL is revoked
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(
+        'blob:http://localhost/first.png'
+      );
+
+      // Verify first.png is gone, second.png remains
+      await waitFor(() => {
+        expect(screen.queryByText('first.png')).not.toBeInTheDocument();
+        expect(screen.getByText('second.png')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('1 arquivo')).toBeInTheDocument();
+      expect(onChange).toHaveBeenLastCalledWith([file2]);
+      expect(onFilesChange).toHaveBeenLastCalledWith([
+        expect.objectContaining({ name: 'second.png' }),
+      ]);
+    });
+
+    it('reverts to spacious empty dropzone when all individual files are removed', async () => {
+      const onChange = vi.fn();
+      const { container } = render(
+        <Dropzone multiple={true} onChange={onChange} />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file = new File(['solo'], 'solo.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [file] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('solo.png')).toBeInTheDocument();
+      });
+
+      const removeBtn = screen.getByRole('button', {
+        name: 'Remover solo.png',
+      });
+      fireEvent.click(removeBtn);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Arraste e solte seus arquivos aqui')
+        ).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('Na pasta')).not.toBeInTheDocument();
+      expect(screen.queryByText('Adicionar mais')).not.toBeInTheDocument();
+      expect(onChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it('clears all files and reverts to spacious dropzone when clicking "Limpar tudo"', async () => {
+      const onChange = vi.fn();
+      const onFilesChange = vi.fn();
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          totalSizeLimit={10 * 1024 * 1024}
+          onChange={onChange}
+          onFilesChange={onFilesChange}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file1 = new File(['1'], 'doc1.pdf', { type: 'application/pdf' });
+      const file2 = new File(['2'], 'image2.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [file1, file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('doc1.pdf')).toBeInTheDocument();
+      });
+
+      const clearAllButton = screen.getByRole('button', {
+        name: /limpar tudo/i,
+      });
+      fireEvent.click(clearAllButton);
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(
+        'blob:http://localhost/image2.png'
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Arraste e solte seus arquivos aqui')
+        ).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText('doc1.pdf')).not.toBeInTheDocument();
+      expect(screen.queryByText('image2.png')).not.toBeInTheDocument();
+      expect(onChange).toHaveBeenLastCalledWith([]);
+      expect(onFilesChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it('enforces maxFiles limit and displays inline validation error when exceeded', async () => {
+      const onError = vi.fn();
+      const onChange = vi.fn();
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          maxFiles={2}
+          onError={onError}
+          onChange={onChange}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file1 = new File(['1'], 'a.png', { type: 'image/png' });
+      const file2 = new File(['2'], 'b.png', { type: 'image/png' });
+      const file3 = new File(['3'], 'c.png', { type: 'image/png' });
+
+      // Attempt dropping 3 files when maxFiles is 2
+      fireEvent.change(fileInput, { target: { files: [file1, file2, file3] } });
+
+      await waitFor(() => {
+        const errorEl = screen.getByRole('alert');
+        expect(errorEl).toHaveTextContent(
+          'Número máximo de arquivos atingido (máximo: 2).'
+        );
+      });
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'too-many-files',
+          message: 'Número máximo de arquivos atingido (máximo: 2).',
+        })
+      );
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('enforces maxFiles limit cumulatively when adding more files via the folded strip', async () => {
+      const onError = vi.fn();
+      const { container } = render(
+        <Dropzone multiple={true} maxFiles={2} onError={onError} />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file1 = new File(['1'], 'first.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [file1] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('first.png')).toBeInTheDocument();
+      });
+
+      // Add two more files (1 existing + 2 new = 3 > maxFiles 2)
+      const file2 = new File(['2'], 'second.png', { type: 'image/png' });
+      const file3 = new File(['3'], 'third.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [file2, file3] } });
+
+      await waitFor(() => {
+        const errorEl = screen.getByRole('alert');
+        expect(errorEl).toHaveTextContent(
+          'Número máximo de arquivos atingido (máximo: 2).'
+        );
+      });
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'too-many-files',
+        })
+      );
+      // original file remains
+      expect(screen.getByText('first.png')).toBeInTheDocument();
+    });
+
+    it('enforces totalSizeLimit if configured and displays validation error', async () => {
+      const onError = vi.fn();
+      const { container } = render(
+        <Dropzone
+          multiple={true}
+          totalSizeLimit={2 * 1024 * 1024} // 2 MB
+          onError={onError}
+        />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const largeFile = new File(['large'], 'large.bin', {
+        type: 'application/octet-stream',
+      });
+      Object.defineProperty(largeFile, 'size', { value: 3 * 1024 * 1024 }); // 3 MB
+
+      fireEvent.change(fileInput, { target: { files: [largeFile] } });
+
+      await waitFor(() => {
+        const errorEl = screen.getByRole('alert');
+        expect(errorEl).toHaveTextContent(
+          'O tamanho total dos arquivos excede o limite de 2 MB.'
+        );
+      });
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: 'total-size-too-large',
+        })
+      );
+    });
+
+    it('supports controlled value mode with multiple files', () => {
+      const file1 = new File(['1'], 'ctrl1.png', { type: 'image/png' });
+      const file2 = new File(['2'], 'ctrl2.png', { type: 'image/png' });
+
+      const { rerender } = render(<Dropzone multiple={true} value={[file1, file2]} />);
+
+      expect(screen.getByText('ctrl1.png')).toBeInTheDocument();
+      expect(screen.getByText('ctrl2.png')).toBeInTheDocument();
+      expect(screen.getByText('2 arquivos')).toBeInTheDocument();
+
+      rerender(<Dropzone multiple={true} value={[]} />);
+
+      expect(
+        screen.getByText('Arraste e solte seus arquivos aqui')
+      ).toBeInTheDocument();
+    });
+
+    it('revokes generated object URLs for all files when component unmounts', async () => {
+      const { container, unmount } = render(<Dropzone multiple={true} />);
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const file1 = new File(['1'], 'multi1.png', { type: 'image/png' });
+      const file2 = new File(['2'], 'multi2.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [file1, file2] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('multi1.png')).toBeInTheDocument();
+        expect(screen.getByText('multi2.png')).toBeInTheDocument();
+      });
+
+      unmount();
+
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(
+        'blob:http://localhost/multi1.png'
+      );
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(
+        'blob:http://localhost/multi2.png'
+      );
+    });
+
+    it('handles drag over and drop onto the folded strip', async () => {
+      const onChange = vi.fn();
+      const { container } = render(
+        <Dropzone multiple={true} onChange={onChange} />
+      );
+
+      const fileInput = container.querySelector('input[type="file"]');
+      const initialFile = new File(['0'], 'initial.png', { type: 'image/png' });
+      fireEvent.change(fileInput, { target: { files: [initialFile] } });
+
+      await waitFor(() => {
+        expect(screen.getByText('initial.png')).toBeInTheDocument();
+      });
+
+      const foldedStrip = container.querySelector(
+        '[data-slot="dropzone-folded-strip"]'
+      );
+      expect(foldedStrip).toBeInTheDocument();
+
+      fireEvent.dragEnter(foldedStrip, {
+        dataTransfer: {
+          items: [{ kind: 'file', type: 'image/png' }],
+          types: ['Files'],
+        },
+      });
+
+      const droppedFile = new File(['dropped'], 'dropped.png', {
+        type: 'image/png',
+      });
+      fireEvent.drop(foldedStrip, {
+        dataTransfer: {
+          files: [droppedFile],
+          types: ['Files'],
+          items: [
+            {
+              kind: 'file',
+              type: 'image/png',
+              getAsFile: () => droppedFile,
+            },
+          ],
+        },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('dropped.png')).toBeInTheDocument();
+      });
+      expect(screen.getByText('initial.png')).toBeInTheDocument();
+      expect(onChange).toHaveBeenLastCalledWith([initialFile, droppedFile]);
+    });
+  });
 });
