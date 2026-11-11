@@ -65,16 +65,19 @@ const CreateEventDialog = ({ trigger, open, onOpenChange, initialDate }) => {
         initialDate instanceof Date &&
         (initialDate.getHours() !== 0 || initialDate.getMinutes() !== 0);
 
+      const targetEndDate = addHours(targetDate, 1);
       const startTime = hasSpecificTime ? format(targetDate, 'HH:mm') : '09:00';
       const endTime = hasSpecificTime
-        ? format(addHours(targetDate, 1), 'HH:mm')
+        ? format(targetEndDate, 'HH:mm')
         : '10:00';
 
       form.reset({
         name: '',
         description: '',
         startDate: startOfDay(targetDate),
-        endDate: startOfDay(targetDate),
+        endDate: hasSpecificTime
+          ? startOfDay(targetEndDate)
+          : startOfDay(targetDate),
         allDay: false,
         startTime,
         endTime,

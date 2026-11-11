@@ -130,6 +130,42 @@ describe('Event Lifecycle Mutations - Google Calendar Sync Feedback', () => {
         );
       });
     });
+
+    it('handles midnight rollover correctly when initialDate is at 23:xx without validation error', async () => {
+      useGoogleCalendarSync.mockReturnValue({
+        isSyncEnabled: false,
+      });
+
+      mockCreateMutateAsync.mockResolvedValueOnce({
+        id: 'ev-3',
+        name: 'Evento Noturno',
+      });
+
+      // initialDate at 23:30 should roll endDate over to next day instead of failing validation
+      render(
+        <CreateEventDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          initialDate={new Date(2026, 11, 1, 23, 30)}
+        />
+      );
+
+      const nameInput = screen.getByLabelText(/nome do evento/i);
+      fireEvent.change(nameInput, { target: { value: 'Evento Noturno' } });
+
+      const saveButton = screen.getByRole('button', { name: /criar evento/i });
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            name: 'Evento Noturno',
+            startTime: '23:30',
+            endTime: '00:30',
+          })
+        );
+      });
+    });
   });
 
   describe('EditEventSheet', () => {
