@@ -1,114 +1,29 @@
-import {
-  ImageIcon,
-  Loader2Icon,
-  TrashIcon,
-  UploadCloudIcon,
-} from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Loader2Icon } from 'lucide-react';
+import { useState } from 'react';
 
 import { useUpdateProfile, useUploadAvatar } from '@/api/hooks/user';
+import Dropzone from '@/components/shared/dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
-import { cn } from '@/lib/utils';
-
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const PersonalInfoForm = () => {
   const { user, updateUser } = useAuthContext();
   const updateProfileMutation = useUpdateProfile();
   const uploadAvatarMutation = useUploadAvatar();
-  const inputRef = useRef(null);
 
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [prevUser, setPrevUser] = useState(user);
-
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   if (user !== prevUser) {
     setPrevUser(user);
     setFirstName(user?.firstName ?? '');
     setLastName(user?.lastName ?? '');
   }
-
-  useEffect(() => {
-    if (!file) {
-      const t = window.setTimeout(() => setPreview(null), 0);
-      return () => clearTimeout(t);
-    }
-
-    const url = URL.createObjectURL(file);
-    const t = window.setTimeout(() => setPreview(url), 0);
-
-    return () => {
-      clearTimeout(t);
-      URL.revokeObjectURL(url);
-    };
-  }, [file]);
-
-  const onSelect = async (e) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
-
-    if (!ALLOWED_MIME_TYPES.includes(selectedFile.type)) {
-      toast.add({
-        type: 'error',
-        title: 'Formato inválido',
-        description:
-          'Por favor, selecione um arquivo de imagem válido (JPG, PNG ou WebP).',
-      });
-      if (inputRef.current) inputRef.current.value = '';
-      return;
-    }
-
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      toast.add({
-        type: 'error',
-        title: 'Arquivo muito grande',
-        description: 'A imagem deve ter no máximo 5MB.',
-      });
-      if (inputRef.current) inputRef.current.value = '';
-      return;
-    }
-
-    setFile(selectedFile);
-
-    try {
-      const updatedUser = await uploadAvatarMutation.mutateAsync(selectedFile);
-      updateUser(updatedUser);
-      toast.add({
-        type: 'success',
-        title: 'Avatar atualizado com sucesso!',
-        description: 'Sua foto de perfil foi alterada.',
-      });
-      setFile(null);
-    } catch (error) {
-      console.error(error);
-      toast.add({
-        type: 'error',
-        title: 'Erro ao enviar avatar',
-        description: error?.message || 'Por favor, tente novamente mais tarde.',
-      });
-      setFile(null);
-    } finally {
-      if (inputRef.current) inputRef.current.value = '';
-    }
-  };
-
-  const openPicker = () => {
-    if (uploadAvatarMutation.isPending) return;
-    inputRef.current?.click();
-  };
-
-  const removeAvatar = () => {
-    setFile(null);
-    if (inputRef.current) inputRef.current.value = '';
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -146,85 +61,56 @@ const PersonalInfoForm = () => {
         <form onSubmit={handleSubmit} className="mx-auto space-y-6">
           <div className="space-y-2">
             <Label>Seu Avatar</Label>
-            <div className="flex items-center gap-4">
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label="Carregar foto de perfil"
-                aria-disabled={uploadAvatarMutation.isPending}
-                onClick={openPicker}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openPicker();
-                  }
-                }}
-                className={cn(
-                  'relative flex size-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed hover:opacity-95',
-                  uploadAvatarMutation.isPending &&
-                    'pointer-events-none cursor-not-allowed opacity-80'
-                )}
-              >
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="Pré-visualização do avatar"
-                    className="size-full object-cover"
-                  />
-                ) : user?.image ? (
-                  <img
-                    src={user.image}
-                    alt="Avatar do usuário"
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <ImageIcon className="text-muted-foreground size-8" />
-                )}
-
-                {uploadAvatarMutation.isPending && (
-                  <div className="bg-background/70 absolute inset-0 flex items-center justify-center">
-                    <Loader2Icon
-                      data-testid="avatar-loading-spinner"
-                      className="text-foreground size-6 animate-spin"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={onSelect}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={openPicker}
-                  disabled={uploadAvatarMutation.isPending}
-                  className="flex items-center gap-2"
-                >
-                  {uploadAvatarMutation.isPending ? (
-                    <Loader2Icon className="size-4 animate-spin" />
-                  ) : (
-                    <UploadCloudIcon className="size-4" />
-                  )}
-                  Enviar avatar
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  aria-label="Remover avatar"
-                  onClick={removeAvatar}
-                  disabled={!file || uploadAvatarMutation.isPending}
-                  className="text-destructive!"
-                >
-                  <TrashIcon className="size-4" />
-                </Button>
-              </div>
-            </div>
+            <Dropzone
+              multiple={false}
+              value={avatarFile}
+              accept={{
+                'image/jpeg': ['.jpg', '.jpeg'],
+                'image/png': ['.png'],
+                'image/webp': ['.webp'],
+              }}
+              maxSize={5 * 1024 * 1024}
+              initialPreviewUrl={user?.image}
+              previewAlt="Avatar do usuário"
+              isUploading={uploadAvatarMutation.isPending}
+              disabled={uploadAvatarMutation.isPending}
+              onChange={async (selectedFile) => {
+                if (!selectedFile) {
+                  setAvatarFile(null);
+                  return;
+                }
+                setAvatarFile(selectedFile);
+                try {
+                  const updatedUser =
+                    await uploadAvatarMutation.mutateAsync(selectedFile);
+                  updateUser(updatedUser);
+                  setAvatarFile(null);
+                  toast.add({
+                    type: 'success',
+                    title: 'Avatar atualizado com sucesso!',
+                    description: 'Sua foto de perfil foi alterada.',
+                  });
+                } catch (error) {
+                  setAvatarFile(null);
+                  console.error(error);
+                  toast.add({
+                    type: 'error',
+                    title: 'Erro ao enviar avatar',
+                    description:
+                      error?.message ||
+                      'Por favor, tente novamente mais tarde.',
+                  });
+                }
+              }}
+              onError={({ message }) => {
+                setAvatarFile(null);
+                toast.add({
+                  type: 'error',
+                  title: 'Arquivo inválido',
+                  description: message,
+                });
+              }}
+            />
             <p className="text-muted-foreground text-sm">
               Escolha uma foto de até 5MB nos formatos JPG, PNG ou WebP.
             </p>
