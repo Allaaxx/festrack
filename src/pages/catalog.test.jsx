@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,7 +8,22 @@ import { ThemeProvider } from '@/components/layout/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
+import { CatalogService } from '@/features/catalog/api/services';
 import { AppRoutes } from '@/main';
+
+vi.mock('recharts', async () => {
+  const original = await vi.importActual('recharts');
+  return {
+    ...original,
+    ResponsiveContainer: ({ children }) => (
+      <div data-testid="responsive-container">
+        {React.isValidElement(children)
+          ? React.cloneElement(children, { width: 500, height: 300 })
+          : children}
+      </div>
+    ),
+  };
+});
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
@@ -18,13 +34,15 @@ vi.mock('@/contexts/shop', () => ({
   UNPROVIDED_SHOP_CONTEXT: Symbol('UNPROVIDED_SHOP_CONTEXT'),
 }));
 
+vi.mock('@/features/catalog/api/services', () => ({
+  CatalogService: {
+    getMetrics: vi.fn(),
+    getStockMovements: vi.fn(),
+  },
+}));
+
 describe('Catalog Page Shell Integration', () => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
+  let queryClient;
 
   const mockUser = {
     id: 'user-1',
@@ -38,8 +56,59 @@ describe('Catalog Page Shell Integration', () => {
     role: 'OWNER',
   };
 
+  const mockMetrics = {
+    activeCatalog: {
+      total: 52,
+      simpleProducts: 40,
+      bundles: 12,
+      trend: 15,
+      trendLabel: 'vs. mês anterior',
+    },
+    activeRentals: {
+      total: 28,
+      trend: 10,
+      trendLabel: 'unidades em eventos ativos',
+    },
+    stockAlerts: {
+      total: 2,
+      outOfStock: 1,
+      criticalBottlenecks: 1,
+      trend: -50,
+      trendLabel: 'itens com reposição urgente',
+    },
+  };
+
+  const mockMovements = {
+    movements: [],
+    series: [
+      {
+        date: '2026-11-10',
+        day: 'Ter',
+        inbound: 30,
+        sale: 10,
+        rentalAllocation: 15,
+        loss: 1,
+      },
+      {
+        date: '2026-11-11',
+        day: 'Qua',
+        inbound: 20,
+        sale: 8,
+        rentalAllocation: 12,
+        loss: 0,
+      },
+    ],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
 
     useAuthContext.mockReturnValue({
       user: mockUser,
@@ -55,6 +124,9 @@ describe('Catalog Page Shell Integration', () => {
       isLoading: false,
       setActiveShop: vi.fn(),
     });
+
+    CatalogService.getMetrics.mockResolvedValue(mockMetrics);
+    CatalogService.getStockMovements.mockResolvedValue(mockMovements);
   });
 
   const renderCatalogPage = () => {
@@ -101,6 +173,77 @@ describe('Catalog Page Shell Integration', () => {
     expect(
       screen.getByText('Gerencie produtos, pacotes virtuais e estoque da loja')
     ).toBeInTheDocument();
+  });
+
+  it('renders catalog health metrics cards with values and trends fetched from API', async () => {
+    renderCatalogPage();
+
+    await waitFor(() => {
+      expect(CatalogService.getMetrics).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+      });
+    });
+
+    // Catálogo Ativo
+    await waitFor(() => {
+      const activeCatalogCard = screen.getByTestId(
+        'metric-card-active-catalog'
+      );
+      expect(
+        within(activeCatalogCard).getByText('Catálogo Ativo')
+      ).toBeInTheDocument();
+      expect(within(activeCatalogCard).getByText('52')).toBeInTheDocument();
+      expect(within(activeCatalogCard).getByText('+15%')).toBeInTheDocument();
+    });
+
+    // Locações em Andamento
+    const activeRentalsCard = screen.getByTestId('metric-card-active-rentals');
+    expect(
+      within(activeRentalsCard).getByText('Locações em Andamento')
+    ).toBeInTheDocument();
+    expect(within(activeRentalsCard).getByText('28')).toBeInTheDocument();
+    expect(within(activeRentalsCard).getByText('+10%')).toBeInTheDocument();
+
+    // Alertas de Estoque
+    const stockAlertsCard = screen.getByTestId('metric-card-stock-alerts');
+    expect(
+      within(stockAlertsCard).getByText('Alertas de Estoque')
+    ).toBeInTheDocument();
+    expect(within(stockAlertsCard).getByText('2')).toBeInTheDocument();
+    expect(within(stockAlertsCard).getByText('-50%')).toBeInTheDocument();
+  });
+
+  it('renders the interactive stock movements chart with summary indicators', async () => {
+    renderCatalogPage();
+
+    await waitFor(() => {
+      expect(CatalogService.getStockMovements).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+      });
+    });
+
+    const movementsCard = screen.getByTestId('stock-movements-card');
+    expect(
+      within(movementsCard).getByText('Movimentações de Estoque')
+    ).toBeInTheDocument();
+    expect(
+      within(movementsCard).getByText('Fluxo operacional semanal de itens')
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        within(movementsCard).getByTestId('summary-inbound')
+      ).toHaveTextContent('50 un');
+      expect(
+        within(movementsCard).getByTestId('summary-sale')
+      ).toHaveTextContent('18 un');
+      expect(
+        within(movementsCard).getByTestId('summary-rental')
+      ).toHaveTextContent('27 un');
+      expect(
+        within(movementsCard).getByTestId('summary-loss')
+      ).toHaveTextContent('1 un');
+    });
   });
 
   it('renders the catalog data table with search, classification tabs, and product directory', async () => {
