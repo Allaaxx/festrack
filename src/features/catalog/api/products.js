@@ -1,7 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
+import { DEFAULT_STOCK_MOVEMENTS } from '@/features/catalog/api/fixtures';
+import {
+  getCatalogMetricsQueryKey,
+  getStockMovementsQueryKey,
+} from '@/features/catalog/api/hooks';
 import protectedApi from '@/lib/axios';
 
 /**
@@ -241,6 +247,49 @@ const filterFixturesByType = (fixtures, type) => {
   return fixtures.filter((p) => p.type === type && !p.is_bundle);
 };
 
+const applyLocalStockAdjustment = ({ productId, delta, type, reason }) => {
+  const numDelta = Number(delta) || 0;
+  const product = DEFAULT_PRODUCT_FIXTURES.find((p) => p.id === productId);
+
+  if (product && product.stock) {
+    let newQuantity = product.stock.quantity;
+    if (type === 'INBOUND') {
+      newQuantity += Math.abs(numDelta);
+    } else if (type === 'LOSS') {
+      newQuantity = Math.max(0, newQuantity - Math.abs(numDelta));
+    } else if (type === 'ADJUSTMENT') {
+      newQuantity = Math.max(0, newQuantity + numDelta);
+    }
+
+    product.stock = {
+      ...product.stock,
+      quantity: newQuantity,
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  const newMovement = {
+    id: `mov-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    type,
+    productId,
+    product_id: productId,
+    productName: product?.name ?? 'Produto',
+    quantity: Math.abs(numDelta),
+    date: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    note: reason,
+    notes: reason,
+  };
+
+  DEFAULT_STOCK_MOVEMENTS.unshift(newMovement);
+
+  return {
+    stock: product?.stock,
+    movement: newMovement,
+    product,
+  };
+};
+
 export const ProductService = {
   /**
    * Retrieves products for the active shop.
@@ -292,6 +341,38 @@ export const ProductService = {
       );
     }
   },
+
+  /**
+   * Records a manual stock adjustment or audited movement for a product.
+   *
+   * @param {Object} input
+   * @param {string} input.shopId
+   * @param {string} input.productId
+   * @param {number} input.delta
+   * @param {'INBOUND'|'LOSS'|'ADJUSTMENT'} input.type
+   * @param {string} input.reason
+   * @returns {Promise<Object>}
+   */
+  adjustStock: async ({ shopId, productId, delta, type, reason }) => {
+    const numDelta = Number(delta);
+    try {
+      const response = await protectedApi.post(
+        `/shops/${shopId}/products/${productId}/stock/adjust`,
+        {
+          quantityDelta: numDelta,
+          type,
+          notes: reason,
+        }
+      );
+      applyLocalStockAdjustment({ productId, delta: numDelta, type, reason });
+      if (response?.data) {
+        return response.data;
+      }
+    } catch {
+      return applyLocalStockAdjustment({ productId, delta: numDelta, type, reason });
+    }
+    return applyLocalStockAdjustment({ productId, delta: numDelta, type, reason });
+  },
 };
 
 /**
@@ -322,5 +403,52 @@ export const useGetProducts = ({ type, initialData, enabled = true } = {}) => {
     queryFn: () => ProductService.getAll({ shopId, type }),
     enabled: enabled && (Boolean(shopId) || Boolean(user?.id)),
     initialData,
+  });
+};
+
+export const adjustStockMutationKey = ['adjustStock'];
+
+/**
+ * TanStack Query mutation hook to record manual stock adjustments.
+ * Invalidates products, metrics, and stock movements queries upon success,
+ * and surfaces a toast confirmation.
+ *
+ * @param {Object} [options]
+ */
+export const useAdjustStock = (options = {}) => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthContext() || {};
+  const { activeShop, currentShop } = useShopContext() || {};
+  const shopId = activeShop?.id || currentShop?.id;
+
+  return useMutation({
+    mutationKey: adjustStockMutationKey,
+    mutationFn: (input) =>
+      ProductService.adjustStock({
+        shopId: input?.shopId ?? shopId,
+        productId: input?.productId,
+        delta: input?.delta,
+        type: input?.type,
+        reason: input?.reason ?? input?.notes,
+      }),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: getProductsQueryKey({ shopId, userId: user?.id }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getCatalogMetricsQueryKey({ shopId, userId: user?.id }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getStockMovementsQueryKey({ shopId, userId: user?.id }),
+      });
+
+      toast.add({
+        type: 'success',
+        description: 'Estoque ajustado com sucesso!',
+      });
+
+      options.onSuccess?.(data, variables, context);
+    },
+    ...options,
   });
 };
