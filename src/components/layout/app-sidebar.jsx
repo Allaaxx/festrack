@@ -1,4 +1,9 @@
-import { CalendarDaysIcon, ChartSplineIcon, SettingsIcon } from 'lucide-react';
+import {
+  BoxesIcon,
+  CalendarDaysIcon,
+  ChartSplineIcon,
+  SettingsIcon,
+} from 'lucide-react';
 import { Link } from 'react-router';
 
 import NavFooter from '@/components/layout/nav-footer';
@@ -23,6 +28,11 @@ const data = {
       title: 'Financeiro',
       url: '/finances',
       icon: <ChartSplineIcon />,
+    },
+    {
+      title: 'Catálogo',
+      url: '/catalog',
+      icon: <BoxesIcon />,
     },
     {
       title: 'Eventos',
