@@ -10,5 +10,8 @@ export { default as CatalogTable } from './components/catalog-table';
 export { default as CreateProductDialog } from './components/create-product-dialog';
 export { default as RentalCheckinCard } from './components/rental-checkin-card';
 export { default as RentalCheckinDialog } from './components/rental-checkin-dialog';
+export { default as StockAdjustDialog } from './components/stock-adjust-dialog';
 export { default as StockMovementsChart } from './components/stock-movements-chart';
+export * from './forms/hooks';
+export * from './forms/schemas';
 export * from './helpers/bundle';

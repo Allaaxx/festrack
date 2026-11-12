@@ -192,6 +192,13 @@ describe('CatalogTable', () => {
     // Click on Ajustar Estoque
     await user.click(screen.getByRole('menuitem', { name: /ajustar estoque/i }));
     expect(handleAction).toHaveBeenCalledWith('adjust-stock', tableItem);
+
+    // Verify modal dialog opens with selected product
+    const dialogHeading = await screen.findByRole('heading', {
+      name: /ajustar estoque/i,
+    });
+    expect(dialogHeading).toBeInTheDocument();
+    expect(screen.getAllByText('Mesa Provençal Branca').length).toBeGreaterThanOrEqual(2);
   });
 
   it('displays contextual actions menu for services: Editar, Desativar', async () => {

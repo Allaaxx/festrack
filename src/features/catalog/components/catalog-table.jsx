@@ -24,7 +24,7 @@ import {
   SearchIcon,
   SlidersHorizontalIcon,
 } from 'lucide-react';
-import { useId, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGetProducts } from '@/features/catalog/api/products';
 import BundleBottleneckPopover from '@/features/catalog/components/bundle-bottleneck-popover';
+import StockAdjustDialog from '@/features/catalog/components/stock-adjust-dialog';
 import { getAvailableStock } from '@/features/catalog/helpers/bundle';
 import { formatCurrency } from '@/helpers/currency';
 import { cn } from '@/lib/utils';
@@ -169,6 +170,19 @@ const CatalogTable = ({
   const [classificationFilter, setClassificationFilter] = useState('all');
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [adjustDialogProduct, setAdjustDialogProduct] = useState(null);
+  const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
+
+  const handleRowAction = useCallback(
+    (action, product) => {
+      if (action === 'adjust-stock') {
+        setAdjustDialogProduct(product);
+        setIsAdjustDialogOpen(true);
+      }
+      onAction?.(action, product);
+    },
+    [onAction]
+  );
 
   const hasPropProducts = propProducts !== undefined;
   const {
@@ -406,11 +420,14 @@ const CatalogTable = ({
         id: 'actions',
         header: () => <span className="sr-only">Ações</span>,
         cell: ({ row }) => (
-          <CatalogRowActions product={row.original} onAction={onAction} />
+          <CatalogRowActions
+            product={row.original}
+            onAction={handleRowAction}
+          />
         ),
       },
     ],
-    [allProducts, onAction]
+    [allProducts, handleRowAction]
   );
 
   const table = useTable({
@@ -576,6 +593,13 @@ const CatalogTable = ({
           </div>
         </div>
       )}
+
+      {/* Manual Stock Adjustment Dialog */}
+      <StockAdjustDialog
+        open={isAdjustDialogOpen}
+        onOpenChange={setIsAdjustDialogOpen}
+        product={adjustDialogProduct}
+      />
     </div>
   );
 };

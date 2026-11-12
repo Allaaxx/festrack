@@ -6,9 +6,16 @@ import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
 import {
+  DEFAULT_STOCK_MOVEMENTS,
+  getCatalogMetricsQueryKey,
+  getStockMovementsQueryKey,
+} from '@/features/catalog';
+import {
+  adjustStockMutationKey,
   DEFAULT_PRODUCT_FIXTURES,
   getProductsQueryKey,
   ProductService,
+  useAdjustStock,
   useCreateProduct,
   useGetProducts,
 } from '@/features/catalog/api/products';
@@ -65,7 +72,10 @@ describe('Catalog Products API & Hooks', () => {
     vi.clearAllMocks();
 
     useAuthContext.mockReturnValue({ user: mockUser });
-    useShopContext.mockReturnValue({ activeShop: mockShop, currentShop: mockShop });
+    useShopContext.mockReturnValue({
+      activeShop: mockShop,
+      currentShop: mockShop,
+    });
   });
 
   describe('DEFAULT_PRODUCT_FIXTURES', () => {
@@ -138,6 +148,153 @@ describe('Catalog Products API & Hooks', () => {
 
       expect(result.every((p) => p.type === 'service')).toBe(true);
     });
+
+    describe('adjustStock', () => {
+      it('calls protectedApi.post with stock adjust endpoint and payload', async () => {
+        const mockResponse = {
+          stock: { quantity: 20, reserved: 3 },
+          movement: { id: 'mov-test', type: 'INBOUND', quantity: 5 },
+        };
+        protectedApi.post.mockResolvedValueOnce({ data: mockResponse });
+
+        const result = await ProductService.adjustStock({
+          shopId: 'shop-1',
+          productId: 'prod-1',
+          delta: 5,
+          type: 'INBOUND',
+          reason: 'Lote de compra adicional',
+        });
+
+        expect(protectedApi.post).toHaveBeenCalledWith(
+          '/shops/shop-1/products/prod-1/stock/adjust',
+          {
+            quantityDelta: 5,
+            type: 'INBOUND',
+            notes: 'Lote de compra adicional',
+          }
+        );
+        expect(result).toEqual(mockResponse);
+      });
+
+      it('falls back to local fixtures on API error, updates stock and registers movement', async () => {
+        protectedApi.post.mockRejectedValueOnce(new Error('Network error'));
+
+        const targetProduct = DEFAULT_PRODUCT_FIXTURES.find(
+          (p) => p.id === 'prod-1'
+        );
+        const initialQuantity = targetProduct.stock.quantity;
+        const initialMovementsCount = DEFAULT_STOCK_MOVEMENTS.length;
+
+        const result = await ProductService.adjustStock({
+          shopId: 'shop-1',
+          productId: 'prod-1',
+          delta: 3,
+          type: 'INBOUND',
+          reason: 'Ajuste manual de teste',
+        });
+
+        expect(targetProduct.stock.quantity).toBe(initialQuantity + 3);
+        expect(DEFAULT_STOCK_MOVEMENTS.length).toBe(initialMovementsCount + 1);
+        expect(DEFAULT_STOCK_MOVEMENTS[0]).toMatchObject({
+          type: 'INBOUND',
+          quantity: 3,
+          note: 'Ajuste manual de teste',
+        });
+        expect(result.stock.quantity).toBe(initialQuantity + 3);
+      });
+
+      it('handles LOSS movements by decreasing stock in fixtures', async () => {
+        protectedApi.post.mockRejectedValueOnce(new Error('Network error'));
+
+        const targetProduct = DEFAULT_PRODUCT_FIXTURES.find(
+          (p) => p.id === 'prod-2'
+        );
+        const initialQuantity = targetProduct.stock.quantity;
+
+        await ProductService.adjustStock({
+          shopId: 'shop-1',
+          productId: 'prod-2',
+          delta: 2,
+          type: 'LOSS',
+          reason: 'Quebra durante manuseio',
+        });
+
+        expect(targetProduct.stock.quantity).toBe(initialQuantity - 2);
+        expect(DEFAULT_STOCK_MOVEMENTS[0]).toMatchObject({
+          type: 'LOSS',
+          quantity: 2,
+          note: 'Quebra durante manuseio',
+        });
+      });
+    });
+  });
+
+  describe('useAdjustStock', () => {
+    it('provides predictable mutation key', () => {
+      expect(adjustStockMutationKey).toEqual(['adjustStock']);
+    });
+
+    it('executes mutation, invalidates queries and displays success toast', async () => {
+      const mockResult = {
+        stock: { quantity: 18, reserved: 3 },
+        movement: { id: 'mov-1', type: 'ADJUSTMENT', quantity: 3 },
+      };
+      protectedApi.post.mockResolvedValueOnce({ data: mockResult });
+
+      let capturedQueryClient;
+      const customWrapper = () => {
+        const queryClient = new QueryClient({
+          defaultOptions: {
+            queries: { retry: false },
+            mutations: { retry: false },
+          },
+        });
+        capturedQueryClient = queryClient;
+        vi.spyOn(queryClient, 'invalidateQueries');
+
+        return ({ children }) => (
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+        );
+      };
+
+      const { result } = renderHook(() => useAdjustStock(), {
+        wrapper: customWrapper(),
+      });
+
+      await result.current.mutateAsync({
+        productId: 'prod-1',
+        delta: 3,
+        type: 'ADJUSTMENT',
+        reason: 'Inventário conferido com sucesso',
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+      // Verify query invalidations
+      expect(capturedQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: getProductsQueryKey({ shopId: 'shop-1', userId: 'usr-1' }),
+      });
+      expect(capturedQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: getCatalogMetricsQueryKey({
+          shopId: 'shop-1',
+          userId: 'usr-1',
+        }),
+      });
+      expect(capturedQueryClient.invalidateQueries).toHaveBeenCalledWith({
+        queryKey: getStockMovementsQueryKey({
+          shopId: 'shop-1',
+          userId: 'usr-1',
+        }),
+      });
+
+      // Verify success toast confirmation
+      expect(toast.add).toHaveBeenCalledWith({
+        type: 'success',
+        description: 'Estoque ajustado com sucesso!',
+      });
+    });
   });
 
   describe('useGetProducts', () => {
@@ -158,9 +315,9 @@ describe('Catalog Products API & Hooks', () => {
         'getProducts',
         'shop-1',
       ]);
-      expect(
-        getProductsQueryKey({ shopId: 'shop-1', type: 'bundle' })
-      ).toEqual(['getProducts', 'shop-1', { type: 'bundle' }]);
+      expect(getProductsQueryKey({ shopId: 'shop-1', type: 'bundle' })).toEqual(
+        ['getProducts', 'shop-1', { type: 'bundle' }]
+      );
     });
   });
 
@@ -222,12 +379,17 @@ describe('Catalog Products API & Hooks', () => {
   describe('useCreateProduct', () => {
     it('executes mutation, invalidates products and catalogMetrics queries, and shows toast', async () => {
       const queryClient = new QueryClient({
-        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+        defaultOptions: {
+          queries: { retry: false },
+          mutations: { retry: false },
+        },
       });
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
       const wrapper = ({ children }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
       );
 
       const createdProduct = {
