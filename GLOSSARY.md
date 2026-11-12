@@ -160,6 +160,56 @@ A digital file (receipt, invoice, product image, or document) associated with a 
 - **Handling:** Upload logic is decoupled from UI presentation; components handle local file selection, validation, and previews, delegating persistence to dedicated entity mutation endpoints.
 - **Avoid:** FileAsset, UploadFile, MediaItem.
 
+---
+
+### Product
+
+A salable, rentable, or serviceable offering created by a shop for customers.
+
+- **Classifications:** Categorized strictly across `sale` (physical items with permanent stock deduction upon purchase), `rent` (physical items allocated during events and returned upon check-in), and `service` (non-physical offerings with no stock tracking).
+- **Avoid:** Item, Article, Listing, Goods.
+
+---
+
+### Product Bundle
+
+A composite virtual product whose retail pricing and marketing presence are distinct, but whose availability and fulfillment are dynamically derived from a collection of component simple products rather than maintaining a dedicated physical stock.
+
+- **Bottleneck Inventory:** Stock availability is computed in real time from the minimum ratio of unreserved component inventory to required bundle quantities: $\min_i \lfloor (quantity_i - reserved_i) / multiplier_i \rfloor$.
+- **Composition Constraints:** Bundles are strictly single-level (a bundle cannot contain another bundle) and its component associations are immutable once defined.
+- **Avoid:** Kit, Combo, Package, Grouped Product.
+
+---
+
+### Bundle Item
+
+The association linking a Product Bundle to a required component simple Product alongside its multiplier quantity.
+
+- **Integrity:** Component products referenced in active bundles are protected against deletion.
+- **Avoid:** Component, Ingredient, Sub-item, Part.
+
+---
+
+### Stock
+
+The physical inventory record tracking on-hand quantity and reserved allocations for a single simple product owned by a shop.
+
+- **Attributes:** Total physical on-hand count (`quantity`) and current allocations for scheduled events or open checkouts (`reserved`).
+- **Availability:** Calculated as `quantity - reserved`.
+- **Applicability:** Maintained exclusively for simple products classified as `sale` or `rent`.
+- **Avoid:** Inventory, Storage, Warehouse count.
+
+---
+
+### Stock Movement
+
+An immutable ledger entry recording a discrete change or adjustment in a product's stock.
+
+- **Movement Types:** Categorized as `INBOUND` (receipt of physical units), `SALE` (outbound fulfillment), `RENTAL_ALLOCATION` (temporary reservation for event), `RENTAL_RETURN` (physical check-in upon event conclusion), `LOSS` (write-off due to damage or disappearance during rental), and `ADJUSTMENT` (manual audit reconciliation).
+- **Auditability:** Preserves timestamp, affected quantity, delta, user attribution, and optional reference to an Event or Inspection.
+- **Avoid:** Stock Change, Adjustment Record, Inventory Log.
+
+
 
 
 
