@@ -96,6 +96,32 @@ describe('Timeline Component Primitive', () => {
     expect(dot).toHaveClass('bg-amber-500');
   });
 
+  it('supports visual variants on TimelineConnector', () => {
+    const { rerender } = render(
+      <TimelineConnector variant="default" data-testid="connector" />
+    );
+    let connector = screen.getByTestId('connector');
+    expect(connector).toHaveClass('bg-border');
+
+    rerender(<TimelineConnector variant="primary" data-testid="connector" />);
+    connector = screen.getByTestId('connector');
+    expect(connector).toHaveClass('bg-primary');
+
+    rerender(<TimelineConnector variant="success" data-testid="connector" />);
+    connector = screen.getByTestId('connector');
+    expect(connector).toHaveClass('bg-emerald-500');
+
+    rerender(
+      <TimelineConnector variant="destructive" data-testid="connector" />
+    );
+    connector = screen.getByTestId('connector');
+    expect(connector).toHaveClass('bg-destructive');
+
+    rerender(<TimelineConnector variant="warning" data-testid="connector" />);
+    connector = screen.getByTestId('connector');
+    expect(connector).toHaveClass('bg-amber-500');
+  });
+
   it('renders custom icons and children inside TimelineDot', () => {
     render(
       <TimelineDot variant="success" data-testid="custom-dot">

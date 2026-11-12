@@ -41,17 +41,37 @@ function TimelineItem({ className, render, ...props }) {
   });
 }
 
-function TimelineConnector({ className, render, ...props }) {
+const timelineConnectorVariants = cva(
+  'absolute top-6 bottom-0 left-3 w-0.5 -translate-x-1/2 group-last/timeline-item:hidden transition-colors',
+  {
+    variants: {
+      variant: {
+        default: 'bg-border',
+        primary: 'bg-primary',
+        success: 'bg-emerald-500 dark:bg-emerald-600',
+        destructive: 'bg-destructive',
+        warning: 'bg-amber-500 dark:bg-amber-600',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
+
+function TimelineConnector({
+  className,
+  variant = 'default',
+  render,
+  ...props
+}) {
   return useRender({
     defaultTagName: 'div',
     props: mergeProps(
       {
         'data-slot': 'timeline-connector',
         'aria-hidden': 'true',
-        className: cn(
-          'bg-border absolute top-6 bottom-0 left-3 w-0.5 -translate-x-1/2 group-last/timeline-item:hidden',
-          className
-        ),
+        className: cn(timelineConnectorVariants({ variant }), className),
       },
       props
     ),

@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/layout/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
-import { CatalogService } from '@/features/catalog/api/services';
+import { CatalogService } from '@/features/catalog';
 import { AppRoutes } from '@/main';
 
 vi.mock('recharts', async () => {
