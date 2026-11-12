@@ -1,4 +1,4 @@
-import { CatalogHeader } from '@/features/catalog';
+import { CatalogHeader, CatalogTable } from '@/features/catalog';
 
 /**
  * Catalog cockpit page component.
@@ -8,6 +8,7 @@ const CatalogPage = () => {
   return (
     <div className="@container/main flex flex-1 flex-col gap-4">
       <CatalogHeader />
+      <CatalogTable />
     </div>
   );
 };

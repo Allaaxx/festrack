@@ -102,4 +102,42 @@ describe('Catalog Page Shell Integration', () => {
       screen.getByText('Gerencie produtos, pacotes virtuais e estoque da loja')
     ).toBeInTheDocument();
   });
+
+  it('renders the catalog data table with search, classification tabs, and product directory', async () => {
+    renderCatalogPage();
+
+    // 1. Search bar and filter tabs rendered
+    expect(
+      screen.getByPlaceholderText(/buscar produtos por nome/i)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /todos/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /venda/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /aluguel/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /serviço/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('tab', { name: /pacote virtual/i })
+    ).toBeInTheDocument();
+
+    // 2. Table columns rendered
+    expect(
+      screen.getByRole('columnheader', { name: /produto/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /classificação/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /preço/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: /estoque/i })
+    ).toBeInTheDocument();
+
+    // 3. Products rendered in table
+    expect(
+      await screen.findByText('Mesa Rústica Retangular 2m')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Kit Festa Infantil Provençal Encantada')
+    ).toBeInTheDocument();
+  });
 });
