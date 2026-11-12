@@ -1,3 +1,4 @@
+import CreateProductDialog from '@/features/catalog/components/create-product-dialog';
 import { cn } from '@/lib/utils';
 
 /**
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils';
 const CatalogHeader = ({
   title = 'Catálogo',
   description = 'Gerencie produtos, pacotes virtuais e estoque da loja',
+  showCreateAction = true,
   children,
   className,
 }) => {
@@ -36,9 +38,10 @@ const CatalogHeader = ({
             {description}
           </p>
         </div>
-        {children && (
-          <div className="flex items-center gap-2.5">{children}</div>
-        )}
+        <div className="flex items-center gap-2.5">
+          {children}
+          {showCreateAction && <CreateProductDialog />}
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
 import protectedApi from '@/lib/axios';
@@ -292,6 +293,79 @@ export const ProductService = {
       );
     }
   },
+
+  /**
+   * Creates a new simple product or virtual bundle in the active shop.
+   * Falls back gracefully to demo entity creation when offline or backend endpoint is missing.
+   *
+   * @param {Object} input
+   * @param {string} input.shopId
+   * @param {string} input.name
+   * @param {string} [input.slug]
+   * @param {string} input.type - 'sale' | 'rent' | 'service'
+   * @param {number} input.price
+   * @param {string} [input.description]
+   * @param {boolean} [input.is_bundle]
+   * @param {number} [input.quantity]
+   * @param {number} [input.initial_quantity]
+   * @param {Array<Object>} [input.bundle_items]
+   * @returns {Promise<Object>}
+   */
+  create: async ({ shopId, ...data } = {}) => {
+    const slug =
+      data.slug ||
+      data.name
+        ?.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') ||
+      'produto';
+
+    const payload = {
+      ...data,
+      slug,
+    };
+
+    try {
+      const response = await protectedApi.post(
+        `/shops/${shopId}/products`,
+        payload
+      );
+      if (response?.data) {
+        return response.data;
+      }
+      return {
+        id: `prod-${Date.now()}`,
+        shop_id: shopId,
+        ...payload,
+      };
+    } catch (error) {
+      if (!error?.response || error?.response?.status === 404) {
+        const initialQty = Number(
+          payload.quantity ?? payload.initial_quantity ?? 0
+        );
+        return {
+          id: `prod-${Date.now()}`,
+          shop_id: shopId,
+          ...payload,
+          stock:
+            payload.is_bundle || payload.type === 'service'
+              ? null
+              : {
+                  id: `stk-${Date.now()}`,
+                  product_id: `prod-${Date.now()}`,
+                  quantity: initialQty,
+                  reserved: 0,
+                  updated_at: new Date().toISOString(),
+                },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+      }
+      throw error;
+    }
+  },
 };
 
 /**
@@ -322,5 +396,57 @@ export const useGetProducts = ({ type, initialData, enabled = true } = {}) => {
     queryFn: () => ProductService.getAll({ shopId, type }),
     enabled: enabled && (Boolean(shopId) || Boolean(user?.id)),
     initialData,
+  });
+};
+
+export const createProductMutationKey = ['createProduct'];
+
+/**
+ * TanStack Query mutation hook to create a product or virtual bundle.
+ * Updates query cache for products and catalog metrics, and triggers toast confirmation.
+ *
+ * @param {Object} [options]
+ */
+export const useCreateProduct = (options = {}) => {
+  const queryClient = useQueryClient();
+  const { activeShop, currentShop } = useShopContext() || {};
+  const shopId = activeShop?.id || currentShop?.id;
+
+  const { onSuccess, onError, ...restOptions } = options;
+
+  return useMutation({
+    mutationKey: createProductMutationKey,
+    mutationFn: (data) =>
+      ProductService.create({
+        shopId: data?.shopId ?? shopId,
+        ...data,
+      }),
+    onSuccess: async (createdProduct, variables, context) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['getProducts'] }),
+        queryClient.invalidateQueries({ queryKey: ['catalogMetrics'] }),
+      ]);
+
+      toast.add({
+        type: 'success',
+        title: 'Produto criado com sucesso!',
+        description: 'Produto criado com sucesso!',
+      });
+
+      onSuccess?.(createdProduct, variables, context);
+    },
+    onError: (error, variables, context) => {
+      toast.add({
+        type: 'error',
+        title: 'Erro ao criar produto',
+        description:
+          error?.response?.data?.message ||
+          error?.message ||
+          'Não foi possível criar o produto.',
+      });
+
+      onError?.(error, variables, context);
+    },
+    ...restOptions,
   });
 };

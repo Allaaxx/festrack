@@ -1,16 +1,24 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { toast } from '@/components/ui/toast';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
 import {
   DEFAULT_PRODUCT_FIXTURES,
   getProductsQueryKey,
   ProductService,
+  useCreateProduct,
   useGetProducts,
 } from '@/features/catalog/api/products';
 import protectedApi from '@/lib/axios';
+
+vi.mock('@/components/ui/toast', () => ({
+  toast: {
+    add: vi.fn(),
+  },
+}));
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
@@ -153,6 +161,116 @@ describe('Catalog Products API & Hooks', () => {
       expect(
         getProductsQueryKey({ shopId: 'shop-1', type: 'bundle' })
       ).toEqual(['getProducts', 'shop-1', { type: 'bundle' }]);
+    });
+  });
+
+  describe('ProductService.create', () => {
+    it('calls protectedApi.post with shopId, payload, and auto-generated slug', async () => {
+      const createdProduct = {
+        id: 'prod-new-1',
+        shop_id: 'shop-1',
+        name: 'Mesa Dobrável Branca',
+        slug: 'mesa-dobravel-branca',
+        type: 'rent',
+        price: 80,
+      };
+      protectedApi.post.mockResolvedValueOnce({ data: createdProduct });
+
+      const result = await ProductService.create({
+        shopId: 'shop-1',
+        name: 'Mesa Dobrável Branca',
+        type: 'rent',
+        price: 80,
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-1/products',
+        expect.objectContaining({
+          name: 'Mesa Dobrável Branca',
+          slug: 'mesa-dobravel-branca',
+          type: 'rent',
+          price: 80,
+        })
+      );
+      expect(result).toEqual(createdProduct);
+    });
+
+    it('falls back gracefully when backend is offline or returns error', async () => {
+      protectedApi.post.mockRejectedValueOnce({
+        response: { status: 404 },
+      });
+
+      const result = await ProductService.create({
+        shopId: 'shop-1',
+        name: 'Toalha de Mesa Branca',
+        type: 'sale',
+        price: 35,
+        quantity: 20,
+      });
+
+      expect(result).toMatchObject({
+        name: 'Toalha de Mesa Branca',
+        type: 'sale',
+        price: 35,
+        shop_id: 'shop-1',
+      });
+      expect(result.id).toBeDefined();
+      expect(result.stock.quantity).toBe(20);
+    });
+  });
+
+  describe('useCreateProduct', () => {
+    it('executes mutation, invalidates products and catalogMetrics queries, and shows toast', async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      });
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const wrapper = ({ children }) => (
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      );
+
+      const createdProduct = {
+        id: 'prod-bundle-1',
+        name: 'Kit Provençal Luxo',
+        type: 'rent',
+        is_bundle: true,
+      };
+      protectedApi.post.mockResolvedValueOnce({ data: createdProduct });
+
+      const onSuccessCallback = vi.fn();
+      const { result } = renderHook(
+        () => useCreateProduct({ onSuccess: onSuccessCallback }),
+        { wrapper }
+      );
+
+      await act(async () => {
+        await result.current.mutateAsync({
+          name: 'Kit Provençal Luxo',
+          type: 'rent',
+          price: 250,
+          is_bundle: true,
+          bundle_items: [{ product_id: 'prod-1', quantity: 2 }],
+        });
+      });
+
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ['getProducts'] })
+      );
+      expect(invalidateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({ queryKey: ['catalogMetrics'] })
+      );
+      expect(toast.add).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'success',
+          title: expect.stringMatching(/produto criado com sucesso/i),
+        })
+      );
+      expect(onSuccessCallback).toHaveBeenCalledWith(
+        createdProduct,
+        expect.anything(),
+        undefined
+      );
     });
   });
 });

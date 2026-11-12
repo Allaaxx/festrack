@@ -6,5 +6,6 @@ export { default as BundleBottleneckPopover } from './components/bundle-bottlene
 export { default as CatalogHeader } from './components/catalog-header';
 export { default as CatalogMetrics } from './components/catalog-metrics';
 export { default as CatalogTable } from './components/catalog-table';
+export { default as CreateProductDialog } from './components/create-product-dialog';
 export { default as StockMovementsChart } from './components/stock-movements-chart';
 export * from './helpers/bundle';
