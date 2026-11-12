@@ -2,6 +2,7 @@ import {
   CatalogHeader,
   CatalogMetrics,
   CatalogTable,
+  RentalCheckinCard,
   StockMovementsChart,
   useGetCatalogMetrics,
   useGetStockMovements,
@@ -24,6 +25,7 @@ const CatalogPage = () => {
         data={movementsData?.series}
         isLoading={isMovementsLoading}
       />
+      <RentalCheckinCard />
       <CatalogTable />
     </div>
   );
