@@ -246,6 +246,45 @@ describe('Catalog Page Shell Integration', () => {
     });
   });
 
+  it('renders the rental check-in logistics card with timeline tracking and return progress', async () => {
+    renderCatalogPage();
+
+    const rentalsCard = screen.getByTestId('rental-checkin-card');
+    expect(rentalsCard).toBeInTheDocument();
+
+    expect(
+      within(rentalsCard).getByText('Controle de Locações')
+    ).toBeInTheDocument();
+    expect(
+      within(rentalsCard).getByText(
+        'Acompanhe entregas, retiradas e devoluções para eventos'
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      within(rentalsCard).getByRole('tab', { name: /retorno pendente/i })
+    ).toBeInTheDocument();
+    expect(
+      within(rentalsCard).getByRole('tab', { name: /em evento/i })
+    ).toBeInTheDocument();
+    expect(
+      within(rentalsCard).getByRole('tab', { name: /reservados/i })
+    ).toBeInTheDocument();
+    expect(
+      within(rentalsCard).getByRole('tab', { name: /inspecionados/i })
+    ).toBeInTheDocument();
+
+    // Verify timeline items rendered after query resolution
+    await waitFor(() => {
+      expect(
+        within(rentalsCard).getByText(/Mariana Souza/i)
+      ).toBeInTheDocument();
+      expect(
+        within(rentalsCard).getByRole('button', { name: /registrar check-in/i })
+      ).toBeInTheDocument();
+    });
+  });
+
   it('renders the catalog data table with search, classification tabs, and product directory', async () => {
     renderCatalogPage();
 
