@@ -28,46 +28,169 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   useCreateProduct,
   useGetProducts,
+  useUpdateProduct,
 } from '@/features/catalog/api/products';
 import { calculateBundleBottleneck } from '@/features/catalog/helpers/bundle';
 
+const mapBundleItemsFromProduct = (product, availableSimpleProducts = []) => {
+  const rawItems = product?.bundle_items ?? product?.bundleItems ?? [];
+  return rawItems.map((bi) => {
+    const compId = bi.product_id ?? bi.productId;
+    const comp =
+      bi.componentProduct ??
+      bi.product ??
+      availableSimpleProducts.find((p) => p.id === compId);
+    const onHand = Number(comp?.stock?.quantity ?? comp?.quantity ?? 0);
+    const reserved = Number(comp?.stock?.reserved ?? comp?.reserved ?? 0);
+    const available = Math.max(0, onHand - reserved);
+
+    return {
+      productId: compId,
+      name: comp?.name ?? bi.name ?? 'Componente',
+      type: comp?.type ?? bi.type ?? 'rent',
+      quantity: Number(bi.quantity ?? 1),
+      onHand,
+      reserved,
+      availableStock: available,
+      componentProduct: comp,
+    };
+  });
+};
+
 /**
- * Modal dialog for unified creation of simple products and virtual bundles.
- * Implements ticket #114 and follows Base UI element composition standards without `asChild`.
+ * Modal dialog for unified creation and editing of simple products and bundles (Pacotes).
+ * Follows Base UI element composition standards without `asChild`.
  *
  * @param {Object} props
  * @param {React.ReactNode} [props.trigger]
+ * @param {Object} [props.product]
  * @param {boolean} [props.open]
  * @param {(open: boolean) => void} [props.onOpenChange]
  * @param {(product: Object) => void} [props.onSuccess]
  */
 const CreateProductDialog = ({
   trigger,
+  product,
   open,
   onOpenChange,
   onSuccess,
 }) => {
+  const isEditMode = Boolean(product?.id);
   const isControlled = open !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = isControlled ? open : internalOpen;
 
-  const [activeTab, setActiveTab] = useState('simple');
+  const { data: allProducts = [] } = useGetProducts();
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+
+  const availableSimpleProducts = useMemo(
+    () => allProducts.filter((p) => !p.is_bundle && p.id !== product?.id),
+    [allProducts, product?.id]
+  );
+
+  const [syncedProductId, setSyncedProductId] = useState(product?.id ?? null);
+  const [activeTab, setActiveTab] = useState(
+    product?.is_bundle ? 'bundle' : 'simple'
+  );
 
   // Simple Product Form State
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState('rent');
-  const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('0');
+  const [name, setName] = useState(
+    !product?.is_bundle ? (product?.name ?? '') : ''
+  );
+  const [description, setDescription] = useState(
+    !product?.is_bundle ? (product?.description ?? '') : ''
+  );
+  const [type, setType] = useState(
+    !product?.is_bundle ? (product?.type ?? 'rent') : 'rent'
+  );
+  const [price, setPrice] = useState(
+    !product?.is_bundle &&
+      product?.price !== undefined &&
+      product?.price !== null
+      ? Number(product.price)
+      : ''
+  );
+  const [quantity, setQuantity] = useState(
+    !product?.is_bundle
+      ? String(product?.stock?.quantity ?? product?.quantity ?? 0)
+      : '0'
+  );
   const [simpleErrors, setSimpleErrors] = useState({});
 
-  // Virtual Bundle Form State
-  const [bundleName, setBundleName] = useState('');
-  const [bundleDescription, setBundleDescription] = useState('');
-  const [bundlePrice, setBundlePrice] = useState('');
-  const [bundleItems, setBundleItems] = useState([]);
+  // Bundle Form State
+  const [bundleName, setBundleName] = useState(
+    product?.is_bundle ? (product?.name ?? '') : ''
+  );
+  const [bundleDescription, setBundleDescription] = useState(
+    product?.is_bundle ? (product?.description ?? '') : ''
+  );
+  const [bundlePrice, setBundlePrice] = useState(
+    product?.is_bundle &&
+      product?.price !== undefined &&
+      product?.price !== null
+      ? Number(product.price)
+      : ''
+  );
+  const [bundleItems, setBundleItems] = useState(() =>
+    product?.is_bundle
+      ? mapBundleItemsFromProduct(product, availableSimpleProducts)
+      : []
+  );
   const [selectedComponentId, setSelectedComponentId] = useState('');
   const [bundleErrors, setBundleErrors] = useState({});
+
+  const applyProductState = (targetProduct) => {
+    setSimpleErrors({});
+    setBundleErrors({});
+    setSelectedComponentId('');
+
+    if (!targetProduct) {
+      setActiveTab('simple');
+      setName('');
+      setDescription('');
+      setType('rent');
+      setPrice('');
+      setQuantity('0');
+      setBundleName('');
+      setBundleDescription('');
+      setBundlePrice('');
+      setBundleItems([]);
+      return;
+    }
+
+    if (targetProduct.is_bundle) {
+      setActiveTab('bundle');
+      setBundleName(targetProduct.name ?? '');
+      setBundleDescription(targetProduct.description ?? '');
+      setBundlePrice(
+        targetProduct.price !== undefined && targetProduct.price !== null
+          ? Number(targetProduct.price)
+          : ''
+      );
+      setBundleItems(
+        mapBundleItemsFromProduct(targetProduct, availableSimpleProducts)
+      );
+    } else {
+      setActiveTab('simple');
+      setName(targetProduct.name ?? '');
+      setDescription(targetProduct.description ?? '');
+      setType(targetProduct.type ?? 'rent');
+      setPrice(
+        targetProduct.price !== undefined && targetProduct.price !== null
+          ? Number(targetProduct.price)
+          : ''
+      );
+      setQuantity(
+        String(targetProduct?.stock?.quantity ?? targetProduct?.quantity ?? 0)
+      );
+    }
+  };
+
+  if ((product?.id ?? null) !== syncedProductId) {
+    setSyncedProductId(product?.id ?? null);
+    applyProductState(product);
+  }
 
   const simpleNameId = useId();
   const simpleDescId = useId();
@@ -80,30 +203,8 @@ const CreateProductDialog = ({
   const bundlePriceId = useId();
   const bundlePickerId = useId();
 
-  const { data: allProducts = [] } = useGetProducts();
-  const createProductMutation = useCreateProduct();
-
-  const availableSimpleProducts = useMemo(
-    () => allProducts.filter((p) => !p.is_bundle),
-    [allProducts]
-  );
-
-  const resetForm = () => {
-    setActiveTab('simple');
-    setName('');
-    setDescription('');
-    setType('rent');
-    setPrice('');
-    setQuantity('0');
-    setSimpleErrors({});
-
-    setBundleName('');
-    setBundleDescription('');
-    setBundlePrice('');
-    setBundleItems([]);
-    setSelectedComponentId('');
-    setBundleErrors({});
-  };
+  const isSubmitting =
+    createProductMutation.isPending || updateProductMutation.isPending;
 
   const handleOpenChange = (nextOpen) => {
     if (!isControlled) {
@@ -111,7 +212,9 @@ const CreateProductDialog = ({
     }
     onOpenChange?.(nextOpen);
     if (!nextOpen) {
-      resetForm();
+      applyProductState(product ?? null);
+    } else if (product) {
+      applyProductState(product);
     }
   };
 
@@ -217,13 +320,20 @@ const CreateProductDialog = ({
     if (type !== 'service') {
       const qty = parseInt(quantity, 10);
       payload.quantity = isNaN(qty) ? 0 : Math.max(0, qty);
-      payload.initial_quantity = payload.quantity;
+      if (!isEditMode) {
+        payload.initial_quantity = payload.quantity;
+      }
     }
 
     try {
-      const created = await createProductMutation.mutateAsync(payload);
+      const saved = isEditMode
+        ? await updateProductMutation.mutateAsync({
+            id: product.id,
+            ...payload,
+          })
+        : await createProductMutation.mutateAsync(payload);
       handleOpenChange(false);
-      onSuccess?.(created);
+      onSuccess?.(saved);
     } catch {
       // Error handled by hook toast
     }
@@ -244,7 +354,7 @@ const CreateProductDialog = ({
     }
 
     if (bundleItems.length === 0) {
-      errors.items = 'Adicione pelo menos um componente ao pacote virtual.';
+      errors.items = 'Adicione pelo menos um componente ao pacote.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -265,9 +375,14 @@ const CreateProductDialog = ({
     };
 
     try {
-      const created = await createProductMutation.mutateAsync(payload);
+      const saved = isEditMode
+        ? await updateProductMutation.mutateAsync({
+            id: product.id,
+            ...payload,
+          })
+        : await createProductMutation.mutateAsync(payload);
       handleOpenChange(false);
-      onSuccess?.(created);
+      onSuccess?.(saved);
     } catch {
       // Error handled by hook toast
     }
@@ -284,18 +399,27 @@ const CreateProductDialog = ({
     </Button>
   );
 
+  const dialogTitle = isEditMode
+    ? activeTab === 'bundle' || product?.is_bundle
+      ? 'Editar Pacote'
+      : 'Editar Produto'
+    : 'Novo Produto';
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={trigger || defaultTrigger} />
+      {(trigger || (!isEditMode && trigger !== null)) && (
+        <DialogTrigger render={trigger || defaultTrigger} />
+      )}
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <PackageIcon className="size-5 text-primary" />
-            Novo Produto
+            {dialogTitle}
           </DialogTitle>
           <DialogDescription>
-            Cadastre um produto simples ou componha um pacote virtual dinâmico
-            para o catálogo da sua loja.
+            {isEditMode
+              ? 'Atualize os dados do produto ou os componentes do pacote no catálogo da sua loja.'
+              : 'Cadastre um produto simples ou componha um pacote dinâmico para o catálogo da sua loja.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -307,7 +431,7 @@ const CreateProductDialog = ({
             </TabsTrigger>
             <TabsTrigger value="bundle" className="gap-2">
               <LayersIcon className="size-4" />
-              Pacote Virtual
+              Pacote
             </TabsTrigger>
           </TabsList>
 
@@ -422,19 +546,19 @@ const CreateProductDialog = ({
                 />
                 <Button
                   type="submit"
-                  disabled={createProductMutation.isPending}
+                  disabled={isSubmitting}
                   className="cursor-pointer"
                 >
-                  {createProductMutation.isPending && (
+                  {isSubmitting && (
                     <Loader2Icon className="size-4 mr-2 animate-spin" />
                   )}
-                  Criar Produto
+                  {isEditMode ? 'Salvar Alterações' : 'Criar Produto'}
                 </Button>
               </DialogFooter>
             </form>
           </TabsContent>
 
-          {/* Virtual Bundle Tab */}
+          {/* Bundle Tab */}
           <TabsContent value="bundle" className="mt-4">
             <form onSubmit={handleSubmitBundle} className="space-y-4">
               <div className="space-y-1.5">
@@ -504,10 +628,11 @@ const CreateProductDialog = ({
                     className="text-sm font-semibold text-foreground flex items-center gap-1.5"
                   >
                     <LayersIcon className="size-4 text-primary" />
-                    Componentes do Pacote Virtual
+                    Componentes do Pacote
                   </Label>
                   <p className="text-muted-foreground text-xs">
-                    Adicione produtos simples da loja com seus respectivos multiplicadores.
+                    Adicione produtos simples da loja com seus respectivos
+                    multiplicadores.
                   </p>
                 </div>
 
@@ -563,8 +688,8 @@ const CreateProductDialog = ({
                 <div className="space-y-2 mt-3">
                   {bundleItems.length === 0 ? (
                     <div className="text-muted-foreground border-border/70 rounded-lg border border-dashed p-4 text-center text-xs">
-                      Nenhum componente adicionado ainda. Selecione um produto acima
-                      para compor o pacote.
+                      Nenhum componente adicionado ainda. Selecione um produto
+                      acima para compor o pacote.
                     </div>
                   ) : (
                     bundleItems.map((item) => (
@@ -615,7 +740,9 @@ const CreateProductDialog = ({
                             type="button"
                             variant="ghost"
                             size="icon-sm"
-                            onClick={() => handleRemoveComponent(item.productId)}
+                            onClick={() =>
+                              handleRemoveComponent(item.productId)
+                            }
                             aria-label={`Remover ${item.name}`}
                             className="text-muted-foreground hover:text-destructive cursor-pointer"
                           >
@@ -677,13 +804,13 @@ const CreateProductDialog = ({
                 />
                 <Button
                   type="submit"
-                  disabled={createProductMutation.isPending}
+                  disabled={isSubmitting}
                   className="cursor-pointer"
                 >
-                  {createProductMutation.isPending && (
+                  {isSubmitting && (
                     <Loader2Icon className="size-4 mr-2 animate-spin" />
                   )}
-                  Criar Pacote
+                  {isEditMode ? 'Salvar Alterações' : 'Criar Pacote'}
                 </Button>
               </DialogFooter>
             </form>
