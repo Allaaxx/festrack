@@ -19,6 +19,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthContextProvider } from '@/contexts/auth';
 import { ShopContextProvider } from '@/contexts/shop';
 import AcceptInvitationPage from '@/pages/accept-invitation';
+import CatalogPage from '@/pages/catalog';
 import EventPage from '@/pages/event';
 import EventDetailPage from '@/pages/event-detail';
 import NotFoundPage from '@/pages/not-found';
@@ -47,6 +48,7 @@ export const AppRoutes = () => {
       <Route element={<DashboardLayout />}>
         <Route path="/" element={<Navigate to="/finances" replace />} />
         <Route path="/finances" element={<FinancePage />} />
+        <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/events" element={<EventPage />} />
         <Route path="/events/:eventId" element={<EventDetailPage />} />
         <Route

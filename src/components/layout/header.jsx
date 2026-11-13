@@ -33,6 +33,10 @@ const getBreadcrumbs = (pathname) => {
     return [{ label: 'Finanças' }];
   }
 
+  if (pathname.startsWith('/catalog')) {
+    return [{ label: 'Catálogo' }];
+  }
+
   if (pathname.startsWith('/settings')) {
     return [{ label: 'Configurações' }];
   }
