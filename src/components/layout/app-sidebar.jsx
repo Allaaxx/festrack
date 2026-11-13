@@ -1,5 +1,5 @@
 import {
-  BoxesIcon,
+  BoxIcon,
   CalendarDaysIcon,
   ChartSplineIcon,
   SettingsIcon,
@@ -32,7 +32,7 @@ const data = {
     {
       title: 'Catálogo',
       url: '/catalog',
-      icon: <BoxesIcon />,
+      icon: <BoxIcon />,
     },
     {
       title: 'Eventos',

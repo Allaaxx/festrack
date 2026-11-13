@@ -1,15 +1,6 @@
 import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardAction,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { KpiCard } from '@/components/shared/kpi-card';
 import { formatCurrency } from '@/helpers/currency';
 
 /**
@@ -82,207 +73,98 @@ export const SectionCards = ({ balance, isLoading = false }) => {
       )}
 
       {/* 1. Receita Total */}
-      <Card data-testid="kpi-card-revenue" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid md:flex-row">
-          <CardDescription>Receita Total</CardDescription>
-          {isLoading ? (
-            <Skeleton
-              data-testid="kpi-skeleton"
-              aria-hidden="true"
-              className="h-8 w-32"
-            />
+      <KpiCard
+        testId="kpi-card-revenue"
+        title="Receita Total"
+        value={formatCurrency(earnings)}
+        badgeIcon={
+          earningsPercentage >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
+        }
+        badgeText={formatPercentage(earningsPercentage)}
+        footerTitle={
+          earningsPercentage >= 0 ? 'Crescimento este mês' : 'Redução este mês'
+        }
+        footerIcon={
+          earningsPercentage >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {formatCurrency(earnings)}
-            </CardTitle>
-          )}
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-testid="kpi-skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge variant="outline">
-                {earningsPercentage >= 0 ? (
-                  <TrendingUpIcon />
-                ) : (
-                  <TrendingDownIcon />
-                )}
-                {formatPercentage(earningsPercentage)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {earningsPercentage >= 0 ? (
-              <>
-                Crescimento este mês <TrendingUpIcon className="size-4" />
-              </>
-            ) : (
-              <>
-                Redução este mês <TrendingDownIcon className="size-4" />
-              </>
-            )}
-          </div>
-          <div className="text-muted-foreground">
-            Comparado aos últimos 6 meses
-          </div>
-        </CardFooter>
-      </Card>
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Comparado aos últimos 6 meses"
+        isLoading={isLoading}
+      />
 
       {/* 2. Despesas do Mês */}
-      <Card data-testid="kpi-card-expenses" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid md:flex-row">
-          <CardDescription>Despesas do Mês</CardDescription>
-          {isLoading ? (
-            <Skeleton
-              data-testid="kpi-skeleton"
-              aria-hidden="true"
-              className="h-8 w-32"
-            />
+      <KpiCard
+        testId="kpi-card-expenses"
+        title="Despesas do Mês"
+        value={formatCurrency(expenses)}
+        badgeIcon={
+          expensePercentage >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
+        }
+        badgeText={formatPercentage(expensePercentage)}
+        footerTitle={
+          expensePercentage <= 0
+            ? expensePercentage !== 0
+              ? `Redução de ${Math.abs(expensePercentage)}% no período`
+              : 'Sem alteração no período'
+            : `Aumento de ${expensePercentage}% no período`
+        }
+        footerIcon={
+          expensePercentage <= 0 ? (
+            <TrendingDownIcon className="size-4" />
           ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {formatCurrency(expenses)}
-            </CardTitle>
-          )}
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-testid="kpi-skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge variant="outline">
-                {expensePercentage >= 0 ? (
-                  <TrendingUpIcon />
-                ) : (
-                  <TrendingDownIcon />
-                )}
-                {formatPercentage(expensePercentage)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {expensePercentage <= 0 ? (
-              <>
-                {expensePercentage !== 0
-                  ? `Redução de ${Math.abs(expensePercentage)}% no período`
-                  : 'Sem alteração no período'}{' '}
-                <TrendingDownIcon className="size-4" />
-              </>
-            ) : (
-              <>
-                Aumento de {expensePercentage}% no período{' '}
-                <TrendingUpIcon className="size-4" />
-              </>
-            )}
-          </div>
-          <div className="text-muted-foreground">
-            Controle de gastos dentro da meta
-          </div>
-        </CardFooter>
-      </Card>
+            <TrendingUpIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Controle de gastos dentro da meta"
+        isLoading={isLoading}
+      />
 
       {/* 3. Investimentos Ativos */}
-      <Card data-testid="kpi-card-investments" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid md:flex-row">
-          <CardDescription>Investimentos Ativos</CardDescription>
-          {isLoading ? (
-            <Skeleton
-              data-testid="kpi-skeleton"
-              aria-hidden="true"
-              className="h-8 w-32"
-            />
+      <KpiCard
+        testId="kpi-card-investments"
+        title="Investimentos Ativos"
+        value={formatCurrency(investments)}
+        badgeIcon={
+          investmentsPercentage >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
+        }
+        badgeText={formatPercentage(investmentsPercentage)}
+        footerTitle="Rendimento acumulado"
+        footerIcon={
+          investmentsPercentage >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {formatCurrency(investments)}
-            </CardTitle>
-          )}
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-testid="kpi-skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge variant="outline">
-                {investmentsPercentage >= 0 ? (
-                  <TrendingUpIcon />
-                ) : (
-                  <TrendingDownIcon />
-                )}
-                {formatPercentage(investmentsPercentage)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Rendimento acumulado{' '}
-            {investmentsPercentage >= 0 ? (
-              <TrendingUpIcon className="size-4" />
-            ) : (
-              <TrendingDownIcon className="size-4" />
-            )}
-          </div>
-          <div className="text-muted-foreground">Alocação diversificada</div>
-        </CardFooter>
-      </Card>
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Alocação diversificada"
+        isLoading={isLoading}
+      />
 
       {/* 4. Saldo Geral */}
-      <Card data-testid="kpi-card-balance" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid md:flex-row">
-          <CardDescription>Saldo Geral</CardDescription>
-          {isLoading ? (
-            <Skeleton
-              data-testid="kpi-skeleton"
-              aria-hidden="true"
-              className="h-8 w-32"
-            />
+      <KpiCard
+        testId="kpi-card-balance"
+        title="Saldo Geral"
+        value={formatCurrency(netBalance)}
+        badgeIcon={netMargin >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+        badgeText={formatPercentage(netMargin)}
+        footerTitle={
+          netMargin >= 0
+            ? 'Balanço financeiro positivo'
+            : 'Balanço financeiro negativo'
+        }
+        footerIcon={
+          netMargin >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {formatCurrency(netBalance)}
-            </CardTitle>
-          )}
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-testid="kpi-skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge variant="outline">
-                {netMargin >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
-                {formatPercentage(netMargin)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {netMargin >= 0 ? (
-              <>
-                Balanço financeiro positivo{' '}
-                <TrendingUpIcon className="size-4" />
-              </>
-            ) : (
-              <>
-                Balanço financeiro negativo{' '}
-                <TrendingDownIcon className="size-4" />
-              </>
-            )}
-          </div>
-          <div className="text-muted-foreground">Conforme projeção mensal</div>
-        </CardFooter>
-      </Card>
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Conforme projeção mensal"
+        isLoading={isLoading}
+      />
     </div>
   );
 };
