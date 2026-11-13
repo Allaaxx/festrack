@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  DEFAULT_CATALOG_METRICS,
-  DEFAULT_STOCK_MOVEMENTS,
-  DEFAULT_STOCK_MOVEMENTS_SERIES,
-} from '@/features/catalog/api/fixtures';
-import { CatalogService } from '@/features/catalog/api/services';
+  CatalogService,
+  EMPTY_CATALOG_METRICS,
+  EMPTY_STOCK_MOVEMENTS,
+} from '@/features/catalog/api/services';
 import protectedApi from '@/lib/axios';
 
 vi.mock('@/lib/axios', () => ({
@@ -25,7 +24,7 @@ describe('CatalogService', () => {
   describe('getMetrics', () => {
     it('fetches catalog metrics from the API when available', async () => {
       const mockMetrics = {
-        activeCatalog: { total: 50, trend: 15 },
+        activeCatalog: { total: 50, simpleProducts: 38, bundles: 12, trend: 15 },
         activeRentals: { total: 30, trend: 10 },
         stockAlerts: { total: 1, trend: -50 },
       };
@@ -40,17 +39,48 @@ describe('CatalogService', () => {
       expect(result).toEqual(mockMetrics);
     });
 
-    it('falls back to domain fixture data when the API returns an error', async () => {
+    it('returns empty metrics instead of fixtures when the API returns an error', async () => {
       protectedApi.get.mockRejectedValueOnce(new Error('Network error'));
 
       const result = await CatalogService.getMetrics({ shopId });
 
-      expect(result).toEqual(DEFAULT_CATALOG_METRICS);
+      expect(result).toEqual(EMPTY_CATALOG_METRICS);
     });
 
-    it('returns fixture data when shopId is not provided', async () => {
+    it('computes real metrics from shop products when metrics endpoint returns 404', async () => {
+      protectedApi.get
+        .mockRejectedValueOnce({ response: { status: 404 } })
+        .mockResolvedValueOnce({
+          data: [
+            {
+              id: 'p-1',
+              name: 'Mesa',
+              type: 'rent',
+              is_bundle: false,
+              stock: { quantity: 10, reserved: 4 },
+            },
+            {
+              id: 'p-2',
+              name: 'Kit',
+              type: 'rent',
+              is_bundle: true,
+              available_stock: 0,
+            },
+          ],
+        });
+
+      const result = await CatalogService.getMetrics({ shopId });
+
+      expect(result.activeCatalog.total).toBe(2);
+      expect(result.activeCatalog.simpleProducts).toBe(1);
+      expect(result.activeCatalog.bundles).toBe(1);
+      expect(result.activeRentals.total).toBe(4);
+      expect(result.stockAlerts.total).toBe(1);
+    });
+
+    it('returns empty metrics when shopId is not provided', async () => {
       const result = await CatalogService.getMetrics();
-      expect(result).toEqual(DEFAULT_CATALOG_METRICS);
+      expect(result).toEqual(EMPTY_CATALOG_METRICS);
       expect(protectedApi.get).not.toHaveBeenCalled();
     });
   });
@@ -82,15 +112,18 @@ describe('CatalogService', () => {
       expect(result).toEqual(mockData);
     });
 
-    it('falls back to domain stock movements fixture data when the API fails', async () => {
+    it('returns empty movements and series when shopId is not provided', async () => {
+      const result = await CatalogService.getStockMovements();
+      expect(result).toEqual(EMPTY_STOCK_MOVEMENTS);
+      expect(protectedApi.get).not.toHaveBeenCalled();
+    });
+
+    it('returns empty movements and series instead of fixtures when the API fails', async () => {
       protectedApi.get.mockRejectedValueOnce(new Error('Backend offline'));
 
       const result = await CatalogService.getStockMovements({ shopId });
 
-      expect(result).toEqual({
-        movements: DEFAULT_STOCK_MOVEMENTS,
-        series: DEFAULT_STOCK_MOVEMENTS_SERIES,
-      });
+      expect(result).toEqual(EMPTY_STOCK_MOVEMENTS);
     });
   });
 });
