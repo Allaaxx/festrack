@@ -1,22 +1,9 @@
-import {
-  AlertTriangleIcon,
-  BoxesIcon,
-  CalendarClockIcon,
-  TrendingDownIcon,
-  TrendingUpIcon,
-} from 'lucide-react';
+import { TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
+import { useMemo } from 'react';
 
-import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { DEFAULT_CATALOG_METRICS } from '@/features/catalog/api/fixtures';
+import { KpiCard } from '@/components/shared/kpi-card';
+import { getAvailableStock } from '@/features/catalog/helpers/bundle';
+import { formatCurrency } from '@/helpers/currency';
 import { cn } from '@/lib/utils';
 
 /**
@@ -34,37 +21,151 @@ const formatTrendPercentage = (value) => {
 };
 
 /**
- * Catalog operational health metrics cards inspired by dashboard-shell-04.
- * Displays:
- * 1. Catálogo Ativo (Total products + bundles with trend badge)
- * 2. Locações em Andamento (Units out on active event rentals)
- * 3. Alertas de Estoque (Out of stock items or critical bundle bottlenecks)
+ * Resolves available stock units for a product or bundle.
+ *
+ * @param {Object} product
+ * @param {Array<Object>} allProducts
+ * @returns {number | null}
+ */
+const resolveAvailableUnits = (product, allProducts = []) => {
+  if (!product) return 0;
+  if (product.type === 'service' && !product.is_bundle) {
+    return null;
+  }
+
+  if (product.is_bundle) {
+    const rawItems = product.bundle_items ?? product.bundleItems ?? [];
+    if (Array.isArray(rawItems) && rawItems.length > 0) {
+      return getAvailableStock(product, allProducts) ?? 0;
+    }
+    return Math.max(
+      0,
+      Number(product.available_stock ?? product.availableStock ?? 0)
+    );
+  }
+
+  if (product?.stock?.quantity != null || product?.quantity != null) {
+    return getAvailableStock(product, allProducts) ?? 0;
+  }
+
+  return Math.max(
+    0,
+    Number(product?.available_stock ?? product?.availableStock ?? 0)
+  );
+};
+
+/**
+ * Catalog operational health KPI cards using the shared KpiCard primitive.
+ * Displays 4 real-time KPI cards:
+ * 1. Total de Produtos
+ * 2. Valor do Catálogo
+ * 3. Unidades Disponíveis
+ * 4. Alertas de Estoque
  *
  * @param {{
- *   metrics?: typeof DEFAULT_CATALOG_METRICS,
+ *   products?: Array<Object>,
+ *   metrics?: Object,
  *   isLoading?: boolean,
  *   className?: string,
  * }} props
  */
 const CatalogMetrics = ({
-  metrics = DEFAULT_CATALOG_METRICS,
+  products = [],
+  metrics,
   isLoading = false,
   className,
 }) => {
-  const activeCatalog = metrics?.activeCatalog ?? DEFAULT_CATALOG_METRICS.activeCatalog;
-  const activeRentals = metrics?.activeRentals ?? DEFAULT_CATALOG_METRICS.activeRentals;
-  const stockAlerts = metrics?.stockAlerts ?? DEFAULT_CATALOG_METRICS.stockAlerts;
+  const computed = useMemo(() => {
+    const hasProducts = Array.isArray(products) && products.length > 0;
 
-  const catalogTrend = activeCatalog?.trend ?? 0;
-  const rentalsTrend = activeRentals?.trend ?? 0;
-  const alertsTrend = stockAlerts?.trend ?? 0;
+    if (hasProducts) {
+      let simpleCount = 0;
+      let bundleCount = 0;
+      let catalogValueTotal = 0;
+      let availableUnitsTotal = 0;
+      let reservedUnitsTotal = 0;
+      let alertsCount = 0;
+
+      for (const product of products) {
+        const isBundle = Boolean(product?.is_bundle);
+        const price = Number(product?.price) || 0;
+        const available = resolveAvailableUnits(product, products);
+
+        if (isBundle) {
+          bundleCount += 1;
+        } else {
+          simpleCount += 1;
+          const reserved = Number(
+            product?.stock?.reserved ?? product?.reserved ?? 0
+          );
+          reservedUnitsTotal += reserved;
+          if (available !== null) {
+            availableUnitsTotal += available;
+          }
+        }
+
+        const effectiveStockForValue = Math.max(1, available ?? 0);
+        catalogValueTotal += price * effectiveStockForValue;
+
+        if (available !== null && available <= 3) {
+          alertsCount += 1;
+        }
+      }
+
+      return {
+        totalProducts: products.length,
+        simpleCount,
+        bundleCount,
+        catalogValueTotal,
+        availableUnitsTotal,
+        reservedUnitsTotal,
+        alertsCount,
+        catalogTrend: metrics?.activeCatalog?.trend ?? 0,
+        valueTrend: metrics?.catalogValue?.trend ?? 0,
+        rentalsTrend: metrics?.activeRentals?.trend ?? 0,
+        alertsTrend: metrics?.stockAlerts?.trend ?? 0,
+      };
+    }
+
+    return {
+      totalProducts: metrics?.activeCatalog?.total ?? 0,
+      simpleCount: metrics?.activeCatalog?.simpleProducts ?? 0,
+      bundleCount: metrics?.activeCatalog?.bundles ?? 0,
+      catalogValueTotal: metrics?.catalogValue?.total ?? 0,
+      availableUnitsTotal:
+        metrics?.availableUnits?.total ?? metrics?.activeRentals?.total ?? 0,
+      reservedUnitsTotal:
+        metrics?.availableUnits?.reserved ??
+        metrics?.activeRentals?.reserved ??
+        0,
+      alertsCount: metrics?.stockAlerts?.total ?? 0,
+      catalogTrend: metrics?.activeCatalog?.trend ?? 0,
+      valueTrend: metrics?.catalogValue?.trend ?? 0,
+      rentalsTrend: metrics?.activeRentals?.trend ?? 0,
+      alertsTrend: metrics?.stockAlerts?.trend ?? 0,
+    };
+  }, [products, metrics]);
+
+  const {
+    totalProducts,
+    simpleCount,
+    bundleCount,
+    catalogValueTotal,
+    availableUnitsTotal,
+    reservedUnitsTotal,
+    alertsCount,
+    catalogTrend,
+    valueTrend,
+    rentalsTrend,
+    alertsTrend,
+  } = computed;
 
   return (
     <div
       data-testid="catalog-metrics-grid"
       aria-busy={isLoading}
       className={cn(
-        '*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs md:grid-cols-3',
+        '*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4',
         className
       )}
     >
@@ -78,196 +179,90 @@ const CatalogMetrics = ({
         </span>
       )}
 
-      {/* 1. Catálogo Ativo */}
-      <Card data-testid="metric-card-active-catalog" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
-              <BoxesIcon className="size-4" />
-            </div>
-            <CardDescription className="text-muted-foreground font-medium">
-              Catálogo Ativo
-            </CardDescription>
-          </div>
-
-          {isLoading ? (
-            <Skeleton
-              data-slot="skeleton"
-              aria-hidden="true"
-              className="mt-2 h-8 w-24"
-            />
+      {/* 1. Total de Produtos */}
+      <KpiCard
+        testId="metric-card-active-catalog"
+        title="Total de Produtos"
+        value={totalProducts}
+        badgeIcon={
+          catalogTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
+        }
+        badgeText={formatTrendPercentage(catalogTrend)}
+        footerTitle={`${simpleCount} produtos simples e ${bundleCount} pacotes`}
+        footerIcon={
+          catalogTrend >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {activeCatalog?.total ?? 0}
-            </CardTitle>
-          )}
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Itens cadastrados no catálogo da loja"
+        isLoading={isLoading}
+      />
 
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-slot="skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge variant="outline" className="gap-1 font-semibold">
-                {catalogTrend >= 0 ? (
-                  <TrendingUpIcon className="text-primary size-3.5" />
-                ) : (
-                  <TrendingDownIcon className="text-muted-foreground size-3.5" />
-                )}
-                {formatTrendPercentage(catalogTrend)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-
-        <CardContent className="text-muted-foreground text-xs">
-          {isLoading ? (
-            <Skeleton
-              data-slot="skeleton"
-              aria-hidden="true"
-              className="h-4 w-44"
-            />
-          ) : activeCatalog?.simpleProducts != null &&
-            activeCatalog?.bundles != null ? (
-            `${activeCatalog.simpleProducts} produtos simples, ${activeCatalog.bundles} pacotes virtuais`
+      {/* 2. Valor do Catálogo */}
+      <KpiCard
+        testId="metric-card-catalog-value"
+        title="Valor do Catálogo"
+        value={formatCurrency(catalogValueTotal)}
+        badgeIcon={valueTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+        badgeText={formatTrendPercentage(valueTrend)}
+        footerTitle="Potencial financeiro ativo"
+        footerIcon={
+          valueTrend >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            activeCatalog?.trendLabel ||
-            'Total de produtos simples e pacotes virtuais'
-          )}
-        </CardContent>
-      </Card>
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Baseado no estoque e preços unitários"
+        isLoading={isLoading}
+      />
 
-      {/* 2. Locações em Andamento */}
-      <Card data-testid="metric-card-active-rentals" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
-              <CalendarClockIcon className="size-4" />
-            </div>
-            <CardDescription className="text-muted-foreground font-medium">
-              Locações em Andamento
-            </CardDescription>
-          </div>
-
-          {isLoading ? (
-            <Skeleton
-              data-slot="skeleton"
-              aria-hidden="true"
-              className="mt-2 h-8 w-24"
-            />
+      {/* 3. Unidades Disponíveis */}
+      <KpiCard
+        testId="metric-card-active-rentals"
+        title="Unidades Disponíveis"
+        value={availableUnitsTotal}
+        badgeIcon={
+          rentalsTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
+        }
+        badgeText={formatTrendPercentage(rentalsTrend)}
+        footerTitle={`${reservedUnitsTotal} unidades reservadas em eventos`}
+        footerIcon={
+          rentalsTrend >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {activeRentals?.total ?? 0}
-            </CardTitle>
-          )}
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Prontas para locação ou venda imediata"
+        isLoading={isLoading}
+      />
 
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-slot="skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge variant="outline" className="gap-1 font-semibold">
-                {rentalsTrend >= 0 ? (
-                  <TrendingUpIcon className="text-primary size-3.5" />
-                ) : (
-                  <TrendingDownIcon className="text-muted-foreground size-3.5" />
-                )}
-                {formatTrendPercentage(rentalsTrend)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-
-        <CardContent className="text-muted-foreground text-xs">
-          {isLoading ? (
-            <Skeleton
-              data-slot="skeleton"
-              aria-hidden="true"
-              className="h-4 w-44"
-            />
+      {/* 4. Alertas de Estoque */}
+      <KpiCard
+        testId="metric-card-stock-alerts"
+        title="Alertas de Estoque"
+        value={alertsCount}
+        badgeVariant={alertsCount > 0 ? 'destructive' : 'outline'}
+        badgeIcon={alertsTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
+        badgeText={formatTrendPercentage(alertsTrend)}
+        footerTitle={
+          alertsCount > 0
+            ? 'Atenção à reposição de itens'
+            : 'Estoque operando normalmente'
+        }
+        footerIcon={
+          alertsTrend >= 0 ? (
+            <TrendingUpIcon className="size-4" />
           ) : (
-            activeRentals?.trendLabel ||
-            'Itens alocados em eventos com retorno pendente'
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 3. Alertas de Estoque */}
-      <Card data-testid="metric-card-stock-alerts" className="@container/card">
-        <CardHeader className="flex flex-col sm:grid">
-          <div className="flex items-center gap-2">
-            <div
-              className={cn(
-                'flex size-8 items-center justify-center rounded-lg',
-                (stockAlerts?.total ?? 0) > 0
-                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                  : 'bg-muted text-muted-foreground'
-              )}
-            >
-              <AlertTriangleIcon className="size-4" />
-            </div>
-            <CardDescription className="text-muted-foreground font-medium">
-              Alertas de Estoque
-            </CardDescription>
-          </div>
-
-          {isLoading ? (
-            <Skeleton
-              data-slot="skeleton"
-              aria-hidden="true"
-              className="mt-2 h-8 w-24"
-            />
-          ) : (
-            <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-              {stockAlerts?.total ?? 0}
-            </CardTitle>
-          )}
-
-          <CardAction>
-            {isLoading ? (
-              <Skeleton
-                data-slot="skeleton"
-                aria-hidden="true"
-                className="h-5 w-14 rounded-full"
-              />
-            ) : (
-              <Badge
-                variant={
-                  (stockAlerts?.total ?? 0) > 0 ? 'destructive' : 'outline'
-                }
-                className="gap-1 font-semibold"
-              >
-                {alertsTrend !== 0 && (
-                  alertsTrend < 0 ? (
-                    <TrendingDownIcon className="size-3.5" />
-                  ) : (
-                    <TrendingUpIcon className="size-3.5" />
-                  )
-                )}
-                {formatTrendPercentage(alertsTrend)}
-              </Badge>
-            )}
-          </CardAction>
-        </CardHeader>
-
-        <CardContent className="text-muted-foreground text-xs">
-          {isLoading ? (
-            <Skeleton
-              data-slot="skeleton"
-              aria-hidden="true"
-              className="h-4 w-44"
-            />
-          ) : (
-            stockAlerts?.trendLabel ||
-            'Produtos com estoque zerado ou bundles com gargalo crítico'
-          )}
-        </CardContent>
-      </Card>
+            <TrendingDownIcon className="size-4" />
+          )
+        }
+        footerSubtitle="Produtos esgotados ou pacotes com gargalo"
+        isLoading={isLoading}
+      />
     </div>
   );
 };
