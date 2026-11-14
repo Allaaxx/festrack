@@ -6,6 +6,12 @@ export * from './api/services';
 export { default as BundleBottleneckPopover } from './components/bundle-bottleneck-popover';
 export { default as CatalogHeader } from './components/catalog-header';
 export { default as CatalogMetrics } from './components/catalog-metrics';
+export {
+  default as CatalogOperationalGrid,
+  PopularProductsCard,
+  ShopDistributionCard,
+  StockMovementsTimelineCard,
+} from './components/catalog-operational-grid';
 export { default as CatalogTable } from './components/catalog-table';
 export { default as CreateProductDialog } from './components/create-product-dialog';
 export { default as RentalCheckinCard } from './components/rental-checkin-card';
