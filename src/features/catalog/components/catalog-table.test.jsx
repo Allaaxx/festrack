@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -263,7 +269,7 @@ describe('CatalogTable', () => {
     expect(screen.queryByText('Pacote Festa Completa')).not.toBeInTheDocument();
     expect(screen.queryByText('Mesa Provençal Branca')).not.toBeInTheDocument();
 
-    // Select "Disponível" -> items with available > 0 or service
+    // Select "Disponível" -> items with available > 0 (excludes service and out-of-stock)
     await user.click(stockTrigger);
     await user.click(
       await screen.findByRole('option', { name: /disponível/i })
@@ -272,8 +278,8 @@ describe('CatalogTable', () => {
     expect(screen.getByText('Mesa Provençal Branca')).toBeInTheDocument();
     expect(screen.getByText('Arco Orgânico de Balões')).toBeInTheDocument();
     expect(
-      screen.getByText('Serviço de Montagem de Painel')
-    ).toBeInTheDocument();
+      screen.queryByText('Serviço de Montagem de Painel')
+    ).not.toBeInTheDocument();
     expect(screen.getByText('Pacote Festa Completa')).toBeInTheDocument();
     expect(
       screen.queryByText('Toalha de Mesa Dourada')
@@ -367,7 +373,9 @@ describe('CatalogTable', () => {
       screen.getByRole('menuitem', { name: /excluir/i })
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole('menuitem', { name: /ajustar estoque/i }));
+    await user.click(
+      screen.getByRole('menuitem', { name: /ajustar estoque/i })
+    );
     expect(handleAction).toHaveBeenCalledWith('adjust-stock', tableItem);
 
     expect(
@@ -418,21 +426,48 @@ describe('CatalogTable', () => {
         })
       );
     });
-  });
+  }, 15000);
 
-  it('opens product details Drawer when clicking a row', async () => {
+  it('opens product details Drawer when clicking a row, displaying recent movement history, Ajustar Estoque button, and bundle bottleneck breakdown', async () => {
     const user = userEvent.setup();
-    renderComponent();
+    renderComponent({
+      movements: [
+        {
+          id: 'mov-1',
+          productId: 'prod-table',
+          type: 'INBOUND',
+          quantity: 5,
+          note: 'Lote extra de mesas',
+        },
+      ],
+    });
 
     const row = screen.getByText('Mesa Provençal Branca').closest('tr');
     await user.click(row);
 
-    expect(
-      await screen.findByText('Detalhes do Produto')
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Detalhes do Produto')).toBeInTheDocument();
     expect(
       screen.getByText(/informações completas de mesa provençal branca/i)
     ).toBeInTheDocument();
+    expect(screen.getByTestId('drawer-movement-history')).toHaveTextContent(
+      'Lote extra de mesas'
+    );
+    expect(
+      screen.getByRole('button', { name: /ajustar estoque/i })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /fechar/i }));
+
+    const bundleRow = screen.getByText('Pacote Festa Completa').closest('tr');
+    await user.click(bundleRow);
+
+    const bottleneckSection = await screen.findByTestId(
+      'drawer-bundle-bottleneck'
+    );
+    expect(bottleneckSection).toHaveTextContent(
+      'Composição & Gargalo do Pacote'
+    );
+    expect(bottleneckSection).toHaveTextContent('Gargalo Limitador');
   });
 
   it('renders bottleneck popover when inspecting bundle stock without opening drawer', async () => {

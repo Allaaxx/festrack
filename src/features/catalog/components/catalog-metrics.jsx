@@ -3,22 +3,8 @@ import { useMemo } from 'react';
 
 import { KpiCard } from '@/components/shared/kpi-card';
 import { getAvailableStock } from '@/features/catalog/helpers/bundle';
-import { formatCurrency } from '@/helpers/currency';
+import { formatCurrency, formatPercentage } from '@/helpers/currency';
 import { cn } from '@/lib/utils';
-
-/**
- * Formats a trend number as a signed percentage string (e.g. +12%, -5%, 0%).
- *
- * @param {number | string | null | undefined} value
- * @returns {string}
- */
-const formatTrendPercentage = (value) => {
-  if (value === null || value === undefined) return '0%';
-  const num = typeof value === 'number' ? value : parseFloat(value);
-  if (Number.isNaN(num) || num === 0) return '0%';
-  const formatted = Number.isInteger(num) ? num.toString() : num.toFixed(1);
-  return num > 0 ? `+${formatted}%` : `${formatted}%`;
-};
 
 /**
  * Resolves available stock units for a product or bundle.
@@ -93,6 +79,7 @@ const CatalogMetrics = ({
 
         if (isBundle) {
           bundleCount += 1;
+          catalogValueTotal += price * (available ?? 0);
         } else {
           simpleCount += 1;
           const reserved = Number(
@@ -102,10 +89,13 @@ const CatalogMetrics = ({
           if (available !== null) {
             availableUnitsTotal += available;
           }
-        }
 
-        const effectiveStockForValue = Math.max(1, available ?? 0);
-        catalogValueTotal += price * effectiveStockForValue;
+          if (product?.type === 'service') {
+            catalogValueTotal += price * (available ?? 1);
+          } else {
+            catalogValueTotal += price * (available ?? 0);
+          }
+        }
 
         if (available !== null && available <= 3) {
           alertsCount += 1;
@@ -187,7 +177,7 @@ const CatalogMetrics = ({
         badgeIcon={
           catalogTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
         }
-        badgeText={formatTrendPercentage(catalogTrend)}
+        badgeText={formatPercentage(catalogTrend)}
         footerTitle={`${simpleCount} produtos simples e ${bundleCount} pacotes`}
         footerIcon={
           catalogTrend >= 0 ? (
@@ -206,7 +196,7 @@ const CatalogMetrics = ({
         title="Valor do Catálogo"
         value={formatCurrency(catalogValueTotal)}
         badgeIcon={valueTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
-        badgeText={formatTrendPercentage(valueTrend)}
+        badgeText={formatPercentage(valueTrend)}
         footerTitle="Potencial financeiro ativo"
         footerIcon={
           valueTrend >= 0 ? (
@@ -227,7 +217,7 @@ const CatalogMetrics = ({
         badgeIcon={
           rentalsTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />
         }
-        badgeText={formatTrendPercentage(rentalsTrend)}
+        badgeText={formatPercentage(rentalsTrend)}
         footerTitle={`${reservedUnitsTotal} unidades reservadas em eventos`}
         footerIcon={
           rentalsTrend >= 0 ? (
@@ -247,7 +237,7 @@ const CatalogMetrics = ({
         value={alertsCount}
         badgeVariant={alertsCount > 0 ? 'destructive' : 'outline'}
         badgeIcon={alertsTrend >= 0 ? <TrendingUpIcon /> : <TrendingDownIcon />}
-        badgeText={formatTrendPercentage(alertsTrend)}
+        badgeText={formatPercentage(alertsTrend)}
         footerTitle={
           alertsCount > 0
             ? 'Atenção à reposição de itens'

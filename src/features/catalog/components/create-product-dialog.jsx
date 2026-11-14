@@ -30,7 +30,10 @@ import {
   useGetProducts,
   useUpdateProduct,
 } from '@/features/catalog/api/products';
-import { calculateBundleBottleneck } from '@/features/catalog/helpers/bundle';
+import {
+  calculateBundleBottleneck,
+  getAvailableStock,
+} from '@/features/catalog/helpers/bundle';
 
 const mapBundleItemsFromProduct = (product, availableSimpleProducts = []) => {
   const rawItems = product?.bundle_items ?? product?.bundleItems ?? [];
@@ -42,7 +45,7 @@ const mapBundleItemsFromProduct = (product, availableSimpleProducts = []) => {
       availableSimpleProducts.find((p) => p.id === compId);
     const onHand = Number(comp?.stock?.quantity ?? comp?.quantity ?? 0);
     const reserved = Number(comp?.stock?.reserved ?? comp?.reserved ?? 0);
-    const available = Math.max(0, onHand - reserved);
+    const available = getAvailableStock(comp) ?? 0;
 
     return {
       productId: compId,
@@ -241,7 +244,7 @@ const CreateProductDialog = ({
     } else {
       const onHand = Number(comp?.stock?.quantity ?? comp?.quantity ?? 0);
       const reserved = Number(comp?.stock?.reserved ?? comp?.reserved ?? 0);
-      const available = Math.max(0, onHand - reserved);
+      const available = getAvailableStock(comp) ?? 0;
 
       setBundleItems((prev) => [
         ...prev,
@@ -392,9 +395,9 @@ const CreateProductDialog = ({
     <Button
       type="button"
       variant="secondary"
-      className="bg-background text-foreground hover:bg-background/90 shadow-sm cursor-pointer"
+      className="bg-background text-foreground hover:bg-background/90 cursor-pointer shadow-sm"
     >
-      <PlusIcon className="size-4 mr-1.5" />
+      <PlusIcon className="mr-1.5 size-4" />
       Novo Produto
     </Button>
   );
@@ -410,10 +413,10 @@ const CreateProductDialog = ({
       {(trigger || (!isEditMode && trigger !== null)) && (
         <DialogTrigger render={trigger || defaultTrigger} />
       )}
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <PackageIcon className="size-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+            <PackageIcon className="text-primary size-5" />
             {dialogTitle}
           </DialogTitle>
           <DialogDescription>
@@ -470,7 +473,7 @@ const CreateProductDialog = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor={simpleTypeId}>Classificação</Label>
                   <select
@@ -478,7 +481,7 @@ const CreateProductDialog = ({
                     aria-label="Classificação"
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="border-input bg-background text-foreground flex h-9 w-full rounded-lg border px-3 py-1 text-sm shadow-xs transition-colors outline-hidden focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="border-input bg-background text-foreground focus-visible:ring-ring/50 flex h-9 w-full rounded-lg border px-3 py-1 text-sm shadow-xs outline-hidden transition-colors focus-visible:ring-3"
                   >
                     <option value="rent">Aluguel</option>
                     <option value="sale">Venda</option>
@@ -550,7 +553,7 @@ const CreateProductDialog = ({
                   className="cursor-pointer"
                 >
                   {isSubmitting && (
-                    <Loader2Icon className="size-4 mr-2 animate-spin" />
+                    <Loader2Icon className="mr-2 size-4 animate-spin" />
                   )}
                   {isEditMode ? 'Salvar Alterações' : 'Criar Produto'}
                 </Button>
@@ -566,7 +569,7 @@ const CreateProductDialog = ({
                 <Input
                   id={bundleNameId}
                   aria-label="Nome do Pacote"
-                  placeholder="Ex: Combo Provençal Rústico Luxo"
+                  placeholder="Ex: Pacote Provençal Rústico Luxo"
                   value={bundleName}
                   onChange={(e) => {
                     setBundleName(e.target.value);
@@ -586,7 +589,7 @@ const CreateProductDialog = ({
                 <Textarea
                   id={bundleDescId}
                   aria-label="Descrição do Pacote"
-                  placeholder="Detalhes dos itens combinados no combo..."
+                  placeholder="Detalhes dos itens combinados no pacote..."
                   value={bundleDescription}
                   onChange={(e) => setBundleDescription(e.target.value)}
                   rows={2}
@@ -621,13 +624,13 @@ const CreateProductDialog = ({
               </div>
 
               {/* Component Selector Section */}
-              <div className="border-border/70 rounded-xl border p-4 space-y-3 bg-muted/20">
+              <div className="border-border/70 bg-muted/20 space-y-3 rounded-xl border p-4">
                 <div className="space-y-1">
                   <Label
                     htmlFor={bundlePickerId}
-                    className="text-sm font-semibold text-foreground flex items-center gap-1.5"
+                    className="text-foreground flex items-center gap-1.5 text-sm font-semibold"
                   >
-                    <LayersIcon className="size-4 text-primary" />
+                    <LayersIcon className="text-primary size-4" />
                     Componentes do Pacote
                   </Label>
                   <p className="text-muted-foreground text-xs">
@@ -636,23 +639,17 @@ const CreateProductDialog = ({
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <select
                     id={bundlePickerId}
                     aria-label="Selecionar componente"
                     value={selectedComponentId}
                     onChange={(e) => setSelectedComponentId(e.target.value)}
-                    className="border-input bg-background text-foreground flex h-9 flex-1 rounded-lg border px-3 py-1 text-sm shadow-xs transition-colors outline-hidden focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="border-input bg-background text-foreground focus-visible:ring-ring/50 flex h-9 flex-1 rounded-lg border px-3 py-1 text-sm shadow-xs outline-hidden transition-colors focus-visible:ring-3"
                   >
                     <option value="">Selecione um produto simples...</option>
                     {availableSimpleProducts.map((p) => {
-                      const onHand = Number(
-                        p?.stock?.quantity ?? p?.quantity ?? 0
-                      );
-                      const reserved = Number(
-                        p?.stock?.reserved ?? p?.reserved ?? 0
-                      );
-                      const available = Math.max(0, onHand - reserved);
+                      const available = getAvailableStock(p) ?? 0;
                       const typeLabel =
                         p.type === 'rent'
                           ? 'Aluguel'
@@ -671,9 +668,9 @@ const CreateProductDialog = ({
                     variant="secondary"
                     onClick={handleAddComponent}
                     disabled={!selectedComponentId}
-                    className="cursor-pointer shrink-0"
+                    className="shrink-0 cursor-pointer"
                   >
-                    <PlusIcon className="size-4 mr-1.5" />
+                    <PlusIcon className="mr-1.5 size-4" />
                     Adicionar Componente
                   </Button>
                 </div>
@@ -685,7 +682,7 @@ const CreateProductDialog = ({
                 )}
 
                 {/* Added Components List */}
-                <div className="space-y-2 mt-3">
+                <div className="mt-3 space-y-2">
                   {bundleItems.length === 0 ? (
                     <div className="text-muted-foreground border-border/70 rounded-lg border border-dashed p-4 text-center text-xs">
                       Nenhum componente adicionado ainda. Selecione um produto
@@ -700,12 +697,12 @@ const CreateProductDialog = ({
                       >
                         <div className="min-w-0 flex-1 space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground truncate">
+                            <span className="text-foreground truncate text-sm font-medium">
                               {item.name}
                             </span>
                             <Badge
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 uppercase"
+                              className="px-1.5 py-0 text-[10px] uppercase"
                             >
                               {item.type === 'rent' ? 'Aluguel' : 'Venda'}
                             </Badge>
@@ -715,7 +712,7 @@ const CreateProductDialog = ({
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex shrink-0 items-center gap-2">
                           <div className="flex items-center gap-1.5">
                             <span className="text-muted-foreground text-xs font-medium">
                               Qtd:
@@ -758,13 +755,13 @@ const CreateProductDialog = ({
                 {bottleneckInfo && (
                   <div
                     data-testid="bundle-bottleneck-preview"
-                    className="bg-primary/5 border-primary/20 rounded-xl border p-3.5 space-y-1.5 mt-3"
+                    className="bg-primary/5 border-primary/20 mt-3 space-y-1.5 rounded-xl border p-3.5"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="text-muted-foreground text-xs font-medium">
                         Disponibilidade Estimada do Pacote:
                       </span>
-                      <span className="text-base font-bold text-foreground">
+                      <span className="text-foreground text-base font-bold">
                         {bottleneckInfo.availableStock}{' '}
                         {bottleneckInfo.availableStock === 1
                           ? 'unidade'
@@ -773,11 +770,11 @@ const CreateProductDialog = ({
                     </div>
 
                     {bottleneckInfo.bottlenecks.length > 0 && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <AlertTriangleIcon className="size-3.5 text-amber-500 shrink-0" />
+                      <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                        <AlertTriangleIcon className="size-3.5 shrink-0 text-amber-500" />
                         <span>
                           Gargalo de estoque:{' '}
-                          <strong className="font-semibold text-foreground">
+                          <strong className="text-foreground font-semibold">
                             {bottleneckInfo.bottlenecks
                               .map((b) => b.name)
                               .join(', ')}
@@ -808,7 +805,7 @@ const CreateProductDialog = ({
                   className="cursor-pointer"
                 >
                   {isSubmitting && (
-                    <Loader2Icon className="size-4 mr-2 animate-spin" />
+                    <Loader2Icon className="mr-2 size-4 animate-spin" />
                   )}
                   {isEditMode ? 'Salvar Alterações' : 'Criar Pacote'}
                 </Button>

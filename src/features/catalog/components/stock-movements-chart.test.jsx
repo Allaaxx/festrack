@@ -93,10 +93,7 @@ describe('StockMovementsChart Component', () => {
     const handlePeriodChange = vi.fn();
 
     const { rerender } = render(
-      <StockMovementsChart
-        period="90d"
-        onPeriodChange={handlePeriodChange}
-      />
+      <StockMovementsChart period="90d" onPeriodChange={handlePeriodChange} />
     );
 
     const thirtyDaysBtn = screen.getByRole('button', {
@@ -106,10 +103,7 @@ describe('StockMovementsChart Component', () => {
     expect(handlePeriodChange).toHaveBeenCalledWith('30d');
 
     rerender(
-      <StockMovementsChart
-        period="7d"
-        onPeriodChange={handlePeriodChange}
-      />
+      <StockMovementsChart period="7d" onPeriodChange={handlePeriodChange} />
     );
 
     const sevenDaysBtn = screen.getByRole('button', {

@@ -84,7 +84,7 @@ const BundleBottleneckPopover = ({
             </PopoverTitle>
           </div>
           <PopoverDescription className="text-muted-foreground text-xs leading-relaxed">
-            A disponibilidade máxima deste combo é calculada pelo componente
+            A disponibilidade máxima deste pacote é calculada pelo componente
             mais restritivo (gargalo limitador).
           </PopoverDescription>
         </PopoverHeader>

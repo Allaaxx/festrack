@@ -232,7 +232,7 @@ describe('CreateProductDialog', () => {
     await user.click(screen.getByRole('tab', { name: /^pacote$/i }));
 
     const nameInput = screen.getByLabelText(/nome do pacote/i);
-    await user.type(nameInput, 'Combo Mesa Rústica + Suportes');
+    await user.type(nameInput, 'Pacote Mesa Rústica + Suportes');
 
     const priceInput = screen.getByLabelText(/preço do pacote/i);
     await user.type(priceInput, '190');
@@ -268,7 +268,9 @@ describe('CreateProductDialog', () => {
     expect(
       within(preview).getByText(/suporte para doces dourado/i)
     ).toBeInTheDocument();
-    expect(within(preview).getByText(/limita em 6 pacotes/i)).toBeInTheDocument();
+    expect(
+      within(preview).getByText(/limita em 6 pacotes/i)
+    ).toBeInTheDocument();
 
     const submitBtn = screen.getByRole('button', { name: /criar pacote/i });
     await user.click(submitBtn);
@@ -277,7 +279,7 @@ describe('CreateProductDialog', () => {
       expect(ProductService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           shopId: 'shop-1',
-          name: 'Combo Mesa Rústica + Suportes',
+          name: 'Pacote Mesa Rústica + Suportes',
           price: 190,
           is_bundle: true,
           bundle_items: expect.arrayContaining([
@@ -383,7 +385,7 @@ describe('CreateProductDialog', () => {
       id: 'bundle-1',
       shop_id: 'shop-1',
       name: 'Pacote Festa Provençal',
-      description: 'Combo de locação',
+      description: 'Pacote de locação',
       type: 'rent',
       price: 350,
       is_bundle: true,

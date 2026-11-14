@@ -116,9 +116,9 @@ describe('Catalog Products API & Hooks', () => {
     it('propagates API errors instead of falling back to static fixtures', async () => {
       protectedApi.get.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(
-        ProductService.getAll({ shopId: 'shop-1' })
-      ).rejects.toThrow('Network error');
+      await expect(ProductService.getAll({ shopId: 'shop-1' })).rejects.toThrow(
+        'Network error'
+      );
     });
 
     describe('getById', () => {
@@ -351,12 +351,15 @@ describe('Catalog Products API & Hooks', () => {
         });
       });
 
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['getProducts'] })
-      );
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['catalogMetrics'] })
-      );
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getProductsQueryKey({ shopId: 'shop-1', userId: 'usr-1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getCatalogMetricsQueryKey({
+          shopId: 'shop-1',
+          userId: 'usr-1',
+        }),
+      });
       expect(toast.add).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'success',
@@ -421,12 +424,15 @@ describe('Catalog Products API & Hooks', () => {
           price: 150,
         })
       );
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['getProducts'] })
-      );
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['catalogMetrics'] })
-      );
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getProductsQueryKey({ shopId: 'shop-1', userId: 'usr-1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getCatalogMetricsQueryKey({
+          shopId: 'shop-1',
+          userId: 'usr-1',
+        }),
+      });
       expect(toast.add).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'success',
@@ -472,12 +478,15 @@ describe('Catalog Products API & Hooks', () => {
       expect(protectedApi.delete).toHaveBeenCalledWith(
         '/shops/shop-1/products/prod-1'
       );
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['getProducts'] })
-      );
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['catalogMetrics'] })
-      );
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getProductsQueryKey({ shopId: 'shop-1', userId: 'usr-1' }),
+      });
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: getCatalogMetricsQueryKey({
+          shopId: 'shop-1',
+          userId: 'usr-1',
+        }),
+      });
       expect(toast.add).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'success',

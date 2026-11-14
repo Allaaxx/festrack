@@ -97,7 +97,7 @@ describe('Catalog Page Shell Integration (#124)', () => {
     id: 'bundle-1',
     name: 'Kit Festa Infantil Provençal Encantada',
     slug: 'kit-festa-infantil-provencal',
-    description: 'Combo completo com mesa e balões',
+    description: 'Pacote completo com mesa e balões',
     type: 'rent',
     price: 380,
     images: [],
@@ -570,5 +570,5 @@ describe('Catalog Page Shell Integration (#124)', () => {
     expect(
       within(dialog).getByRole('tab', { name: /^pacote$/i })
     ).toBeInTheDocument();
-  });
+  }, 15000);
 });

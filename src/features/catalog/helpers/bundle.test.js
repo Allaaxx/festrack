@@ -146,7 +146,7 @@ describe('bundle helpers', () => {
     it('identifies single clear bottleneck limiting component', () => {
       const bundle = {
         id: 'b-single-bottleneck',
-        name: 'Combo Arco + Mesa',
+        name: 'Pacote Arco + Mesa',
         is_bundle: true,
         bundle_items: [
           {

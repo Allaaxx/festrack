@@ -37,12 +37,7 @@ import { useStockAdjustForm } from '@/features/catalog/forms/hooks';
  * @param {Object} [props.product] - Product entity to adjust stock for.
  * @param {Function} [props.onSuccess] - Optional callback executed on adjustment success.
  */
-const StockAdjustDialog = ({
-  open,
-  onOpenChange,
-  product,
-  onSuccess,
-}) => {
+const StockAdjustDialog = ({ open, onOpenChange, product, onSuccess }) => {
   const { form, onSubmit, isSubmitting } = useStockAdjustForm({
     product,
     onSuccess: (result) => {
@@ -79,26 +74,26 @@ const StockAdjustDialog = ({
         </DialogHeader>
 
         {product && (
-          <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1.5">
-            <div className="flex justify-between items-center">
+          <div className="bg-muted/40 space-y-1.5 rounded-lg border p-3 text-xs">
+            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Produto:</span>
-              <span className="font-semibold text-foreground">
+              <span className="text-foreground font-semibold">
                 {product.name}
               </span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">
                 Estoque Físico Atual:
               </span>
-              <span className="font-medium text-foreground">{onHand} un</span>
+              <span className="text-foreground font-medium">{onHand} un</span>
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Estoque Reservado:</span>
-              <span className="font-medium text-foreground">{reserved} un</span>
+              <span className="text-foreground font-medium">{reserved} un</span>
             </div>
-            <div className="flex justify-between items-center pt-1 border-t">
+            <div className="flex items-center justify-between border-t pt-1">
               <span className="text-muted-foreground">Disponível:</span>
-              <span className="font-semibold text-primary">{available} un</span>
+              <span className="text-primary font-semibold">{available} un</span>
             </div>
           </div>
         )}
@@ -189,7 +184,7 @@ const StockAdjustDialog = ({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && (
-                <Loader2Icon className="size-4 animate-spin mr-2" />
+                <Loader2Icon className="mr-2 size-4 animate-spin" />
               )}
               Confirmar Ajuste
             </Button>

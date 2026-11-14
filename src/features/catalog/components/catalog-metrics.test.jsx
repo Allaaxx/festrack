@@ -27,7 +27,7 @@ describe('CatalogMetrics Component', () => {
       type: 'sale',
       price: 20,
       is_bundle: false,
-      stock: { quantity: 2, reserved: 2 }, // available = 0 (out of stock), value = 20 * max(1, 0) = 20
+      stock: { quantity: 2, reserved: 2 }, // available = 0 (out of stock), value = 20 * 0 = 0
     },
     {
       id: 'bundle-1',
@@ -63,13 +63,13 @@ describe('CatalogMetrics Component', () => {
       )
     ).toBeInTheDocument();
 
-    // 2. Valor do Catálogo: 900 + 100 + 20 + 800 = R$ 1.820,00
+    // 2. Valor do Catálogo: 900 + 100 + 0 + 800 = R$ 1.800,00
     const catalogValueCard = screen.getByTestId('metric-card-catalog-value');
     expect(
       within(catalogValueCard).getByText('Valor do Catálogo')
     ).toBeInTheDocument();
     expect(
-      within(catalogValueCard).getByText('R$ 1.820,00')
+      within(catalogValueCard).getByText('R$ 1.800,00')
     ).toBeInTheDocument();
     expect(
       within(catalogValueCard).getByText('Potencial financeiro ativo')

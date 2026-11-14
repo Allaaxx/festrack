@@ -47,6 +47,7 @@ const CatalogPage = () => {
         <div className="px-4">
           <CatalogTable
             products={products}
+            movements={movementsData?.movements}
             isLoading={isProductsLoading}
             isError={isProductsError}
             refetch={refetchProducts}

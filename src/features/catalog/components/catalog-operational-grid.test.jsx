@@ -159,17 +159,18 @@ describe('CatalogOperationalGrid', () => {
     expect(timelineCard).toHaveTextContent('Avaria no retorno do evento');
   });
 
-  it('derives stock movements from products when movements is empty and shows empty state on empty tab', async () => {
+  it('shows empty state across tabs when movements is empty instead of synthesizing movements from products', async () => {
     const user = userEvent.setup();
 
     render(<CatalogOperationalGrid products={MOCK_PRODUCTS} movements={[]} />);
 
     const timelineCard = screen.getByTestId('stock-movements-timeline-card');
-    // Entradas derived from physical stock
-    expect(timelineCard).toHaveTextContent('Painel Redondo Dourado');
-    expect(timelineCard).toHaveTextContent('+10 un • Entrada em estoque');
+    expect(timelineCard).toHaveTextContent('0 movimentações registradas');
+    expect(timelineCard).toHaveTextContent(
+      'Nenhuma movimentação registrada nesta categoria.'
+    );
+    expect(timelineCard).not.toHaveTextContent('Painel Redondo Dourado');
 
-    // Baixas tab has no derived items -> shows Portuguese empty state
     const baixasTab = screen.getByRole('tab', { name: /baixas/i });
     await user.click(baixasTab);
 

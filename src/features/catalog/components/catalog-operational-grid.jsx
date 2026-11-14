@@ -2,8 +2,6 @@ import {
   ArrowUpDownIcon,
   BoxIcon,
   CalendarClockIcon,
-  MoreHorizontalIcon,
-  MoreVerticalIcon,
   PackageIcon,
   ShoppingBagIcon,
   StoreIcon,
@@ -11,10 +9,8 @@ import {
 import { useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -51,6 +47,10 @@ const normalizeMovementsList = (movements, products = []) => {
         ? movements.items
         : [];
 
+  if (rawList.length === 0) {
+    return [];
+  }
+
   const safeProducts = Array.isArray(products) ? products : [];
   const productByNameOrId = new Map();
   for (const prod of safeProducts) {
@@ -58,109 +58,69 @@ const normalizeMovementsList = (movements, products = []) => {
     if (prod?.name) productByNameOrId.set(prod.name, prod);
   }
 
-  if (rawList.length > 0) {
-    return rawList.map((item, idx) => {
-      const rawType = String(item?.type || 'INBOUND').toUpperCase();
-      const rawQty = Math.abs(
-        Number(item?.quantity ?? item?.quantityDelta ?? 0)
-      );
-      const matchedProduct =
-        productByNameOrId.get(item?.productId ?? item?.product_id) ||
-        productByNameOrId.get(item?.productName);
+  return rawList.map((item, idx) => {
+    const rawType = String(item?.type || 'INBOUND').toUpperCase();
+    const rawQty = Math.abs(Number(item?.quantity ?? item?.quantityDelta ?? 0));
+    const matchedProduct =
+      productByNameOrId.get(item?.productId ?? item?.product_id) ||
+      productByNameOrId.get(item?.productName);
 
-      const productName =
-        item?.productName ||
-        item?.product?.name ||
-        matchedProduct?.name ||
-        'Produto do Catálogo';
+    const productName =
+      item?.productName ||
+      item?.product?.name ||
+      matchedProduct?.name ||
+      'Produto do Catálogo';
 
-      const classification = matchedProduct
-        ? getProductClassificationLabel(matchedProduct)
-        : item?.classification || 'Catálogo';
-      const slug =
-        item?.slug ||
-        item?.productSlug ||
-        matchedProduct?.slug ||
-        'item-catalogo';
-      const productSubtitle = `${classification} • ${slug}`;
-
-      let bucket = 'inbound';
-      let statusTitle = `+${rawQty} un • Entrada em estoque`;
-
-      if (
-        rawType === 'RENTAL_ALLOCATION' ||
-        rawType === 'RESERVATION' ||
-        rawType === 'RESERVED' ||
-        rawType === 'RESERVA' ||
-        rawType === 'ALLOCATION'
-      ) {
-        bucket = 'reserved';
-        statusTitle = `${rawQty} un • Reservado em evento`;
-      } else if (
-        rawType === 'LOSS' ||
-        rawType === 'SALE' ||
-        rawType === 'OUTBOUND' ||
-        rawType === 'BAIXA' ||
-        rawType === 'DAMAGE' ||
-        (rawType === 'ADJUSTMENT' &&
-          Number(item?.quantity ?? item?.quantityDelta ?? 0) < 0)
-      ) {
-        bucket = 'outbound';
-        statusTitle = `-${rawQty} un • Baixa de estoque`;
-      }
-
-      const noteSubtitle =
-        item?.note ||
-        item?.notes ||
-        item?.reason ||
-        'Movimentação registrada no estoque';
-
-      return {
-        id: item?.id || `mov-${idx}`,
-        bucket,
-        productName,
-        productSubtitle,
-        statusTitle,
-        noteSubtitle,
-      };
-    });
-  }
-
-  const derived = [];
-  for (const product of safeProducts) {
-    if (!product || product.type === 'service') continue;
-
-    const classification = getProductClassificationLabel(product);
-    const slug = product.slug || 'item-catalogo';
+    const classification = matchedProduct
+      ? getProductClassificationLabel(matchedProduct)
+      : item?.classification || 'Catálogo';
+    const slug =
+      item?.slug ||
+      item?.productSlug ||
+      matchedProduct?.slug ||
+      'item-catalogo';
     const productSubtitle = `${classification} • ${slug}`;
 
-    const quantity = Number(product.stock?.quantity ?? product.quantity ?? 0);
-    const reserved = Number(product.stock?.reserved ?? product.reserved ?? 0);
+    let bucket = 'inbound';
+    let statusTitle = `+${rawQty} un • Entrada em estoque`;
 
-    if (quantity > 0) {
-      derived.push({
-        id: `derived-inbound-${product.id}`,
-        bucket: 'inbound',
-        productName: product.name,
-        productSubtitle,
-        statusTitle: `+${quantity} un • Entrada em estoque`,
-        noteSubtitle: 'Saldo físico cadastrado no catálogo',
-      });
+    if (
+      rawType === 'RENTAL_ALLOCATION' ||
+      rawType === 'RESERVATION' ||
+      rawType === 'RESERVED' ||
+      rawType === 'RESERVA' ||
+      rawType === 'ALLOCATION'
+    ) {
+      bucket = 'reserved';
+      statusTitle = `${rawQty} un • Reservado em evento`;
+    } else if (
+      rawType === 'LOSS' ||
+      rawType === 'SALE' ||
+      rawType === 'OUTBOUND' ||
+      rawType === 'BAIXA' ||
+      rawType === 'DAMAGE' ||
+      (rawType === 'ADJUSTMENT' &&
+        Number(item?.quantity ?? item?.quantityDelta ?? 0) < 0)
+    ) {
+      bucket = 'outbound';
+      statusTitle = `-${rawQty} un • Baixa de estoque`;
     }
 
-    if (reserved > 0) {
-      derived.push({
-        id: `derived-reserved-${product.id}`,
-        bucket: 'reserved',
-        productName: product.name,
-        productSubtitle,
-        statusTitle: `${reserved} un • Reservado em evento`,
-        noteSubtitle: 'Unidades alocadas em eventos ativos',
-      });
-    }
-  }
+    const noteSubtitle =
+      item?.note ||
+      item?.notes ||
+      item?.reason ||
+      'Movimentação registrada no estoque';
 
-  return derived;
+    return {
+      id: item?.id || `mov-${idx}`,
+      bucket,
+      productName,
+      productSubtitle,
+      statusTitle,
+      noteSubtitle,
+    };
+  });
 };
 
 export function ShopDistributionCard({
@@ -252,15 +212,6 @@ export function ShopDistributionCard({
               </p>
             </div>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground size-8 shrink-0"
-            aria-label="Opções da loja"
-          >
-            <MoreHorizontalIcon className="size-4" />
-          </Button>
         </div>
 
         <Separator />
@@ -450,17 +401,6 @@ export function StockMovementsTimelineCard({
         <CardDescription>
           {normalizedMovements.length} movimentações registradas
         </CardDescription>
-        <CardAction>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground size-8"
-            aria-label="Opções de movimentações"
-          >
-            <MoreVerticalIcon className="size-4" />
-          </Button>
-        </CardAction>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col">
@@ -551,17 +491,6 @@ export function PopularProductsCard({ products = [], isLoading = false }) {
         <CardDescription>
           Total de {safeProducts.length} itens no catálogo
         </CardDescription>
-        <CardAction>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground size-8"
-            aria-label="Opções de produtos populares"
-          >
-            <MoreVerticalIcon className="size-4" />
-          </Button>
-        </CardAction>
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col">
