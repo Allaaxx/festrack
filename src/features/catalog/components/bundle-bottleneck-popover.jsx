@@ -55,17 +55,17 @@ const BundleBottleneckPopover = ({
               size="sm"
               aria-label={`Estoque do pacote ${bundle?.name ?? ''}`}
               className={cn(
-                'group h-auto p-0 cursor-pointer hover:bg-transparent font-normal',
+                'group h-auto cursor-pointer p-0 font-normal hover:bg-transparent',
                 className
               )}
             >
               <Badge
                 variant={isOutOfStock ? 'destructive' : 'secondary'}
-                className="gap-1.5 font-medium transition-all group-hover:ring-2 group-hover:ring-primary/20"
+                className="group-hover:ring-primary/20 gap-1.5 font-medium transition-all group-hover:ring-2"
               >
                 <BoxesIcon className="size-3.5 shrink-0" />
                 <span>{availableStock} un</span>
-                <InfoIcon className="size-3 text-muted-foreground ml-0.5 opacity-70 group-hover:opacity-100" />
+                <InfoIcon className="text-muted-foreground ml-0.5 size-3 opacity-70 group-hover:opacity-100" />
               </Badge>
             </Button>
           )
@@ -74,16 +74,16 @@ const BundleBottleneckPopover = ({
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="w-84 sm:w-96 p-4 gap-3 text-left shadow-lg"
+        className="w-84 gap-3 p-4 text-left shadow-lg sm:w-96"
       >
         <PopoverHeader className="gap-1 border-b pb-2.5">
-          <div className="flex items-center gap-1.5 text-primary">
+          <div className="text-primary flex items-center gap-1.5">
             <PackageOpenIcon className="size-4 shrink-0" />
-            <PopoverTitle className="text-sm font-semibold text-foreground">
+            <PopoverTitle className="text-foreground text-sm font-semibold">
               Composição & Gargalo do Pacote
             </PopoverTitle>
           </div>
-          <PopoverDescription className="text-xs text-muted-foreground leading-relaxed">
+          <PopoverDescription className="text-muted-foreground text-xs leading-relaxed">
             A disponibilidade máxima deste combo é calculada pelo componente
             mais restritivo (gargalo limitador).
           </PopoverDescription>
@@ -94,8 +94,8 @@ const BundleBottleneckPopover = ({
           className={cn(
             'flex items-center justify-between rounded-lg p-2.5 text-xs font-medium',
             isOutOfStock
-              ? 'bg-destructive/10 text-destructive border border-destructive/20'
-              : 'bg-muted/60 text-foreground border border-border/50'
+              ? 'bg-destructive/10 text-destructive border-destructive/20 border'
+              : 'bg-muted/60 text-foreground border-border/50 border'
           )}
         >
           <span>Disponibilidade Atual:</span>
@@ -107,10 +107,10 @@ const BundleBottleneckPopover = ({
         </div>
 
         {/* Components breakdown */}
-        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+        <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
           {components.length === 0 ? (
-            <p className="text-muted-foreground text-xs text-center py-4">
-              Nenhum componente configurado neste pacote virtual.
+            <p className="text-muted-foreground py-4 text-center text-xs">
+              Nenhum componente configurado neste pacote.
             </p>
           ) : (
             components.map((comp) => {
@@ -120,20 +120,20 @@ const BundleBottleneckPopover = ({
                 <div
                   key={comp.id}
                   className={cn(
-                    'rounded-lg border p-2.5 space-y-1.5 transition-colors text-xs',
+                    'space-y-1.5 rounded-lg border p-2.5 text-xs transition-colors',
                     isBottleneck
                       ? 'border-destructive/40 bg-destructive/5'
                       : 'border-border/60 bg-card/60'
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-semibold text-foreground leading-tight">
+                    <span className="text-foreground leading-tight font-semibold">
                       {comp.name}
                     </span>
                     {isBottleneck && (
                       <Badge
                         variant="destructive"
-                        className="text-[10px] h-4.5 px-1.5 gap-1 shrink-0 font-medium"
+                        className="h-4.5 shrink-0 gap-1 px-1.5 text-[10px] font-medium"
                       >
                         <AlertTriangleIcon className="size-2.5 shrink-0" />
                         Gargalo Limitador
@@ -141,30 +141,28 @@ const BundleBottleneckPopover = ({
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-0.5 text-muted-foreground text-[11px]">
+                  <div className="text-muted-foreground flex flex-col gap-0.5 text-[11px]">
                     <div className="flex justify-between">
                       <span>Proporção:</span>
-                      <span className="font-medium text-foreground">
+                      <span className="text-foreground font-medium">
                         {comp.multiplier} un por pacote
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Estoque físico disponível:</span>
-                      <span className="font-medium text-foreground">
+                      <span className="text-foreground font-medium">
                         {comp.availableStock} un ({comp.onHand} total,{' '}
                         {comp.reserved} res.)
                       </span>
                     </div>
-                    <div className="flex justify-between border-t border-border/40 pt-1 mt-0.5 font-medium">
+                    <div className="border-border/40 mt-0.5 flex justify-between border-t pt-1 font-medium">
                       <span className={isBottleneck ? 'text-destructive' : ''}>
                         Permite montar:
                       </span>
                       <span
                         className={cn(
                           'font-semibold',
-                          isBottleneck
-                            ? 'text-destructive'
-                            : 'text-foreground'
+                          isBottleneck ? 'text-destructive' : 'text-foreground'
                         )}
                       >
                         {comp.maxBundles}{' '}
