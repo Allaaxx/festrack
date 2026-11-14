@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { getAvailableStock } from '@/features/catalog/helpers/bundle';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
@@ -206,13 +207,10 @@ export function buildDailyStockChartData({
       const targetKey = dailyMap.has(dateKey) ? dateKey : todayKey;
       if (dailyMap.has(targetKey)) {
         const target = dailyMap.get(targetKey);
-        const quantity = Number(
-          product?.stock?.quantity ?? product?.quantity ?? 0
-        );
         const reserved = Number(
           product?.stock?.reserved ?? product?.reserved ?? 0
         );
-        const available = Math.max(0, quantity - reserved);
+        const available = getAvailableStock(product, products) ?? 0;
         target.entradas += available;
         target.saidas += reserved;
       }

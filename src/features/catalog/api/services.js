@@ -1,3 +1,4 @@
+import { getAvailableStock } from '@/features/catalog/helpers/bundle';
 import protectedApi from '@/lib/axios';
 
 export const EMPTY_CATALOG_METRICS = {
@@ -51,10 +52,7 @@ const computeMetricsFromProducts = (products = []) => {
       );
       activeRentalsTotal += reserved;
       if (product.type !== 'service') {
-        const quantity = Number(
-          product?.stock?.quantity ?? product?.quantity ?? 0
-        );
-        const available = Math.max(0, quantity - reserved);
+        const available = getAvailableStock(product, products) ?? 0;
         if (available <= 0) {
           outOfStock += 1;
         }

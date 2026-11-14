@@ -117,7 +117,9 @@ export const calculateBundleBottleneck = (bundle, allProducts = []) => {
       componentProduct?.stock?.reserved ?? componentProduct?.reserved ?? 0
     );
 
-    const availableStock = Math.max(0, onHand - reserved);
+    const availableStock = componentProduct
+      ? (getAvailableStock(componentProduct) ?? 0)
+      : 0;
     const maxBundles = Math.floor(availableStock / multiplier);
 
     return {

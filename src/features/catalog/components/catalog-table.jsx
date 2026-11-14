@@ -29,6 +29,7 @@ import {
 } from '@tanstack/react-table';
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   ArrowUpDown,
   BoxIcon,
   ChevronDownIcon,
@@ -38,7 +39,6 @@ import {
   ChevronsRightIcon,
   Columns2Icon,
   GripVerticalIcon,
-  Loader2Icon,
   MoreHorizontalIcon,
   PackageIcon,
   PackageSearchIcon,
@@ -86,6 +86,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -101,7 +102,10 @@ import {
 import BundleBottleneckPopover from '@/features/catalog/components/bundle-bottleneck-popover';
 import CreateProductDialog from '@/features/catalog/components/create-product-dialog';
 import StockAdjustDialog from '@/features/catalog/components/stock-adjust-dialog';
-import { getAvailableStock } from '@/features/catalog/helpers/bundle';
+import {
+  calculateBundleBottleneck,
+  getAvailableStock,
+} from '@/features/catalog/helpers/bundle';
 import { formatCurrency } from '@/helpers/currency';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -150,7 +154,7 @@ const CatalogClassificationBadge = ({ product }) => {
     return (
       <Badge
         variant="secondary"
-        className="gap-1 border-primary/20 bg-primary/10 font-medium whitespace-nowrap text-primary"
+        className="border-primary/20 bg-primary/10 text-primary gap-1 font-medium whitespace-nowrap"
       >
         <BoxIcon className="size-3 shrink-0" />
         Pacote
@@ -214,7 +218,7 @@ const DragHandle = ({ product }) => {
       type="button"
       variant="ghost"
       size="icon"
-      className="text-muted-foreground hover:bg-transparent size-7 cursor-grab active:cursor-grabbing"
+      className="text-muted-foreground size-7 cursor-grab hover:bg-transparent active:cursor-grabbing"
       aria-label={`Reordenar ${product.name}`}
       {...attributes}
       {...listeners}
@@ -354,6 +358,7 @@ const SortableCatalogRow = ({ row, onRowClick, onMoveRow }) => {
  */
 const CatalogTable = ({
   products: propProducts,
+  movements: propMovements,
   isLoading: propIsLoading,
   isError: propIsError,
   refetch: propRefetch,
@@ -482,7 +487,7 @@ const CatalogTable = ({
         const isService = product.type === 'service';
 
         if (stockStatusFilter === 'available') {
-          if (!isService && (available === null || available <= 0)) {
+          if (isService || available === null || available <= 0) {
             return false;
           }
         } else if (stockStatusFilter === 'low_stock') {
@@ -626,7 +631,9 @@ const CatalogTable = ({
       {
         id: 'classification',
         header: 'Classificação',
-        cell: ({ row }) => <CatalogClassificationBadge product={row.original} />,
+        cell: ({ row }) => (
+          <CatalogClassificationBadge product={row.original} />
+        ),
       },
       {
         accessorKey: 'price',
@@ -740,6 +747,34 @@ const CatalogTable = ({
   const filteredRowsCount = filteredProducts.length;
   const currentPage = effectivePageIndex + 1;
   const visibleColumnCount = table.getVisibleLeafColumns().length;
+
+  const selectedBundleBottleneck = useMemo(() => {
+    if (!selectedProduct?.is_bundle) return null;
+    return calculateBundleBottleneck(selectedProduct, allProducts);
+  }, [selectedProduct, allProducts]);
+
+  const selectedProductMovements = useMemo(() => {
+    if (!selectedProduct) return [];
+    const rawMovements = Array.isArray(propMovements)
+      ? propMovements
+      : Array.isArray(propMovements?.movements)
+        ? propMovements.movements
+        : [];
+    const embeddedMovements = Array.isArray(selectedProduct?.movements)
+      ? selectedProduct.movements
+      : Array.isArray(selectedProduct?.stock?.movements)
+        ? selectedProduct.stock.movements
+        : [];
+    const combined =
+      rawMovements.length > 0
+        ? rawMovements.filter(
+            (m) =>
+              (m?.productId ?? m?.product_id) === selectedProduct.id ||
+              (selectedProduct.name && m?.productName === selectedProduct.name)
+          )
+        : embeddedMovements;
+    return combined.slice(0, 5);
+  }, [selectedProduct, propMovements]);
 
   return (
     <section
@@ -895,13 +930,16 @@ const CatalogTable = ({
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
                 {isLoading ? (
                   <TableRow data-testid="catalog-loading">
-                    <TableCell
-                      colSpan={visibleColumnCount}
-                      className="h-40 text-center"
-                    >
-                      <div className="text-muted-foreground flex flex-col items-center justify-center gap-2">
-                        <Loader2Icon className="text-primary size-6 animate-spin" />
-                        <span className="text-xs">Carregando catálogo...</span>
+                    <TableCell colSpan={visibleColumnCount} className="p-4">
+                      <div className="space-y-3">
+                        <span className="sr-only">Carregando catálogo...</span>
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <Skeleton
+                            key={index}
+                            data-testid="catalog-table-skeleton"
+                            className="h-10 w-full rounded-md"
+                          />
+                        ))}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1126,6 +1164,114 @@ const CatalogTable = ({
                 </div>
               </div>
               <Separator />
+
+              {selectedProduct.is_bundle && selectedBundleBottleneck && (
+                <>
+                  <div
+                    data-testid="drawer-bundle-bottleneck"
+                    className="flex flex-col gap-2.5"
+                  >
+                    <p className="text-foreground text-xs font-semibold tracking-wide uppercase">
+                      Composição & Gargalo do Pacote
+                    </p>
+                    {selectedBundleBottleneck.components.length === 0 ? (
+                      <p className="text-muted-foreground text-xs">
+                        Nenhum componente configurado neste pacote.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {selectedBundleBottleneck.components.map((comp) => (
+                          <div
+                            key={comp.id}
+                            className={cn(
+                              'flex flex-col gap-1 rounded-lg border p-2.5 text-xs',
+                              comp.isBottleneck
+                                ? 'border-destructive/40 bg-destructive/5'
+                                : 'border-border/60 bg-card/60'
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold">{comp.name}</span>
+                              {comp.isBottleneck && (
+                                <Badge
+                                  variant="destructive"
+                                  className="h-4.5 gap-1 px-1.5 text-[10px]"
+                                >
+                                  <AlertTriangleIcon className="size-2.5 shrink-0" />
+                                  Gargalo Limitador
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-muted-foreground flex items-center justify-between text-[11px]">
+                              <span>{comp.multiplier} un por pacote</span>
+                              <span>
+                                {comp.availableStock} disp. ({comp.maxBundles}{' '}
+                                {comp.maxBundles === 1 ? 'pacote' : 'pacotes'})
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <Separator />
+                </>
+              )}
+
+              <div
+                data-testid="drawer-movement-history"
+                className="flex flex-col gap-2"
+              >
+                <p className="text-foreground text-xs font-semibold tracking-wide uppercase">
+                  Histórico de Movimentações Recentes
+                </p>
+                {selectedProduct.type === 'service' ? (
+                  <p className="text-muted-foreground text-xs">
+                    Controle de estoque não aplicável para serviços.
+                  </p>
+                ) : selectedProductMovements.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {selectedProductMovements.map((mov, idx) => {
+                      const rawQty = Number(
+                        mov?.quantity ?? mov?.quantityDelta ?? mov?.delta ?? 0
+                      );
+                      const type = String(mov?.type ?? 'INBOUND').toUpperCase();
+                      const isNegative =
+                        type === 'LOSS' ||
+                        type === 'SALE' ||
+                        type === 'OUTBOUND' ||
+                        type === 'RENTAL_ALLOCATION' ||
+                        type === 'RESERVATION' ||
+                        rawQty < 0;
+                      const formattedDelta = `${isNegative ? '-' : '+'}${Math.abs(rawQty)} un`;
+                      const note =
+                        mov?.note ||
+                        mov?.notes ||
+                        mov?.reason ||
+                        'Movimentação de estoque';
+
+                      return (
+                        <div
+                          key={mov?.id ?? `drawer-mov-${idx}`}
+                          className="border-border/60 bg-card/60 flex items-center justify-between gap-2 rounded-lg border p-2 text-xs"
+                        >
+                          <span className="text-muted-foreground truncate">
+                            {note}
+                          </span>
+                          <span className="font-semibold tabular-nums">
+                            {formattedDelta}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    Nenhuma movimentação recente registrada para este item.
+                  </p>
+                )}
+              </div>
+              <Separator />
             </div>
           )}
 
@@ -1144,6 +1290,21 @@ const CatalogTable = ({
                   <PencilIcon className="mr-2 size-4" />
                   Editar
                 </Button>
+                {!selectedProduct.is_bundle &&
+                  selectedProduct.type !== 'service' && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const target = selectedProduct;
+                        setSelectedProduct(null);
+                        handleRowAction('adjust-stock', target);
+                      }}
+                    >
+                      <SlidersHorizontalIcon className="mr-2 size-4" />
+                      Ajustar Estoque
+                    </Button>
+                  )}
                 <Button
                   type="button"
                   variant="destructive"

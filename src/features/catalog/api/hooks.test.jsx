@@ -98,9 +98,9 @@ describe('Catalog API Hooks', () => {
     });
 
     it('generates consistent query key', () => {
-      expect(
-        getCatalogMetricsQueryKey({ userId: 'u1', shopId: 's1' })
-      ).toEqual(['catalogMetrics', 'u1', 's1']);
+      expect(getCatalogMetricsQueryKey({ userId: 'u1', shopId: 's1' })).toEqual(
+        ['catalogMetrics', 'u1', 's1']
+      );
     });
   });
 

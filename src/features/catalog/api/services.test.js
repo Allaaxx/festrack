@@ -24,7 +24,12 @@ describe('CatalogService', () => {
   describe('getMetrics', () => {
     it('fetches catalog metrics from the API when available', async () => {
       const mockMetrics = {
-        activeCatalog: { total: 50, simpleProducts: 38, bundles: 12, trend: 15 },
+        activeCatalog: {
+          total: 50,
+          simpleProducts: 38,
+          bundles: 12,
+          trend: 15,
+        },
         activeRentals: { total: 30, trend: 10 },
         stockAlerts: { total: 1, trend: -50 },
       };

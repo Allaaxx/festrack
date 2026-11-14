@@ -36,8 +36,7 @@ export const ProductService = {
       return [];
     }
 
-    const hasTypeFilter =
-      Boolean(type) && type !== 'all' && type !== 'todos';
+    const hasTypeFilter = Boolean(type) && type !== 'all' && type !== 'todos';
     const endpoint = hasTypeFilter
       ? `/shops/${shopId}/products?type=${type}`
       : `/shops/${shopId}/products`;
@@ -199,6 +198,7 @@ export const createProductMutationKey = ['createProduct'];
  */
 export const useCreateProduct = (options = {}) => {
   const queryClient = useQueryClient();
+  const { user } = useAuthContext() || {};
   const { activeShop, currentShop } = useShopContext() || {};
   const shopId = activeShop?.id || currentShop?.id;
 
@@ -213,8 +213,12 @@ export const useCreateProduct = (options = {}) => {
       }),
     onSuccess: async (createdProduct, variables, context) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['getProducts'] }),
-        queryClient.invalidateQueries({ queryKey: ['catalogMetrics'] }),
+        queryClient.invalidateQueries({
+          queryKey: getProductsQueryKey({ shopId, userId: user?.id }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getCatalogMetricsQueryKey({ shopId, userId: user?.id }),
+        }),
       ]);
 
       toast.add({
@@ -250,6 +254,7 @@ export const updateProductMutationKey = ['updateProduct'];
  */
 export const useUpdateProduct = (options = {}) => {
   const queryClient = useQueryClient();
+  const { user } = useAuthContext() || {};
   const { activeShop, currentShop } = useShopContext() || {};
   const shopId = activeShop?.id || currentShop?.id;
 
@@ -264,9 +269,15 @@ export const useUpdateProduct = (options = {}) => {
       }),
     onSuccess: async (updatedProduct, variables, context) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['getProducts'] }),
-        queryClient.invalidateQueries({ queryKey: ['catalogMetrics'] }),
-        queryClient.invalidateQueries({ queryKey: ['stockMovements'] }),
+        queryClient.invalidateQueries({
+          queryKey: getProductsQueryKey({ shopId, userId: user?.id }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getCatalogMetricsQueryKey({ shopId, userId: user?.id }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getStockMovementsQueryKey({ shopId, userId: user?.id }),
+        }),
       ]);
 
       toast.add({
@@ -302,6 +313,7 @@ export const deleteProductMutationKey = ['deleteProduct'];
  */
 export const useDeleteProduct = (options = {}) => {
   const queryClient = useQueryClient();
+  const { user } = useAuthContext() || {};
   const { activeShop, currentShop } = useShopContext() || {};
   const shopId = activeShop?.id || currentShop?.id;
 
@@ -318,9 +330,15 @@ export const useDeleteProduct = (options = {}) => {
     },
     onSuccess: async (deletedProduct, variables, context) => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['getProducts'] }),
-        queryClient.invalidateQueries({ queryKey: ['catalogMetrics'] }),
-        queryClient.invalidateQueries({ queryKey: ['stockMovements'] }),
+        queryClient.invalidateQueries({
+          queryKey: getProductsQueryKey({ shopId, userId: user?.id }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getCatalogMetricsQueryKey({ shopId, userId: user?.id }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getStockMovementsQueryKey({ shopId, userId: user?.id }),
+        }),
       ]);
 
       toast.add({

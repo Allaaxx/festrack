@@ -4,11 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useAdjustStock } from '@/features/catalog/api/products';
 import { stockAdjustFormSchema } from '@/features/catalog/forms/schemas';
 
-export const useStockAdjustForm = ({
-  product,
-  onSuccess,
-  onError,
-} = {}) => {
+export const useStockAdjustForm = ({ product, onSuccess, onError } = {}) => {
   const adjustStockMutation = useAdjustStock();
 
   const form = useForm({
