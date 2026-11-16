@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { EVENT_STATUSES } from '../helpers/event';
 import { useEventsSidebar } from '../hooks/use-events-sidebar';
 import EventDropdownMenu from './event-dropdown-menu';
+import { EventTagFilterDropdown } from './event-tag-filter-dropdown';
 
 export function EventsSidebarContent({
   currentDate,
@@ -19,6 +20,13 @@ export function EventsSidebarContent({
   onSidebarDateChange,
   events = [],
   onEventCreate,
+  showAllTypes,
+  selectedTypes,
+  eventTypeOptions,
+  onSetShowAllTypes,
+  onToggleTypeFilter,
+  onAddEventTypeOption,
+  onRemoveEventTypeOption,
 }) {
   const {
     dotsByDate,
@@ -151,9 +159,18 @@ export function EventsSidebarContent({
       </ScrollArea>
 
       {/* Action Buttons */}
-      <div className="flex flex-col gap-2 border-t p-4">
+      <div className="flex items-center gap-2 border-t p-4">
+        <EventTagFilterDropdown
+          showAllTypes={showAllTypes}
+          selectedTypes={selectedTypes}
+          eventTypeOptions={eventTypeOptions}
+          onSetShowAllTypes={onSetShowAllTypes}
+          onToggleTypeFilter={onToggleTypeFilter}
+          onAddEventTypeOption={onAddEventTypeOption}
+          onRemoveEventTypeOption={onRemoveEventTypeOption}
+        />
         <Button
-          className="w-full"
+          className="flex-1"
           size="default"
           onClick={() => onEventCreate(currentDate)}
         >

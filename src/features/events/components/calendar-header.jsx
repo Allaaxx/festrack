@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { EventStatusFilters } from './event-status-filters';
 import { EventsSidebarSheet } from './events-sidebar-sheet';
 
 export function CalendarHeader({
@@ -32,8 +31,13 @@ export function CalendarHeader({
   onDateChange,
   sidebarDate,
   onSidebarDateChange,
-  selectedStatuses,
-  onToggleStatus,
+  showAllTypes,
+  selectedTypes,
+  eventTypeOptions,
+  onSetShowAllTypes,
+  onToggleTypeFilter,
+  onAddEventTypeOption,
+  onRemoveEventTypeOption,
 }) {
   return (
     <div className="flex flex-col">
@@ -56,6 +60,13 @@ export function CalendarHeader({
               sidebarDate={sidebarDate}
               onSidebarDateChange={onSidebarDateChange}
               onEventCreate={onEventCreate}
+              showAllTypes={showAllTypes}
+              selectedTypes={selectedTypes}
+              eventTypeOptions={eventTypeOptions}
+              onSetShowAllTypes={onSetShowAllTypes}
+              onToggleTypeFilter={onToggleTypeFilter}
+              onAddEventTypeOption={onAddEventTypeOption}
+              onRemoveEventTypeOption={onRemoveEventTypeOption}
             />
           </div>
           <div className="flex items-center gap-1">
@@ -132,12 +143,6 @@ export function CalendarHeader({
           </Button>
         </div>
       </div>
-
-      {/* Filters Bar */}
-      <EventStatusFilters
-        selectedStatuses={selectedStatuses}
-        onToggleStatus={onToggleStatus}
-      />
     </div>
   );
 }
