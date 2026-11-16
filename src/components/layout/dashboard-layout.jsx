@@ -46,7 +46,7 @@ const DashboardLayout = () => {
                   </a>
                   , Celebre a vida
                 </p>
-                <div className="text-muted-foreground *:hover:text-primary mr-10 flex items-center gap-5 sm:mr-0">
+                <div className="text-muted-foreground *:hover:text-primary mr-0 flex items-center gap-5 sm:mr-10">
                   <a href="#" aria-label="Facebook">
                     <FacebookIcon className="size-4" />
                   </a>
