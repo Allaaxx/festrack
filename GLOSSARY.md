@@ -209,6 +209,18 @@ An immutable ledger entry recording a discrete change or adjustment in a product
 - **Auditability:** Preserves timestamp, affected quantity, delta, user attribution, and optional reference to an Event or Inspection.
 - **Avoid:** Stock Change, Adjustment Record, Inventory Log.
 
+---
+
+### Etiqueta (Event Tag)
+
+A visual classification label or category assigned to an Event to organize, filter, and color-code scheduled occasions on the calendar.
+
+- **Attributes:** Unique identifier or key (`value`), display title (`label`), and visual accent color (`dotClass` / `color`).
+- **Defaults:** Standard built-in classifications include Família (`family`), Negócios (`business`), Pessoal (`personal`), Feriado (`holiday`), and Outros (`etc`).
+- **Customization:** Shop members can dynamically create new custom tags or remove non-default tags within their workspace.
+- **Filtering:** Filters event visibility across all calendar views (month, week, day, year, and agenda).
+- **Avoid:** Category, EventType, Classificação, Label.
+
 
 
 

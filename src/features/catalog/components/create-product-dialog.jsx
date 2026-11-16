@@ -23,6 +23,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -415,10 +422,7 @@ const CreateProductDialog = ({
       )}
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-            <PackageIcon className="text-primary size-5" />
-            {dialogTitle}
-          </DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>
             {isEditMode
               ? 'Atualize os dados do produto ou os componentes do pacote no catálogo da sua loja.'
@@ -476,17 +480,26 @@ const CreateProductDialog = ({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor={simpleTypeId}>Classificação</Label>
-                  <select
-                    id={simpleTypeId}
-                    aria-label="Classificação"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                    className="border-input bg-background text-foreground focus-visible:ring-ring/50 flex h-9 w-full rounded-lg border px-3 py-1 text-sm shadow-xs outline-hidden transition-colors focus-visible:ring-3"
-                  >
-                    <option value="rent">Aluguel</option>
-                    <option value="sale">Venda</option>
-                    <option value="service">Serviço</option>
-                  </select>
+                  <Select value={type} onValueChange={(val) => setType(val)}>
+                    <SelectTrigger
+                      id={simpleTypeId}
+                      aria-label="Classificação"
+                      className="w-full"
+                    >
+                      <SelectValue placeholder="Selecione a classificação">
+                        {type === 'rent'
+                          ? 'Aluguel'
+                          : type === 'sale'
+                            ? 'Venda'
+                            : 'Serviço'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rent">Aluguel</SelectItem>
+                      <SelectItem value="sale">Venda</SelectItem>
+                      <SelectItem value="service">Serviço</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -539,7 +552,7 @@ const CreateProductDialog = ({
                 </div>
               )}
 
-              <DialogFooter className="mt-6 pt-2">
+              <DialogFooter className="mt-6">
                 <DialogClose
                   render={
                     <Button type="button" variant="outline">
@@ -640,29 +653,52 @@ const CreateProductDialog = ({
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
-                  <select
-                    id={bundlePickerId}
-                    aria-label="Selecionar componente"
-                    value={selectedComponentId}
-                    onChange={(e) => setSelectedComponentId(e.target.value)}
-                    className="border-input bg-background text-foreground focus-visible:ring-ring/50 flex h-9 flex-1 rounded-lg border px-3 py-1 text-sm shadow-xs outline-hidden transition-colors focus-visible:ring-3"
-                  >
-                    <option value="">Selecione um produto simples...</option>
-                    {availableSimpleProducts.map((p) => {
-                      const available = getAvailableStock(p) ?? 0;
-                      const typeLabel =
-                        p.type === 'rent'
-                          ? 'Aluguel'
-                          : p.type === 'sale'
-                            ? 'Venda'
-                            : 'Serviço';
-                      return (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({typeLabel} • {available} disp.)
-                        </option>
-                      );
-                    })}
-                  </select>
+                  <div className="flex-1">
+                    <Select
+                      value={selectedComponentId}
+                      onValueChange={(val) => setSelectedComponentId(val)}
+                    >
+                      <SelectTrigger
+                        id={bundlePickerId}
+                        aria-label="Selecionar componente"
+                        className="w-full"
+                      >
+                        <SelectValue placeholder="Selecione um produto simples...">
+                          {(() => {
+                            const selectedProd = availableSimpleProducts.find(
+                              (p) => p.id === selectedComponentId
+                            );
+                            if (!selectedProd) return null;
+                            const available =
+                              getAvailableStock(selectedProd) ?? 0;
+                            const typeLabel =
+                              selectedProd.type === 'rent'
+                                ? 'Aluguel'
+                                : selectedProd.type === 'sale'
+                                  ? 'Venda'
+                                  : 'Serviço';
+                            return `${selectedProd.name} (${typeLabel} • ${available} disp.)`;
+                          })()}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSimpleProducts.map((p) => {
+                          const available = getAvailableStock(p) ?? 0;
+                          const typeLabel =
+                            p.type === 'rent'
+                              ? 'Aluguel'
+                              : p.type === 'sale'
+                                ? 'Venda'
+                                : 'Serviço';
+                          return (
+                            <SelectItem key={p.id} value={p.id}>
+                              {p.name} ({typeLabel} • {available} disp.)
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button
                     type="button"
                     variant="secondary"
@@ -791,7 +827,7 @@ const CreateProductDialog = ({
                 )}
               </div>
 
-              <DialogFooter className="mt-6 pt-2">
+              <DialogFooter className="mt-6">
                 <DialogClose
                   render={
                     <Button type="button" variant="outline">

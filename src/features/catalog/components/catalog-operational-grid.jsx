@@ -4,7 +4,6 @@ import {
   CalendarClockIcon,
   PackageIcon,
   ShoppingBagIcon,
-  StoreIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -16,7 +15,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import {
+  Progress,
+  ProgressIndicator,
+  ProgressTrack,
+} from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,6 +33,11 @@ const DISTRIBUTION_CATEGORIES = [
   { id: 'sale', label: 'Venda', Icon: ShoppingBagIcon },
   { id: 'bundle', label: 'Pacote', Icon: BoxIcon },
 ];
+
+const getShopInitial = (name) => {
+  if (!name || typeof name !== 'string') return 'L';
+  return name.trim().charAt(0).toUpperCase() || 'L';
+};
 
 const getProductClassificationLabel = (product) => {
   if (product?.is_bundle) return 'Pacote';
@@ -132,7 +140,13 @@ export function ShopDistributionCard({
   const [selectedCategory, setSelectedCategory] = useState('rent');
 
   const resolvedShopName = shopName || activeShop?.name || 'Minha Loja';
-  const shopLogo = activeShop?.logoUrl || activeShop?.image || null;
+  const shopLogo =
+    activeShop?.imageUrl ||
+    activeShop?.image ||
+    activeShop?.logoUrl ||
+    (typeof activeShop?.logo === 'string' ? activeShop?.logo : null);
+  const ActiveLogo =
+    typeof activeShop?.logo === 'function' ? activeShop?.logo : null;
 
   const breakdown = useMemo(() => {
     const safeProducts = Array.isArray(products) ? products : [];
@@ -192,15 +206,19 @@ export function ShopDistributionCard({
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <Avatar size="lg" className="rounded-xl after:rounded-xl">
-              {shopLogo && (
+              {shopLogo ? (
                 <AvatarImage
                   src={shopLogo}
                   alt={resolvedShopName}
                   className="rounded-xl"
                 />
-              )}
-              <AvatarFallback className="bg-primary/10 text-primary rounded-xl">
-                <StoreIcon className="size-5" />
+              ) : null}
+              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground rounded-xl text-base font-semibold">
+                {ActiveLogo ? (
+                  <ActiveLogo className="size-5" />
+                ) : (
+                  <span>{getShopInitial(resolvedShopName)}</span>
+                )}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
@@ -302,10 +320,11 @@ export function ShopDistributionCard({
                     {breakdown.exhaustedCount}
                   </span>
                 </div>
-                <Progress
-                  value={breakdown.exhaustedPct}
-                  aria-label="Esgotado"
-                />
+                <Progress value={breakdown.exhaustedPct} aria-label="Esgotado">
+                  <ProgressTrack>
+                    <ProgressIndicator className="bg-destructive" />
+                  </ProgressTrack>
+                </Progress>
               </div>
             </div>
           </>
