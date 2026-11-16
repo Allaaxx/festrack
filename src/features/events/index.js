@@ -1,4 +1,5 @@
 // Components
+export { default as AgendaView } from './components/agenda-view';
 export { default as CreateEventDialog } from './components/create-event-dialog';
 export { default as DeleteEventButton } from './components/delete-event-button';
 export { default as EditEventSheet } from './components/edit-event-sheet';

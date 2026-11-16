@@ -8,6 +8,7 @@ import { EventGap, EventHeight, WeekCellsHeight } from '../constants';
 import { EVENT_STATUSES } from '../helpers/event';
 import { useCalendarDnd } from '../hooks/use-calendar-dnd';
 import { useCalendarNavigation } from '../hooks/use-calendar-navigation';
+import { AgendaView } from './agenda-view';
 import { CalendarDragOverlay } from './calendar-drag-overlay';
 import { CalendarHeader } from './calendar-header';
 import { DayView } from './day-view';
@@ -196,6 +197,13 @@ const EventCalendar = ({
                 events={calendarEvents}
                 onEventSelect={onEventSelect}
                 onEventCreate={onEventCreate}
+              />
+            )}
+            {view === 'agenda' && (
+              <AgendaView
+                currentDate={currentDate}
+                events={calendarEvents}
+                onEventSelect={onEventSelect}
               />
             )}
           </div>
