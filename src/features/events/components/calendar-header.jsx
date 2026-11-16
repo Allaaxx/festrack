@@ -114,6 +114,12 @@ export function CalendarHeader({
               <DropdownMenuItem onClick={() => onViewChange('day')}>
                 Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('year')}>
+                Ano <DropdownMenuShortcut>A</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('agenda')}>
+                Agenda <DropdownMenuShortcut>G</DropdownMenuShortcut>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

@@ -2,11 +2,13 @@ import {
   addDays,
   addMonths,
   addWeeks,
+  addYears,
   endOfWeek,
   format,
   startOfWeek,
   subMonths,
   subWeeks,
+  subYears,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEffect, useMemo, useState } from 'react';
@@ -59,6 +61,8 @@ export function useCalendarNavigation({
 
   const goToPrevious = () => {
     handleDateChange((current) => {
+      if (view === 'year') return subYears(current, 1);
+      if (view === 'agenda') return addDays(current, -30);
       if (view === 'month') return subMonths(current, 1);
       if (view === 'week') return subWeeks(current, 1);
       return addDays(current, -1);
@@ -67,6 +71,8 @@ export function useCalendarNavigation({
 
   const goToNext = () => {
     handleDateChange((current) => {
+      if (view === 'year') return addYears(current, 1);
+      if (view === 'agenda') return addDays(current, 30);
       if (view === 'month') return addMonths(current, 1);
       if (view === 'week') return addWeeks(current, 1);
       return addDays(current, 1);
@@ -94,6 +100,12 @@ export function useCalendarNavigation({
         case 'd':
           handleViewChange('day');
           break;
+        case 'a':
+          handleViewChange('year');
+          break;
+        case 'g':
+          handleViewChange('agenda');
+          break;
       }
     };
 
@@ -102,6 +114,24 @@ export function useCalendarNavigation({
   });
 
   const viewTitle = useMemo(() => {
+    if (view === 'year') {
+      const yearTitle = format(currentDate, 'yyyy');
+      return {
+        mobile: yearTitle,
+        desktop: yearTitle,
+      };
+    }
+
+    if (view === 'agenda') {
+      const agendaTitle = `Agenda · ${capitalize(
+        format(currentDate, 'MMMM yyyy', { locale: ptBR })
+      )}`;
+      return {
+        mobile: 'Agenda',
+        desktop: agendaTitle,
+      };
+    }
+
     if (view === 'month') {
       const monthTitle = capitalize(
         format(currentDate, 'MMMM yyyy', { locale: ptBR })

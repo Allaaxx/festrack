@@ -13,6 +13,7 @@ import { CalendarHeader } from './calendar-header';
 import { DayView } from './day-view';
 import { MonthView } from './month-view';
 import { WeekView } from './week-view';
+import { YearView } from './year-view';
 
 // Re-exportações para preservar compatibilidade retroativa
 export {
@@ -187,6 +188,14 @@ const EventCalendar = ({
                 onEventCreate={onEventCreate}
                 onEventResize={handleEventResize}
                 onEventResizeEnd={handleEventCommit}
+              />
+            )}
+            {view === 'year' && (
+              <YearView
+                currentDate={currentDate}
+                events={calendarEvents}
+                onEventSelect={onEventSelect}
+                onEventCreate={onEventCreate}
               />
             )}
           </div>
