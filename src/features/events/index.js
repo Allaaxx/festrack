@@ -78,6 +78,7 @@ export {
   getEventStatus,
   getEventStatusLabel,
   mapEventToCalendarItem,
+  normalizeEventAuthor,
   parseEventDate,
 } from './helpers/event';
 export {

@@ -71,12 +71,15 @@ describe('AgendaView (#131)', () => {
     expect(workshopElements.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('renders event description and author in agenda view cards', () => {
+  it('renders event description and author with avatar in agenda view cards', () => {
     const detailedEvent = {
       id: 'ev-detailed-1',
       title: 'Company Offsite',
       description: 'Team building and strategy planning retreat',
-      author: 'Lakeside Resort',
+      author: {
+        name: 'Allan Silva',
+        image: 'https://example.com/avatar.jpg',
+      },
       start: today,
       end: new Date(today.getTime() + 7200000),
       color: 'scheduled',
@@ -85,9 +88,32 @@ describe('AgendaView (#131)', () => {
     render(<AgendaView currentDate={today} events={[detailedEvent]} />);
 
     expect(screen.getByText('Company Offsite')).toBeInTheDocument();
-    expect(screen.getByText('Lakeside Resort')).toBeInTheDocument();
+    expect(screen.getByText('Allan Silva')).toBeInTheDocument();
+    expect(screen.getByText('AS')).toBeInTheDocument();
     expect(
       screen.getByText('Team building and strategy planning retreat')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/location/i)).not.toBeInTheDocument();
+  });
+
+  it('renders author string and fallback initials without throwing when author is string', () => {
+    const stringAuthorEvent = {
+      id: 'ev-string-author',
+      title: 'Workshop de Design',
+      description: 'Alinhamento de design tokens',
+      author: 'Lakeside Resort',
+      start: today,
+      end: new Date(today.getTime() + 3600000),
+      color: 'scheduled',
+    };
+
+    render(<AgendaView currentDate={today} events={[stringAuthorEvent]} />);
+
+    expect(screen.getByText('Workshop de Design')).toBeInTheDocument();
+    expect(screen.getByText('Lakeside Resort')).toBeInTheDocument();
+    expect(screen.getByText('LR')).toBeInTheDocument();
+    expect(
+      screen.getByText('Alinhamento de design tokens')
     ).toBeInTheDocument();
   });
 });

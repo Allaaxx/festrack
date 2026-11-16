@@ -1,6 +1,8 @@
 import { differenceInMinutes, format, isPast } from 'date-fns';
 import { useMemo } from 'react';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuthContext } from '@/contexts/auth';
 import { cn } from '@/lib/utils';
 
 import {
@@ -9,6 +11,7 @@ import {
   getMonthViewBleedClasses,
   getMonthViewEventPaddingClasses,
 } from '../helpers/calendar-styles';
+import { normalizeEventAuthor } from '../helpers/event';
 
 const formatEventTime = (date) => format(date, 'HH:mm');
 
@@ -59,6 +62,11 @@ export function EventItem({
   const durationMinutes = useMemo(
     () => differenceInMinutes(event.end, event.start),
     [event.start, event.end]
+  );
+  const { user } = useAuthContext();
+  const author = useMemo(
+    () => normalizeEventAuthor(event, user),
+    [event, user]
   );
 
   const getEventTime = () => {
@@ -118,18 +126,10 @@ export function EventItem({
 
   if (view === 'agenda') {
     const timeText = getEventTime();
-    const authorText =
-      event.author ||
-      event.creator?.name ||
-      event.rawEvent?.creator?.name ||
-      event.rawEvent?.created_by_user_name ||
-      event.rawEvent?.author ||
-      event.location ||
-      event.rawEvent?.location ||
-      null;
-
+    const rawDescription =
+      event.description ?? event.rawEvent?.description ?? '';
     const descriptionText =
-      event.description || event.rawEvent?.description || null;
+      typeof rawDescription === 'string' ? rawDescription.trim() : '';
 
     return (
       <EventWrapper
@@ -147,20 +147,30 @@ export function EventItem({
         <div className="text-sm font-semibold tracking-tight">
           {event.title}
         </div>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs font-normal opacity-80">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-normal opacity-85">
           <span>{timeText}</span>
-          {authorText && (
+          {(author.hasAuthor || author.name) && (
             <>
-              <span className="opacity-50">·</span>
-              <span>{authorText}</span>
+              <span className="opacity-40">·</span>
+              <div className="inline-flex items-center gap-1.5">
+                <Avatar className="size-5 shrink-0">
+                  {author.avatar && (
+                    <AvatarImage src={author.avatar} alt={author.name} />
+                  )}
+                  <AvatarFallback className="text-[9px]">
+                    {author.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{author.name}</span>
+              </div>
             </>
           )}
         </div>
-        {descriptionText && (
-          <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-70">
+        {descriptionText ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-75">
             {descriptionText}
           </p>
-        )}
+        ) : null}
       </EventWrapper>
     );
   }

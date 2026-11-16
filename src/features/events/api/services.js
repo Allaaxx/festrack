@@ -17,7 +17,7 @@ const mapEventFromApi = (event) => {
     event.created_by_user_id ?? event.createdByUserId ?? event.user_id ?? null;
   const tag = event.tag ?? null;
 
-  return {
+  const mapped = {
     id: event.id,
     shopId,
     createdByUserId,
@@ -31,6 +31,12 @@ const mapEventFromApi = (event) => {
     googleEventId,
     syncError,
   };
+
+  if (event.author !== undefined) mapped.author = event.author;
+  if (event.creator !== undefined) mapped.creator = event.creator;
+  if (event.user !== undefined) mapped.user = event.user;
+
+  return mapped;
 };
 
 const resolveShopEventParams = (idOrParams, maybeId) => {
