@@ -6,6 +6,8 @@ import AgendaView from '@/features/events/components/agenda-view';
 
 describe('AgendaView (#131)', () => {
   const today = new Date();
+  today.setHours(10, 0, 0, 0);
+
   const mockEvents = [
     {
       id: 'ev-agenda-1',
@@ -53,5 +55,19 @@ describe('AgendaView (#131)', () => {
 
     expect(onEventSelect).toHaveBeenCalledTimes(1);
     expect(onEventSelect).toHaveBeenCalledWith(mockEvents[0]);
+  });
+
+  it('handles multi-day events spanning across days without duplicate single-day leak', () => {
+    const multiDayEvent = {
+      id: 'ev-multi-day',
+      title: 'Workshop Intensivo',
+      start: today,
+      end: new Date(today.getTime() + 86400000 * 2),
+      color: 'scheduled',
+    };
+
+    render(<AgendaView currentDate={today} events={[multiDayEvent]} />);
+    const workshopElements = screen.getAllByText('Workshop Intensivo');
+    expect(workshopElements.length).toBeGreaterThanOrEqual(2);
   });
 });

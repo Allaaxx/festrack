@@ -1,4 +1,11 @@
-import { addDays, format, isSameDay, isToday } from 'date-fns';
+import {
+  addDays,
+  endOfDay,
+  format,
+  isSameDay,
+  isToday,
+  startOfDay,
+} from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarX2 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -21,10 +28,16 @@ export function AgendaView({ currentDate, events = [], onEventSelect }) {
     const groups = [];
 
     daysList.forEach((day) => {
+      const startDay = startOfDay(day);
+      const endDay = endOfDay(day);
+
       const dayEvents = events.filter((ev) => {
         const s = new Date(ev.start);
-        const e = new Date(ev.end);
-        return isSameDay(day, s) || isSameDay(day, e) || (day > s && day < e);
+        const e = new Date(ev.end || ev.start);
+        if (s.getTime() === e.getTime()) {
+          return isSameDay(day, s);
+        }
+        return s < endDay && e > startDay;
       });
 
       if (dayEvents.length > 0) {
