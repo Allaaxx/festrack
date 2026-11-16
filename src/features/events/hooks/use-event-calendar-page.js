@@ -91,7 +91,7 @@ export function useEventCalendarPage() {
   const editEventMutation = useEditEvent();
 
   const handleEventCreate = (date) => {
-    setCreateInitialDate(date instanceof Date ? date : new Date());
+    setCreateInitialDate(date instanceof Date ? date : currentDate);
     setCreateDialogOpen(true);
   };
 

@@ -118,7 +118,7 @@ export function CalendarHeader({
           </DropdownMenu>
 
           <Button
-            onClick={() => onEventCreate(new Date())}
+            onClick={() => onEventCreate(currentDate)}
             className="w-12 max-sm:h-8 sm:w-fit md:max-lg:h-8"
           >
             <PlusIcon className="h-4 w-4 sm:mr-2" />

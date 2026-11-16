@@ -112,6 +112,7 @@ const EventForm = ({ form, onSubmit, formId }) => {
                   aria-invalid={fieldState.invalid}
                   placeholder="Selecione a data de início"
                   disabled={form.formState.isSubmitting}
+                  defaultMonth={field.value}
                 />
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />
@@ -157,6 +158,7 @@ const EventForm = ({ form, onSubmit, formId }) => {
                   aria-invalid={fieldState.invalid}
                   placeholder="Selecione a data de encerramento"
                   disabled={form.formState.isSubmitting}
+                  defaultMonth={field.value || form.getValues('startDate')}
                 />
                 {fieldState.invalid && (
                   <FieldError errors={[fieldState.error]} />

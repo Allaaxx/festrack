@@ -128,7 +128,9 @@ export function EventsSidebarContent({
                     aria-hidden="true"
                   />
                   <div className="min-w-0 flex-1 py-0.5">
-                    <p className="truncate text-sm font-medium">{event.title}</p>
+                    <p className="truncate text-sm font-medium">
+                      {event.title}
+                    </p>
                     <p className="text-muted-foreground text-xs">{eventTime}</p>
                   </div>
                   <Avatar className="my-auto size-6 shrink-0">
@@ -150,7 +152,11 @@ export function EventsSidebarContent({
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-2 border-t p-4">
-        <Button className="w-full" size="default" onClick={onEventCreate}>
+        <Button
+          className="w-full"
+          size="default"
+          onClick={() => onEventCreate(currentDate)}
+        >
           <PlusIcon className="mr-2 size-4" />
           Novo Evento
         </Button>
