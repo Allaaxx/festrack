@@ -1,6 +1,7 @@
 import { DndContext } from '@dnd-kit/core';
 import { useMemo, useState } from 'react';
 
+import { useShopContext } from '@/contexts/shop';
 import { cn } from '@/lib/utils';
 
 import { EventsSidebar } from '..';
@@ -55,16 +56,61 @@ const EventCalendar = ({
   onEventCreate = () => {},
   onEventUpdate = () => {},
 }) => {
-  const [showAllTypes, setShowAllTypes] = useState(true);
-  const [selectedTypes, setSelectedTypes] = useState([]);
+  const shopContext = useShopContext?.();
+  const shopId = shopContext?.activeShop?.id;
+
+  const tagsStorageKey = shopId
+    ? `festrack:${shopId}:event_tags`
+    : 'festrack:event_tags';
+  const filtersStorageKey = shopId
+    ? `festrack:${shopId}:event_tag_filters`
+    : 'festrack:event_tag_filters';
+
   const [customTagOptions, setCustomTagOptions] = useState(() => {
     try {
-      const stored = localStorage.getItem('festrack:event_tags');
+      const stored =
+        localStorage.getItem(tagsStorageKey) ||
+        (!shopId ? localStorage.getItem('festrack:event_tags') : null);
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
     }
   });
+
+  const [filterState, setFilterState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(filtersStorageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return {
+          showAllTags: parsed.showAllTags ?? true,
+          selectedTags: parsed.selectedTags ?? [],
+        };
+      }
+    } catch {
+      // ignore
+    }
+    return { showAllTags: true, selectedTags: [] };
+  });
+
+  const showAllTags = filterState.showAllTags;
+  const selectedTags = filterState.selectedTags;
+
+  const persistTags = (tags) => {
+    try {
+      localStorage.setItem(tagsStorageKey, JSON.stringify(tags));
+    } catch (err) {
+      void err;
+    }
+  };
+
+  const persistFilters = (filters) => {
+    try {
+      localStorage.setItem(filtersStorageKey, JSON.stringify(filters));
+    } catch (err) {
+      void err;
+    }
+  };
 
   const allTagOptions = useMemo(
     () => [...DEFAULT_EVENT_TAGS, ...customTagOptions],
@@ -88,33 +134,56 @@ const EventCalendar = ({
     onDateChange,
   });
 
-  const handleSetShowAllTypes = (showAll) => {
-    setShowAllTypes(showAll);
-    if (showAll) {
-      setSelectedTypes([]);
-    } else {
-      setSelectedTypes(allTagOptions.map((opt) => opt.value));
-    }
+  const handleSetShowAllTags = (showAll) => {
+    const next = {
+      showAllTags: showAll,
+      selectedTags: showAll ? [] : allTagOptions.map((opt) => opt.value),
+    };
+    setFilterState(next);
+    persistFilters(next);
   };
 
-  const handleToggleTypeFilter = (value, checked) => {
-    setShowAllTypes(false);
-    setSelectedTypes((prev) => {
-      let next;
-      if (checked) {
-        next = prev.includes(value) ? prev : [...prev, value];
+  const handleToggleTagFilter = (value, checked) => {
+    setFilterState((prev) => {
+      let nextSelected;
+      let nextShowAll;
+
+      if (prev.showAllTags) {
+        if (!checked) {
+          nextSelected = allTagOptions
+            .map((opt) => opt.value)
+            .filter((v) => v !== value);
+          nextShowAll = false;
+        } else {
+          return prev;
+        }
       } else {
-        next = prev.filter((v) => v !== value);
+        if (checked) {
+          nextSelected = prev.selectedTags.includes(value)
+            ? prev.selectedTags
+            : [...prev.selectedTags, value];
+        } else {
+          nextSelected = prev.selectedTags.filter((v) => v !== value);
+        }
+
+        if (
+          nextSelected.length === 0 ||
+          nextSelected.length === allTagOptions.length
+        ) {
+          nextShowAll = true;
+          nextSelected = [];
+        } else {
+          nextShowAll = false;
+        }
       }
-      if (next.length === 0 || next.length === allTagOptions.length) {
-        setShowAllTypes(true);
-        return [];
-      }
+
+      const next = { showAllTags: nextShowAll, selectedTags: nextSelected };
+      persistFilters(next);
       return next;
     });
   };
 
-  const handleAddEventTypeOption = (name) => {
+  const handleAddTagOption = (name) => {
     const trimmed = name.trim();
     if (!trimmed) return;
     const value = trimmed.toLowerCase().replace(/\s+/g, '-');
@@ -132,30 +201,29 @@ const EventCalendar = ({
     const newOption = { value, label: trimmed, dotClass: color };
     setCustomTagOptions((prev) => {
       const next = [...prev, newOption];
-      try {
-        localStorage.setItem('festrack:event_tags', JSON.stringify(next));
-      } catch (err) {
-        void err;
-      }
+      persistTags(next);
       return next;
     });
   };
 
-  const handleRemoveEventTypeOption = (value) => {
+  const handleRemoveTagOption = (value) => {
     setCustomTagOptions((prev) => {
       const next = prev.filter((opt) => opt.value !== value);
-      try {
-        localStorage.setItem('festrack:event_tags', JSON.stringify(next));
-      } catch (err) {
-        void err;
-      }
+      persistTags(next);
       return next;
     });
-    setSelectedTypes((prev) => prev.filter((v) => v !== value));
+    setFilterState((prev) => {
+      const next = {
+        showAllTags: prev.showAllTags,
+        selectedTags: prev.selectedTags.filter((v) => v !== value),
+      };
+      persistFilters(next);
+      return next;
+    });
   };
 
   const filteredEvents = useMemo(() => {
-    if (showAllTypes || selectedTypes.length === 0) return events;
+    if (showAllTags || selectedTags.length === 0) return events;
     return events.filter((event) => {
       const eventTag =
         event.tag ||
@@ -164,9 +232,27 @@ const EventCalendar = ({
         event.event ||
         event.color ||
         'etc';
-      return selectedTypes.includes(eventTag);
+      return selectedTags.includes(eventTag);
     });
-  }, [events, showAllTypes, selectedTypes]);
+  }, [events, showAllTags, selectedTags]);
+
+  const tagFilterProps = {
+    showAllTags,
+    selectedTags,
+    tagOptions: allTagOptions,
+    onSetShowAllTags: handleSetShowAllTags,
+    onToggleTagFilter: handleToggleTagFilter,
+    onAddTagOption: handleAddTagOption,
+    onRemoveTagOption: handleRemoveTagOption,
+    // Backward-compatibility aliases
+    showAllTypes: showAllTags,
+    selectedTypes: selectedTags,
+    eventTypeOptions: allTagOptions,
+    onSetShowAllTypes: handleSetShowAllTags,
+    onToggleTypeFilter: handleToggleTagFilter,
+    onAddEventTypeOption: handleAddTagOption,
+    onRemoveEventTypeOption: handleRemoveTagOption,
+  };
 
   const {
     calendarEvents,
@@ -209,13 +295,7 @@ const EventCalendar = ({
         onDateChange={onDateChange}
         sidebarDate={sidebarDate}
         onSidebarDateChange={onSidebarDateChange}
-        showAllTypes={showAllTypes}
-        selectedTypes={selectedTypes}
-        eventTypeOptions={allTagOptions}
-        onSetShowAllTypes={handleSetShowAllTypes}
-        onToggleTypeFilter={handleToggleTypeFilter}
-        onAddEventTypeOption={handleAddEventTypeOption}
-        onRemoveEventTypeOption={handleRemoveEventTypeOption}
+        {...tagFilterProps}
       />
       <div className="flex min-h-0 flex-1 flex-row">
         <div
@@ -284,13 +364,7 @@ const EventCalendar = ({
           onSidebarDateChange={onSidebarDateChange}
           events={calendarEvents}
           onEventCreate={onEventCreate}
-          showAllTypes={showAllTypes}
-          selectedTypes={selectedTypes}
-          eventTypeOptions={allTagOptions}
-          onSetShowAllTypes={handleSetShowAllTypes}
-          onToggleTypeFilter={handleToggleTypeFilter}
-          onAddEventTypeOption={handleAddEventTypeOption}
-          onRemoveEventTypeOption={handleRemoveEventTypeOption}
+          {...tagFilterProps}
         />
       </div>
       <CalendarDragOverlay

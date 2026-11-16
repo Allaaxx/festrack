@@ -31,20 +31,37 @@ export const SYSTEM_TAG_VALUES = [
 ];
 
 export function EventTagFilterDropdown({
-  showAllTypes = true,
-  selectedTypes = [],
-  eventTypeOptions = DEFAULT_EVENT_TAGS,
+  showAllTags,
+  selectedTags,
+  tagOptions,
+  onSetShowAllTags,
+  onToggleTagFilter,
+  onAddTagOption,
+  onRemoveTagOption,
+  // Backward-compatibility aliases
+  showAllTypes,
+  selectedTypes,
+  eventTypeOptions,
   onSetShowAllTypes,
   onToggleTypeFilter,
   onAddEventTypeOption,
   onRemoveEventTypeOption,
 }) {
+  const isShowAll = showAllTags ?? showAllTypes ?? true;
+  const currentSelectedTags = selectedTags ?? selectedTypes ?? [];
+  const currentTagOptions =
+    tagOptions ?? eventTypeOptions ?? DEFAULT_EVENT_TAGS;
+  const handleSetShowAll = onSetShowAllTags ?? onSetShowAllTypes;
+  const handleToggle = onToggleTagFilter ?? onToggleTypeFilter;
+  const handleAdd = onAddTagOption ?? onAddEventTypeOption;
+  const handleRemove = onRemoveTagOption ?? onRemoveEventTypeOption;
+
   const [newFilterName, setNewFilterName] = useState('');
 
   const handleAddFilter = () => {
     const trimmed = newFilterName.trim();
     if (!trimmed) return;
-    onAddEventTypeOption?.(trimmed);
+    handleAdd?.(trimmed);
     setNewFilterName('');
   };
 
@@ -73,15 +90,16 @@ export function EventTagFilterDropdown({
 
           {/* Todas Checkbox */}
           <DropdownMenuCheckboxItem
-            checked={showAllTypes}
-            onCheckedChange={(checked) => onSetShowAllTypes?.(Boolean(checked))}
+            checked={isShowAll}
+            onCheckedChange={(checked) => handleSetShowAll?.(Boolean(checked))}
           >
             Todas
           </DropdownMenuCheckboxItem>
 
-          {/* Each Event Type */}
-          {eventTypeOptions.map((opt) => {
-            const isChecked = showAllTypes || selectedTypes.includes(opt.value);
+          {/* Each Event Tag */}
+          {currentTagOptions.map((opt) => {
+            const isChecked =
+              isShowAll || currentSelectedTags.includes(opt.value);
             const isSystemTag = SYSTEM_TAG_VALUES.includes(opt.value);
 
             return (
@@ -92,7 +110,7 @@ export function EventTagFilterDropdown({
                 <DropdownMenuCheckboxItem
                   checked={isChecked}
                   onCheckedChange={(checked) =>
-                    onToggleTypeFilter?.(opt.value, Boolean(checked))
+                    handleToggle?.(opt.value, Boolean(checked))
                   }
                   className="flex-1 pr-8"
                 >
@@ -101,13 +119,13 @@ export function EventTagFilterDropdown({
                   />
                   <span className="truncate">{opt.label}</span>
                 </DropdownMenuCheckboxItem>
-                {/* Trash icon to remove custom types */}
+                {/* Trash icon to remove custom tags */}
                 {!isSystemTag && (
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onRemoveEventTypeOption?.(opt.value);
+                      handleRemove?.(opt.value);
                     }}
                     className="text-muted-foreground hover:text-destructive absolute right-2 p-1 opacity-0 transition-opacity group-hover/item:opacity-100"
                     title={`Remover etiqueta ${opt.label}`}

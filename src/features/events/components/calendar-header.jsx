@@ -31,6 +31,14 @@ export function CalendarHeader({
   onDateChange,
   sidebarDate,
   onSidebarDateChange,
+  showAllTags,
+  selectedTags,
+  tagOptions,
+  onSetShowAllTags,
+  onToggleTagFilter,
+  onAddTagOption,
+  onRemoveTagOption,
+  // Backward-compatibility aliases
   showAllTypes,
   selectedTypes,
   eventTypeOptions,
@@ -60,13 +68,13 @@ export function CalendarHeader({
               sidebarDate={sidebarDate}
               onSidebarDateChange={onSidebarDateChange}
               onEventCreate={onEventCreate}
-              showAllTypes={showAllTypes}
-              selectedTypes={selectedTypes}
-              eventTypeOptions={eventTypeOptions}
-              onSetShowAllTypes={onSetShowAllTypes}
-              onToggleTypeFilter={onToggleTypeFilter}
-              onAddEventTypeOption={onAddEventTypeOption}
-              onRemoveEventTypeOption={onRemoveEventTypeOption}
+              showAllTags={showAllTags ?? showAllTypes}
+              selectedTags={selectedTags ?? selectedTypes}
+              tagOptions={tagOptions ?? eventTypeOptions}
+              onSetShowAllTags={onSetShowAllTags ?? onSetShowAllTypes}
+              onToggleTagFilter={onToggleTagFilter ?? onToggleTypeFilter}
+              onAddTagOption={onAddTagOption ?? onAddEventTypeOption}
+              onRemoveTagOption={onRemoveTagOption ?? onRemoveEventTypeOption}
             />
           </div>
           <div className="flex items-center gap-1">

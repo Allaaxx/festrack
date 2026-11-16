@@ -32,15 +32,17 @@ describe('YearView (#130)', () => {
     expect(screen.getByText(/dezembro/i)).toBeInTheDocument();
   });
 
-  it('opens dialog with events list when clicking a day with events', async () => {
+  it('opens dialog with events list and create button when clicking a day with events', async () => {
     const user = userEvent.setup();
     const onEventSelect = vi.fn();
+    const onEventCreate = vi.fn();
 
     render(
       <YearView
         currentDate={currentDate}
         events={mockEvents}
         onEventSelect={onEventSelect}
+        onEventCreate={onEventCreate}
       />
     );
 
@@ -55,6 +57,33 @@ describe('YearView (#130)', () => {
       screen.getByText(/eventos em sexta-feira, 15 de janeiro de 2027/i)
     ).toBeInTheDocument();
     expect(screen.getByText('Planejamento Estratégico')).toBeInTheDocument();
+
+    const createButton = screen.getByRole('button', { name: /criar evento/i });
+    expect(createButton).toBeInTheDocument();
+    await user.click(createButton);
+    expect(onEventCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders multi-day events across each day in the span', async () => {
+    const user = userEvent.setup();
+    const multiDayEvents = [
+      {
+        id: 'multi-1',
+        title: 'Festival Multi-dia',
+        start: new Date(2027, 0, 20),
+        end: new Date(2027, 0, 22),
+        color: 'scheduled',
+      },
+    ];
+
+    render(<YearView currentDate={currentDate} events={multiDayEvents} />);
+
+    // Day 21 (middle day of span) should have the event in its dialog
+    const day21Buttons = screen.getAllByRole('button', { name: /^21/i });
+    await user.click(day21Buttons[0]);
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Festival Multi-dia')).toBeInTheDocument();
   });
 
   it('opens dialog with empty state and create button when clicking a day with no events', async () => {

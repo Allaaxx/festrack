@@ -20,6 +20,14 @@ export function EventsSidebarContent({
   onSidebarDateChange,
   events = [],
   onEventCreate,
+  showAllTags,
+  selectedTags,
+  tagOptions,
+  onSetShowAllTags,
+  onToggleTagFilter,
+  onAddTagOption,
+  onRemoveTagOption,
+  // Backward-compatibility aliases
   showAllTypes,
   selectedTypes,
   eventTypeOptions,
@@ -116,7 +124,10 @@ export function EventsSidebarContent({
       </p>
 
       {/* UP NEXT List */}
-      <ScrollArea className="relative min-h-0 flex-1 px-4">
+      <ScrollArea
+        className="relative max-h-72 min-h-0 flex-1 px-4"
+        data-testid="upcoming-events-scroll-area"
+      >
         <div className="flex flex-col gap-2 pb-4">
           {upcomingEvents.map((event) => {
             const dotColor =
@@ -161,13 +172,13 @@ export function EventsSidebarContent({
       {/* Action Buttons */}
       <div className="flex items-center gap-2 border-t p-4">
         <EventTagFilterDropdown
-          showAllTypes={showAllTypes}
-          selectedTypes={selectedTypes}
-          eventTypeOptions={eventTypeOptions}
-          onSetShowAllTypes={onSetShowAllTypes}
-          onToggleTypeFilter={onToggleTypeFilter}
-          onAddEventTypeOption={onAddEventTypeOption}
-          onRemoveEventTypeOption={onRemoveEventTypeOption}
+          showAllTags={showAllTags ?? showAllTypes}
+          selectedTags={selectedTags ?? selectedTypes}
+          tagOptions={tagOptions ?? eventTypeOptions}
+          onSetShowAllTags={onSetShowAllTags ?? onSetShowAllTypes}
+          onToggleTagFilter={onToggleTagFilter ?? onToggleTypeFilter}
+          onAddTagOption={onAddTagOption ?? onAddEventTypeOption}
+          onRemoveTagOption={onRemoveTagOption ?? onRemoveEventTypeOption}
         />
         <Button
           className="flex-1"

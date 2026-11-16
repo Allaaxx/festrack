@@ -21,6 +21,31 @@ import { cn } from '@/lib/utils';
 const capitalize = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
+const STATUS_DOT_COLORS = {
+  scheduled: 'bg-violet-500',
+  in_progress: 'bg-amber-500',
+  completed: 'bg-rose-500',
+};
+
+const TAG_DOT_COLORS = {
+  family: 'bg-amber-400',
+  business: 'bg-violet-400',
+  personal: 'bg-rose-400',
+  holiday: 'bg-emerald-400',
+  etc: 'bg-sky-400',
+};
+
+function getEventDotBg(ev) {
+  if (ev.color && STATUS_DOT_COLORS[ev.color]) {
+    return STATUS_DOT_COLORS[ev.color];
+  }
+  const tag = ev.tag || ev.event;
+  if (tag && TAG_DOT_COLORS[tag]) {
+    return TAG_DOT_COLORS[tag];
+  }
+  return 'bg-sky-400';
+}
+
 function MiniMonth({ monthDate, events = [], onDayClick }) {
   const monthStart = startOfMonth(monthDate);
   const monthEnd = endOfMonth(monthDate);
@@ -30,14 +55,20 @@ function MiniMonth({ monthDate, events = [], onDayClick }) {
 
   const weekdays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
-  // Map events for this month
+  // Map events for this month (supporting multi-day spans)
   const eventsByDay = useMemo(() => {
     const map = new Map();
     events.forEach((ev) => {
       const start = new Date(ev.start);
-      const dayKey = format(start, 'yyyy-MM-dd');
-      if (!map.has(dayKey)) map.set(dayKey, []);
-      map.get(dayKey).push(ev);
+      const end = ev.end ? new Date(ev.end) : start;
+      const validStart = start <= end ? start : end;
+      const validEnd = start <= end ? end : start;
+      const spanDays = eachDayOfInterval({ start: validStart, end: validEnd });
+      spanDays.forEach((d) => {
+        const dayKey = format(d, 'yyyy-MM-dd');
+        if (!map.has(dayKey)) map.set(dayKey, []);
+        map.get(dayKey).push(ev);
+      });
     });
     return map;
   }, [events]);
@@ -84,25 +115,7 @@ function MiniMonth({ monthDate, events = [], onDayClick }) {
                 {dayEvents.length > 0 && isCurMonth && (
                   <span className="mt-0.5 flex min-h-1 w-full items-center justify-center gap-0.5 overflow-hidden">
                     {dayEvents.slice(0, 3).map((ev, i) => {
-                      const dotBg =
-                        ev.color === 'scheduled'
-                          ? 'bg-violet-500'
-                          : ev.color === 'in_progress'
-                            ? 'bg-amber-500'
-                            : ev.color === 'completed'
-                              ? 'bg-rose-500'
-                              : ev.tag === 'family' || ev.event === 'family'
-                                ? 'bg-amber-400'
-                                : ev.tag === 'business' ||
-                                    ev.event === 'business'
-                                  ? 'bg-violet-400'
-                                  : ev.tag === 'personal' ||
-                                      ev.event === 'personal'
-                                    ? 'bg-rose-400'
-                                    : ev.tag === 'holiday' ||
-                                        ev.event === 'holiday'
-                                      ? 'bg-emerald-400'
-                                      : 'bg-sky-400';
+                      const dotBg = getEventDotBg(ev);
                       return (
                         <span
                           key={i}
@@ -203,17 +216,35 @@ export function YearView({
                 </Button>
               </div>
             ) : (
-              selectedDayInfo?.events.map((ev) => (
-                <EventItem
-                  key={ev.id}
-                  event={ev}
-                  view="month"
-                  onClick={(clicked) => {
-                    setSelectedDayInfo(null);
-                    onEventSelect?.(clicked);
-                  }}
-                />
-              ))
+              <>
+                <div className="space-y-2">
+                  {selectedDayInfo?.events.map((ev) => (
+                    <EventItem
+                      key={ev.id}
+                      event={ev}
+                      view="month"
+                      onClick={(clicked) => {
+                        setSelectedDayInfo(null);
+                        onEventSelect?.(clicked);
+                      }}
+                    />
+                  ))}
+                </div>
+                <div className="border-t pt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      const d = selectedDayInfo.day;
+                      setSelectedDayInfo(null);
+                      onEventCreate?.(d);
+                    }}
+                  >
+                    Criar evento
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         </DialogContent>

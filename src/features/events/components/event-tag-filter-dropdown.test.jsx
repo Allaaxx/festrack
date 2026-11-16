@@ -121,4 +121,43 @@ describe('EventTagFilterDropdown (#132)', () => {
       'custom-tag'
     );
   });
+
+  it('supports canonical domain naming props (tagOptions, onToggleTagFilter, etc.)', async () => {
+    const user = userEvent.setup();
+    const onSetShowAllTags = vi.fn();
+    const onToggleTagFilter = vi.fn();
+    const onAddTagOption = vi.fn();
+    const onRemoveTagOption = vi.fn();
+
+    render(
+      <EventTagFilterDropdown
+        showAllTags={false}
+        selectedTags={['family']}
+        tagOptions={[
+          ...DEFAULT_EVENT_TAGS,
+          {
+            value: 'custom-tag',
+            label: 'Custom Tag',
+            dotClass: 'bg-indigo-400',
+          },
+        ]}
+        onSetShowAllTags={onSetShowAllTags}
+        onToggleTagFilter={onToggleTagFilter}
+        onAddTagOption={onAddTagOption}
+        onRemoveTagOption={onRemoveTagOption}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: /filtro de etiquetas/i })
+    );
+
+    const negocioOption = await screen.findByText('Negócios');
+    await user.click(negocioOption);
+    expect(onToggleTagFilter).toHaveBeenCalledWith('business', true);
+
+    const todasOption = screen.getByText('Todas');
+    await user.click(todasOption);
+    expect(onSetShowAllTags).toHaveBeenCalledWith(true);
+  });
 });

@@ -201,4 +201,23 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
       screen.getByRole('menuitem', { name: /editar evento/i })
     ).toBeInTheDocument();
   });
+
+  it('limits upcoming events list height to prevent infinite page expansion (max-h-72 and scrollable)', () => {
+    const { getByTestId } = render(
+      <MemoryRouter>
+        <EventsSidebarContent
+          currentDate={new Date()}
+          onDateChange={vi.fn()}
+          sidebarDate={new Date()}
+          onSidebarDateChange={vi.fn()}
+          events={[]}
+          onEventCreate={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    const scrollArea = getByTestId('upcoming-events-scroll-area');
+    expect(scrollArea).toBeInTheDocument();
+    expect(scrollArea).toHaveClass('max-h-72');
+  });
 });
