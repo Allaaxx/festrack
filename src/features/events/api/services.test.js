@@ -51,6 +51,7 @@ describe('EventService', () => {
           startDate: '2026-11-01T00:00:00.000Z',
           endDate: '2026-11-05T23:59:00.000Z',
           allDay: true,
+          tag: null,
           google_event_id: 'g-event-123',
           googleEventId: 'g-event-123',
           syncError: false,
@@ -195,6 +196,7 @@ describe('EventService', () => {
         startDate: '2026-11-20T09:00:00.000Z',
         endDate: '2026-11-20T18:00:00.000Z',
         allDay: false,
+        tag: null,
         google_event_id: 'g-event-conf',
         googleEventId: 'g-event-conf',
         syncError: false,
@@ -233,6 +235,7 @@ describe('EventService', () => {
         startDate: '2026-12-31T00:00:00.000Z',
         endDate: '2026-12-31T23:59:00.000Z',
         allDay: true,
+        tag: null,
         google_event_id: null,
         googleEventId: null,
         syncError: true,
@@ -268,5 +271,69 @@ describe('EventService', () => {
       expect(result.shopId).toBe('shop-20');
     });
   });
-});
 
+  describe('Event Tags API integration (festrack-api #122)', () => {
+    it('fetches shop-scoped event tags', async () => {
+      const mockTags = [
+        {
+          id: 'tag-1',
+          shop_id: 'shop-1',
+          name: 'Viagens',
+          slug: 'viagens',
+          color: 'bg-indigo-400',
+          is_system: false,
+        },
+      ];
+      protectedApi.get.mockResolvedValue({ data: mockTags });
+
+      const result = await EventService.getTags({ shopId: 'shop-1' });
+
+      expect(protectedApi.get).toHaveBeenCalledWith('/shops/shop-1/event-tags');
+      expect(result).toEqual(mockTags);
+    });
+
+    it('creates a custom event tag', async () => {
+      const createdTag = {
+        id: 'tag-2',
+        shop_id: 'shop-1',
+        name: 'Workshops',
+        slug: 'workshops',
+        color: 'bg-teal-400',
+        is_system: false,
+      };
+      protectedApi.post.mockResolvedValue({ data: createdTag });
+
+      const result = await EventService.createTag({
+        shopId: 'shop-1',
+        name: 'Workshops',
+        color: 'bg-teal-400',
+        slug: 'workshops',
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-1/event-tags',
+        {
+          name: 'Workshops',
+          color: 'bg-teal-400',
+          slug: 'workshops',
+        }
+      );
+      expect(result).toEqual(createdTag);
+    });
+
+    it('deletes a custom event tag', async () => {
+      const deletedTag = { id: 'tag-2', name: 'Workshops' };
+      protectedApi.delete.mockResolvedValue({ data: deletedTag });
+
+      const result = await EventService.deleteTag({
+        shopId: 'shop-1',
+        tagId: 'tag-2',
+      });
+
+      expect(protectedApi.delete).toHaveBeenCalledWith(
+        '/shops/shop-1/event-tags/tag-2'
+      );
+      expect(result).toEqual(deletedTag);
+    });
+  });
+});

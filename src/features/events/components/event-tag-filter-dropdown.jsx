@@ -83,7 +83,7 @@ export function EventTagFilterDropdown({
           </Button>
         }
       />
-      <DropdownMenuContent align="start" className="w-56 p-1">
+      <DropdownMenuContent align="start" className="w-64 p-1">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Filtro de etiquetas</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -100,34 +100,36 @@ export function EventTagFilterDropdown({
           {currentTagOptions.map((opt) => {
             const isChecked =
               isShowAll || currentSelectedTags.includes(opt.value);
-            const isSystemTag = SYSTEM_TAG_VALUES.includes(opt.value);
+            const isSystemTag =
+              opt.isSystem ?? SYSTEM_TAG_VALUES.includes(opt.value);
 
             return (
               <div
                 key={opt.value}
-                className="group/item relative flex items-center justify-between"
+                className="group/item hover:bg-accent/40 flex items-center justify-between rounded-md pr-1"
               >
                 <DropdownMenuCheckboxItem
                   checked={isChecked}
                   onCheckedChange={(checked) =>
                     handleToggle?.(opt.value, Boolean(checked))
                   }
-                  className="flex-1 pr-8"
+                  className="flex-1 pr-6"
                 >
                   <span
                     className={cn('size-2 shrink-0 rounded-full', opt.dotClass)}
                   />
                   <span className="truncate">{opt.label}</span>
                 </DropdownMenuCheckboxItem>
-                {/* Trash icon to remove custom tags */}
+                {/* Trash icon to remove custom tags - separated from checkbox to prevent overlap */}
                 {!isSystemTag && (
                   <button
                     type="button"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
-                      handleRemove?.(opt.value);
+                      handleRemove?.(opt.value, opt.id);
                     }}
-                    className="text-muted-foreground hover:text-destructive absolute right-2 p-1 opacity-0 transition-opacity group-hover/item:opacity-100"
+                    className="text-muted-foreground hover:text-destructive hover:bg-accent flex size-6 shrink-0 items-center justify-center rounded-sm opacity-0 transition-opacity group-hover/item:opacity-100"
                     title={`Remover etiqueta ${opt.label}`}
                     aria-label={`Remover etiqueta ${opt.label}`}
                   >

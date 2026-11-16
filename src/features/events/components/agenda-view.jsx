@@ -59,7 +59,7 @@ export function AgendaView({ currentDate, events = [], onEventSelect }) {
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     >
       <ScrollArea className="h-full flex-1">
-        <div className="mx-auto w-full max-w-4xl p-4 sm:p-6">
+        <div className="mx-auto w-full p-4 sm:p-6">
           {groupedEvents.length === 0 ? (
             <div className="flex min-h-[50vh] flex-col items-center justify-center py-16 text-center">
               <CalendarX2 className="text-muted-foreground/40 mb-3 size-10" />

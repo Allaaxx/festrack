@@ -118,8 +118,47 @@ describe('EventTagFilterDropdown (#132)', () => {
 
     await user.click(removeBtn);
     expect(defaultProps.onRemoveEventTypeOption).toHaveBeenCalledWith(
-      'custom-tag'
+      'custom-tag',
+      undefined
     );
+  });
+
+  it('renders trash button as a separate sibling to prevent overlapping checkbox selection', async () => {
+    const user = userEvent.setup();
+    const onRemoveTagOption = vi.fn();
+
+    render(
+      <EventTagFilterDropdown
+        tagOptions={[
+          ...DEFAULT_EVENT_TAGS,
+          {
+            id: 'tag-123',
+            value: 'custom-tag',
+            label: 'Custom Tag',
+            dotClass: 'bg-indigo-400',
+            isSystem: false,
+          },
+        ]}
+        onRemoveTagOption={onRemoveTagOption}
+      />
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: /filtro de etiquetas/i })
+    );
+
+    const removeBtn = await screen.findByRole('button', {
+      name: /remover etiqueta custom tag/i,
+    });
+    const checkboxItem = screen.getByRole('menuitemcheckbox', {
+      name: /custom tag/i,
+    });
+
+    // Trash button is not a descendant of the checkbox item (prevents overlap & misclick)
+    expect(checkboxItem).not.toContainElement(removeBtn);
+
+    await user.click(removeBtn);
+    expect(onRemoveTagOption).toHaveBeenCalledWith('custom-tag', 'tag-123');
   });
 
   it('supports canonical domain naming props (tagOptions, onToggleTagFilter, etc.)', async () => {

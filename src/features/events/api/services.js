@@ -15,6 +15,7 @@ const mapEventFromApi = (event) => {
   const shopId = event.shop_id ?? event.shopId ?? null;
   const createdByUserId =
     event.created_by_user_id ?? event.createdByUserId ?? event.user_id ?? null;
+  const tag = event.tag ?? null;
 
   return {
     id: event.id,
@@ -25,6 +26,7 @@ const mapEventFromApi = (event) => {
     startDate: event.start_date,
     endDate: event.end_date,
     allDay,
+    tag,
     google_event_id: googleEventId,
     googleEventId,
     syncError,
@@ -81,7 +83,7 @@ const EventService = {
    * }} input
    */
   create: async ({ shopId, ...input }) => {
-    const response = await protectedApi.post(`/shops/${shopId}/events`, {
+    const payload = {
       name: input.name,
       description: input.description || null,
       start_date: formatEventDateToApi(
@@ -96,7 +98,13 @@ const EventService = {
         input.allDay,
         input.endTime
       ),
-    });
+    };
+    if (input.tag) payload.tag = input.tag;
+
+    const response = await protectedApi.post(
+      `/shops/${shopId}/events`,
+      payload
+    );
 
     return mapEventFromApi(response.data);
   },
@@ -108,6 +116,7 @@ const EventService = {
    *   id: string,
    *   name: string,
    *   description?: string | null,
+   *   tag?: string | null,
    *   startDate: Date | string,
    *   endDate: Date | string,
    *   allDay: boolean,
@@ -116,7 +125,7 @@ const EventService = {
    * }} input
    */
   update: async ({ shopId, id, ...input }) => {
-    const response = await protectedApi.patch(`/shops/${shopId}/events/${id}`, {
+    const payload = {
       name: input.name,
       description: input.description || null,
       start_date: formatEventDateToApi(
@@ -131,9 +140,50 @@ const EventService = {
         input.allDay,
         input.endTime
       ),
-    });
+    };
+    if (input.tag !== undefined) payload.tag = input.tag;
+
+    const response = await protectedApi.patch(
+      `/shops/${shopId}/events/${id}`,
+      payload
+    );
 
     return mapEventFromApi(response.data);
+  },
+
+  /**
+   * Busca todas as etiquetas da loja ativa.
+   * @param {{ shopId: string }} input
+   * @returns {Promise<Array<{ id: string, shop_id: string, name: string, slug: string, color: string, is_system: boolean }>>}
+   */
+  getTags: async ({ shopId } = {}) => {
+    if (!shopId) return [];
+    const response = await protectedApi.get(`/shops/${shopId}/event-tags`);
+    return response.data;
+  },
+
+  /**
+   * Cria uma nova etiqueta customizada para a loja.
+   * @param {{ shopId: string, name: string, color: string, slug?: string }} input
+   */
+  createTag: async ({ shopId, name, color, slug }) => {
+    const response = await protectedApi.post(`/shops/${shopId}/event-tags`, {
+      name,
+      color,
+      ...(slug ? { slug } : {}),
+    });
+    return response.data;
+  },
+
+  /**
+   * Remove uma etiqueta customizada da loja ativa.
+   * @param {{ shopId: string, tagId: string }} input
+   */
+  deleteTag: async ({ shopId, tagId }) => {
+    const response = await protectedApi.delete(
+      `/shops/${shopId}/event-tags/${tagId}`
+    );
+    return response.data;
   },
 
   /**
@@ -143,9 +193,7 @@ const EventService = {
    */
   delete: async (idOrParams, maybeId) => {
     const { shopId, id } = resolveShopEventParams(idOrParams, maybeId);
-    const response = await protectedApi.delete(
-      `/shops/${shopId}/events/${id}`
-    );
+    const response = await protectedApi.delete(`/shops/${shopId}/events/${id}`);
     return response.data ? mapEventFromApi(response.data) : null;
   },
 };

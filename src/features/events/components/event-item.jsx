@@ -116,6 +116,55 @@ export function EventItem({
     );
   }
 
+  if (view === 'agenda') {
+    const timeText = getEventTime();
+    const authorText =
+      event.author ||
+      event.creator?.name ||
+      event.rawEvent?.creator?.name ||
+      event.rawEvent?.created_by_user_name ||
+      event.rawEvent?.author ||
+      event.location ||
+      event.rawEvent?.location ||
+      null;
+
+    const descriptionText =
+      event.description || event.rawEvent?.description || null;
+
+    return (
+      <EventWrapper
+        ref={ref}
+        event={event}
+        isFirstDay={isFirstDay}
+        isLastDay={isLastDay}
+        onClick={onClick}
+        className={cn(
+          'flex-col items-start gap-1 rounded-lg border border-current/15 p-3 text-left transition hover:border-current/30 sm:p-3.5',
+          className
+        )}
+        {...props}
+      >
+        <div className="text-sm font-semibold tracking-tight">
+          {event.title}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 text-xs font-normal opacity-80">
+          <span>{timeText}</span>
+          {authorText && (
+            <>
+              <span className="opacity-50">·</span>
+              <span>{authorText}</span>
+            </>
+          )}
+        </div>
+        {descriptionText && (
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-70">
+            {descriptionText}
+          </p>
+        )}
+      </EventWrapper>
+    );
+  }
+
   return (
     <EventWrapper
       ref={ref}

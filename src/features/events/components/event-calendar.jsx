@@ -5,6 +5,11 @@ import { useShopContext } from '@/contexts/shop';
 import { cn } from '@/lib/utils';
 
 import { EventsSidebar } from '..';
+import {
+  useCreateEventTag,
+  useDeleteEventTag,
+  useGetEventTags,
+} from '../api/hooks';
 import { EventGap, EventHeight, WeekCellsHeight } from '../constants';
 import { useCalendarDnd } from '../hooks/use-calendar-dnd';
 import { useCalendarNavigation } from '../hooks/use-calendar-navigation';
@@ -112,10 +117,22 @@ const EventCalendar = ({
     }
   };
 
-  const allTagOptions = useMemo(
-    () => [...DEFAULT_EVENT_TAGS, ...customTagOptions],
-    [customTagOptions]
-  );
+  const { data: serverTags } = useGetEventTags();
+  const createTagMutation = useCreateEventTag();
+  const deleteTagMutation = useDeleteEventTag();
+
+  const allTagOptions = useMemo(() => {
+    if (serverTags && serverTags.length > 0) {
+      return serverTags.map((t) => ({
+        id: t.id,
+        value: t.slug || t.value,
+        label: t.name || t.label,
+        dotClass: t.color || t.dotClass,
+        isSystem: t.is_system ?? t.isSystem,
+      }));
+    }
+    return [...DEFAULT_EVENT_TAGS, ...customTagOptions];
+  }, [serverTags, customTagOptions]);
 
   const {
     currentDate,
@@ -204,11 +221,19 @@ const EventCalendar = ({
       persistTags(next);
       return next;
     });
+
+    createTagMutation?.mutate?.({
+      name: trimmed,
+      color,
+      slug: value,
+    });
   };
 
-  const handleRemoveTagOption = (value) => {
+  const handleRemoveTagOption = (value, id) => {
     setCustomTagOptions((prev) => {
-      const next = prev.filter((opt) => opt.value !== value);
+      const next = prev.filter(
+        (opt) => opt.value !== value && (!id || opt.id !== id)
+      );
       persistTags(next);
       return next;
     });
@@ -220,6 +245,11 @@ const EventCalendar = ({
       persistFilters(next);
       return next;
     });
+
+    const targetId = id || allTagOptions.find((opt) => opt.value === value)?.id;
+    if (targetId) {
+      deleteTagMutation?.mutate?.({ tagId: targetId });
+    }
   };
 
   const filteredEvents = useMemo(() => {

@@ -139,3 +139,77 @@ export const useDeleteEvent = () => {
     },
   });
 };
+
+export const getEventTagsQueryKey = ({ shopId } = {}) => [
+  'getEventTags',
+  shopId,
+];
+
+export const useGetEventTags = () => {
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
+  return useQuery({
+    queryKey: getEventTagsQueryKey({ shopId }),
+    queryFn: async () => {
+      try {
+        return await EventService.getTags({ shopId });
+      } catch (err) {
+        void err;
+        // Fallback gracefully if endpoints not deployed yet
+        return [];
+      }
+    },
+    enabled: Boolean(shopId),
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const createEventTagMutationKey = ['createEventTag'];
+
+export const useCreateEventTag = () => {
+  const queryClient = useQueryClient();
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
+  return useMutation({
+    mutationKey: createEventTagMutationKey,
+    mutationFn: (input) =>
+      EventService.createTag({
+        ...input,
+        shopId: input?.shopId ?? shopId,
+      }),
+    onSuccess: (_data, variables) => {
+      const targetShopId = variables?.shopId ?? shopId;
+      queryClient.invalidateQueries({
+        queryKey: getEventTagsQueryKey({ shopId: targetShopId }),
+      });
+    },
+  });
+};
+
+export const deleteEventTagMutationKey = ['deleteEventTag'];
+
+export const useDeleteEventTag = () => {
+  const queryClient = useQueryClient();
+  const { activeShop } = useShopContext() || {};
+  const shopId = activeShop?.id;
+
+  return useMutation({
+    mutationKey: deleteEventTagMutationKey,
+    mutationFn: (input) =>
+      EventService.deleteTag({
+        ...input,
+        shopId: input?.shopId ?? shopId,
+      }),
+    onSuccess: (_data, variables) => {
+      const targetShopId = variables?.shopId ?? shopId;
+      queryClient.invalidateQueries({
+        queryKey: getEventTagsQueryKey({ shopId: targetShopId }),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['getEvents', targetShopId],
+      });
+    },
+  });
+};

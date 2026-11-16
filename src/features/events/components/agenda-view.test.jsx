@@ -70,4 +70,24 @@ describe('AgendaView (#131)', () => {
     const workshopElements = screen.getAllByText('Workshop Intensivo');
     expect(workshopElements.length).toBeGreaterThanOrEqual(2);
   });
+
+  it('renders event description and author in agenda view cards', () => {
+    const detailedEvent = {
+      id: 'ev-detailed-1',
+      title: 'Company Offsite',
+      description: 'Team building and strategy planning retreat',
+      author: 'Lakeside Resort',
+      start: today,
+      end: new Date(today.getTime() + 7200000),
+      color: 'scheduled',
+    };
+
+    render(<AgendaView currentDate={today} events={[detailedEvent]} />);
+
+    expect(screen.getByText('Company Offsite')).toBeInTheDocument();
+    expect(screen.getByText('Lakeside Resort')).toBeInTheDocument();
+    expect(
+      screen.getByText('Team building and strategy planning retreat')
+    ).toBeInTheDocument();
+  });
 });
