@@ -96,6 +96,10 @@ describe('CreateProductDialog', () => {
       shop_id: payload.shopId || 'shop-1',
       ...payload,
     }));
+    vi.spyOn(ProductService, 'update').mockImplementation(async (payload) => ({
+      ...payload,
+      shop_id: payload.shopId || 'shop-1',
+    }));
   });
 
   const renderDialog = (props = {}) => {
@@ -106,7 +110,7 @@ describe('CreateProductDialog', () => {
     );
   };
 
-  it('renders default trigger button and opens dialog upon click', async () => {
+  it('renders default trigger button and opens dialog with canonical "Pacote" tab upon click', async () => {
     const user = userEvent.setup();
     renderDialog();
 
@@ -117,9 +121,14 @@ describe('CreateProductDialog', () => {
 
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByRole('heading', { name: /novo produto/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /produto simples/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /pacote virtual/i })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('heading', { name: /novo produto/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('tab', { name: /produto simples/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^pacote$/i })).toBeInTheDocument();
+    expect(screen.queryByText(/pacote virtual/i)).not.toBeInTheDocument();
   });
 
   it('validates that product name is required before calling ProductService.create', async () => {
@@ -129,7 +138,9 @@ describe('CreateProductDialog', () => {
     const submitBtn = screen.getByRole('button', { name: /criar produto/i });
     await user.click(submitBtn);
 
-    expect(await screen.findByText(/o nome é obrigatório/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/o nome é obrigatório/i)
+    ).toBeInTheDocument();
     expect(ProductService.create).not.toHaveBeenCalled();
   });
 
@@ -138,27 +149,21 @@ describe('CreateProductDialog', () => {
     const onOpenChange = vi.fn();
     renderDialog({ open: true, onOpenChange });
 
-    // 1. Fill Name
     const nameInput = screen.getByLabelText(/nome do produto/i);
     await user.type(nameInput, 'Cadeira Tiffany Dourada');
 
-    // 2. Fill Description
     const descInput = screen.getByLabelText(/descrição/i);
     await user.type(descInput, 'Cadeira elegante para casamentos e banquetes.');
 
-    // 3. Select Classification "Aluguel" (rent)
     const typeSelect = screen.getByLabelText(/classificação/i);
     await user.selectOptions(typeSelect, 'rent');
 
-    // 4. Fill Price
     const priceInput = screen.getByLabelText(/preço do produto/i);
     await user.type(priceInput, '18');
 
-    // 5. Fill Initial Stock
     const stockInput = screen.getByLabelText(/estoque inicial/i);
     await user.type(stockInput, '50');
 
-    // 6. Submit
     const submitBtn = screen.getByRole('button', { name: /criar produto/i });
     await user.click(submitBtn);
 
@@ -197,54 +202,49 @@ describe('CreateProductDialog', () => {
     expect(screen.queryByLabelText(/estoque inicial/i)).not.toBeInTheDocument();
   });
 
-  it('validates that a virtual bundle requires at least one component', async () => {
+  it('validates that a bundle (Pacote) requires at least one component', async () => {
     const user = userEvent.setup();
     renderDialog({ open: true });
 
-    // Switch to Virtual Bundle tab
-    const bundleTab = screen.getByRole('tab', { name: /pacote virtual/i });
+    const bundleTab = screen.getByRole('tab', { name: /^pacote$/i });
     await user.click(bundleTab);
 
-    // Fill Name and Price
     const nameInput = screen.getByLabelText(/nome do pacote/i);
     await user.type(nameInput, 'Kit Festa Provençal Completo');
 
     const priceInput = screen.getByLabelText(/preço do pacote/i);
     await user.type(priceInput, '290');
 
-    // Submit bundle without components
     const submitBtn = screen.getByRole('button', { name: /criar pacote/i });
     await user.click(submitBtn);
 
     expect(
-      await screen.findByText(/adicione pelo menos um componente ao pacote/i)
+      await screen.findByText(/adicione pelo menos um componente ao pacote\./i)
     ).toBeInTheDocument();
     expect(ProductService.create).not.toHaveBeenCalled();
   });
 
-  it('adds components with multipliers, previews derived bottleneck availability, and creates virtual bundle', async () => {
+  it('adds components with multipliers, previews derived bottleneck availability, and creates bundle', async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     renderDialog({ open: true, onOpenChange });
 
-    // Switch to Virtual Bundle tab
-    await user.click(screen.getByRole('tab', { name: /pacote virtual/i }));
+    await user.click(screen.getByRole('tab', { name: /^pacote$/i }));
 
-    // Fill Bundle Name and Price
     const nameInput = screen.getByLabelText(/nome do pacote/i);
-    await user.type(nameInput, 'Combo Mesa Rústica + Suportes');
+    await user.type(nameInput, 'Pacote Mesa Rústica + Suportes');
 
     const priceInput = screen.getByLabelText(/preço do pacote/i);
     await user.type(priceInput, '190');
 
-    // Wait for available simple products in picker
     const picker = await screen.findByLabelText(/selecionar componente/i);
-    await user.selectOptions(picker, 'prod-1'); // Mesa: 10 - 2 = 8 available
+    await user.selectOptions(picker, 'prod-1');
 
-    const addBtn = screen.getByRole('button', { name: /adicionar componente/i });
+    const addBtn = screen.getByRole('button', {
+      name: /adicionar componente/i,
+    });
     await user.click(addBtn);
 
-    // Verify component in list
     expect(screen.getByTestId('bundle-item-prod-1')).toBeInTheDocument();
     expect(
       within(screen.getByTestId('bundle-item-prod-1')).getByText(
@@ -252,27 +252,26 @@ describe('CreateProductDialog', () => {
       )
     ).toBeInTheDocument();
 
-    // Add second component: Suporte: 30 - 6 = 24 available
     await user.selectOptions(picker, 'prod-2');
     await user.click(addBtn);
     expect(screen.getByTestId('bundle-item-prod-2')).toBeInTheDocument();
 
-    // Adjust multiplier for Suporte to 4
-    // 24 / 4 = 6 bundles available -> becomes bottleneck over Mesa (8 / 1 = 8)
     const suporteMultiplier = screen.getByLabelText(
       /quantidade de suporte para doces dourado/i
     );
     await user.clear(suporteMultiplier);
     await user.type(suporteMultiplier, '4');
 
-    // Verify derived bottleneck preview
     const preview = screen.getByTestId('bundle-bottleneck-preview');
     expect(preview).toBeInTheDocument();
     expect(within(preview).getByText(/6 unidades/i)).toBeInTheDocument();
-    expect(within(preview).getByText(/suporte para doces dourado/i)).toBeInTheDocument();
-    expect(within(preview).getByText(/limita em 6 pacotes/i)).toBeInTheDocument();
+    expect(
+      within(preview).getByText(/suporte para doces dourado/i)
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByText(/limita em 6 pacotes/i)
+    ).toBeInTheDocument();
 
-    // Submit Bundle
     const submitBtn = screen.getByRole('button', { name: /criar pacote/i });
     await user.click(submitBtn);
 
@@ -280,7 +279,7 @@ describe('CreateProductDialog', () => {
       expect(ProductService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           shopId: 'shop-1',
-          name: 'Combo Mesa Rústica + Suportes',
+          name: 'Pacote Mesa Rústica + Suportes',
           price: 190,
           is_bundle: true,
           bundle_items: expect.arrayContaining([
@@ -304,10 +303,12 @@ describe('CreateProductDialog', () => {
     const user = userEvent.setup();
     renderDialog({ open: true });
 
-    await user.click(screen.getByRole('tab', { name: /pacote virtual/i }));
+    await user.click(screen.getByRole('tab', { name: /^pacote$/i }));
 
     const picker = await screen.findByLabelText(/selecionar componente/i);
-    const addBtn = screen.getByRole('button', { name: /adicionar componente/i });
+    const addBtn = screen.getByRole('button', {
+      name: /adicionar componente/i,
+    });
 
     await user.selectOptions(picker, 'prod-1');
     await user.click(addBtn);
@@ -324,27 +325,111 @@ describe('CreateProductDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('invalidates products and metrics query cache upon successful submission', async () => {
+  it('prefills simple product fields in edit mode and submits via ProductService.update', async () => {
     const user = userEvent.setup();
-    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
-    renderDialog({ open: true });
+    const onOpenChange = vi.fn();
+    const existingProduct = {
+      id: 'prod-1',
+      shop_id: 'shop-1',
+      name: 'Mesa Rústica Retangular 2m',
+      description: 'Mesa original',
+      type: 'rent',
+      price: 120,
+      is_bundle: false,
+      stock: { quantity: 10, reserved: 2 },
+    };
+
+    renderDialog({ open: true, onOpenChange, product: existingProduct });
+
+    expect(
+      screen.getByRole('heading', { name: /editar produto/i })
+    ).toBeInTheDocument();
 
     const nameInput = screen.getByLabelText(/nome do produto/i);
-    await user.type(nameInput, 'Produto Teste Cache');
+    expect(nameInput).toHaveValue('Mesa Rústica Retangular 2m');
 
-    const priceInput = screen.getByLabelText(/preço do produto/i);
-    await user.type(priceInput, '50');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Mesa Rústica Retangular 3m');
 
-    const submitBtn = screen.getByRole('button', { name: /criar produto/i });
+    const submitBtn = screen.getByRole('button', {
+      name: /salvar alterações/i,
+    });
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['getProducts'] })
-      );
-      expect(invalidateSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ queryKey: ['catalogMetrics'] })
+      expect(ProductService.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shopId: 'shop-1',
+          id: 'prod-1',
+          name: 'Mesa Rústica Retangular 3m',
+          type: 'rent',
+          price: 120,
+          is_bundle: false,
+        })
       );
     });
+
+    expect(toast.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'success',
+        title: expect.stringMatching(/produto atualizado com sucesso/i),
+      })
+    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('prefills bundle fields and components in edit mode and submits updated bundle_items via ProductService.update', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const existingBundle = {
+      id: 'bundle-1',
+      shop_id: 'shop-1',
+      name: 'Pacote Festa Provençal',
+      description: 'Pacote de locação',
+      type: 'rent',
+      price: 350,
+      is_bundle: true,
+      bundle_items: [
+        {
+          id: 'bi-1',
+          product_id: 'prod-1',
+          quantity: 2,
+          componentProduct: mockSimpleProducts[0],
+        },
+      ],
+    };
+
+    renderDialog({ open: true, onOpenChange, product: existingBundle });
+
+    expect(
+      screen.getByRole('heading', { name: /editar pacote/i })
+    ).toBeInTheDocument();
+
+    const nameInput = screen.getByLabelText(/nome do pacote/i);
+    expect(nameInput).toHaveValue('Pacote Festa Provençal');
+    expect(screen.getByTestId('bundle-item-prod-1')).toBeInTheDocument();
+
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Pacote Festa Provençal Premium');
+
+    const submitBtn = screen.getByRole('button', {
+      name: /salvar alterações/i,
+    });
+    await user.click(submitBtn);
+
+    await waitFor(() => {
+      expect(ProductService.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          shopId: 'shop-1',
+          id: 'bundle-1',
+          name: 'Pacote Festa Provençal Premium',
+          price: 350,
+          is_bundle: true,
+          bundle_items: [{ product_id: 'prod-1', quantity: 2 }],
+        })
+      );
+    });
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });

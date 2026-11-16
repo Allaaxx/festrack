@@ -171,13 +171,13 @@ A salable, rentable, or serviceable offering created by a shop for customers.
 
 ---
 
-### Product Bundle
+### Product Bundle (Pacote)
 
-A composite virtual product whose retail pricing and marketing presence are distinct, but whose availability and fulfillment are dynamically derived from a collection of component simple products rather than maintaining a dedicated physical stock.
+A composite product whose retail pricing and marketing presence are distinct, but whose availability and fulfillment are dynamically derived from a collection of component simple products rather than maintaining a dedicated physical stock. Referred to in the UI strictly as **Pacote**.
 
 - **Bottleneck Inventory:** Stock availability is computed in real time from the minimum ratio of unreserved component inventory to required bundle quantities: $\min_i \lfloor (quantity_i - reserved_i) / multiplier_i \rfloor$.
-- **Composition Constraints:** Bundles are strictly single-level (a bundle cannot contain another bundle) and its component associations are immutable once defined.
-- **Avoid:** Kit, Combo, Package, Grouped Product.
+- **Composition Constraints:** Bundles are strictly single-level (a bundle cannot contain another bundle), and both their metadata and component associations (`bundle_items`) can be edited by shop members.
+- **Avoid:** Pacote Virtual, Kit, Combo, Grouped Product.
 
 ---
 

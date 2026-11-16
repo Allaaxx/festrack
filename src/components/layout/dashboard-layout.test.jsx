@@ -337,4 +337,23 @@ describe('useNavMenu and AppSidebar nested route active state', () => {
       'data-active'
     );
   });
+
+  it('renders the Catálogo link in AppSidebar with a single box icon (BoxIcon)', async () => {
+    const { default: ActualAppSidebar } = await vi.importActual(
+      '@/components/layout/app-sidebar'
+    );
+
+    render(
+      <MemoryRouter initialEntries={['/catalog']}>
+        <SidebarProvider>
+          <ActualAppSidebar />
+        </SidebarProvider>
+      </MemoryRouter>
+    );
+
+    const catalogLink = screen.getByRole('link', { name: 'Catálogo' });
+    expect(catalogLink).toHaveAttribute('data-active');
+    expect(catalogLink.querySelector('svg')).toHaveClass('lucide-box');
+    expect(catalogLink.querySelector('svg')).not.toHaveClass('lucide-boxes');
+  });
 });

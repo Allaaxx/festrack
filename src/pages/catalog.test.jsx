@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/layout/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuthContext } from '@/contexts/auth';
 import { useShopContext } from '@/contexts/shop';
-import { CatalogService } from '@/features/catalog';
+import { CatalogService, ProductService } from '@/features/catalog';
 import { AppRoutes } from '@/main';
 
 vi.mock('recharts', async () => {
@@ -42,7 +42,7 @@ vi.mock('@/features/catalog/api/services', () => ({
   },
 }));
 
-describe('Catalog Page Shell Integration', () => {
+describe('Catalog Page Shell Integration (#124)', () => {
   let queryClient;
 
   const mockUser = {
@@ -57,46 +57,130 @@ describe('Catalog Page Shell Integration', () => {
     role: 'OWNER',
   };
 
+  const tableProduct = {
+    id: 'prod-table',
+    name: 'Mesa Rústica Retangular 2m',
+    slug: 'mesa-rustica-retangular-2m',
+    description: 'Mesa em madeira maciça para eventos',
+    type: 'rent',
+    price: 150,
+    images: ['https://example.com/mesa.jpg'],
+    is_bundle: false,
+    stock: { quantity: 10, reserved: 2 }, // available = 8
+  };
+
+  const balloonProduct = {
+    id: 'prod-balloon',
+    name: 'Arco Orgânico de Balões',
+    slug: 'arco-organico-baloes',
+    description: 'Balões metalizados rose gold',
+    type: 'sale',
+    price: 180,
+    images: [],
+    is_bundle: false,
+    stock: { quantity: 6, reserved: 4 }, // available = 2 (low stock <= 3)
+  };
+
+  const outOfStockProduct = {
+    id: 'prod-out',
+    name: 'Toalha Jacquard Dourada',
+    slug: 'toalha-jacquard-dourada',
+    description: 'Tecido nobre para mesas',
+    type: 'rent',
+    price: 50,
+    images: [],
+    is_bundle: false,
+    stock: { quantity: 5, reserved: 5 }, // available = 0 (out of stock)
+  };
+
+  const bundleProduct = {
+    id: 'bundle-1',
+    name: 'Kit Festa Infantil Provençal Encantada',
+    slug: 'kit-festa-infantil-provencal',
+    description: 'Pacote completo com mesa e balões',
+    type: 'rent',
+    price: 380,
+    images: [],
+    is_bundle: true,
+    stock: null,
+    bundle_items: [
+      {
+        id: 'bi-1',
+        product_id: 'prod-table',
+        quantity: 1, // 8 / 1 = 8
+        componentProduct: tableProduct,
+      },
+      {
+        id: 'bi-2',
+        product_id: 'prod-balloon',
+        quantity: 1, // 2 / 1 = 2 (bottleneck = 2 <= 3)
+        componentProduct: balloonProduct,
+      },
+    ],
+  };
+
+  const mockProducts = [
+    tableProduct,
+    balloonProduct,
+    outOfStockProduct,
+    bundleProduct,
+  ];
+
   const mockMetrics = {
     activeCatalog: {
-      total: 52,
-      simpleProducts: 40,
-      bundles: 12,
+      total: 4,
+      simpleProducts: 3,
+      bundles: 1,
       trend: 15,
-      trendLabel: 'vs. mês anterior',
+    },
+    catalogValue: {
+      total: 2370,
+      trend: 8,
     },
     activeRentals: {
-      total: 28,
+      total: 10,
+      reserved: 11,
       trend: 10,
-      trendLabel: 'unidades em eventos ativos',
     },
     stockAlerts: {
-      total: 2,
+      total: 3,
       outOfStock: 1,
-      criticalBottlenecks: 1,
-      trend: -50,
-      trendLabel: 'itens com reposição urgente',
+      criticalBottlenecks: 2,
+      trend: -20,
     },
   };
 
   const mockMovements = {
-    movements: [],
+    movements: [
+      {
+        id: 'mov-1',
+        type: 'INBOUND',
+        productId: 'prod-table',
+        productName: 'Mesa Rústica Retangular 2m',
+        quantity: 10,
+        date: '2026-11-12T10:00:00.000Z',
+        note: 'Recebimento de lote novo',
+      },
+      {
+        id: 'mov-2',
+        type: 'RENTAL_ALLOCATION',
+        productId: 'prod-table',
+        productName: 'Mesa Rústica Retangular 2m',
+        quantity: 2,
+        date: '2026-11-11T14:30:00.000Z',
+        note: 'Reserva para Casamento Marina',
+      },
+    ],
     series: [
       {
         date: '2026-11-10',
-        day: 'Ter',
-        inbound: 30,
-        sale: 10,
-        rentalAllocation: 15,
-        loss: 1,
+        entradas: 30,
+        saidas: 10,
       },
       {
         date: '2026-11-11',
-        day: 'Qua',
-        inbound: 20,
-        sale: 8,
-        rentalAllocation: 12,
-        loss: 0,
+        entradas: 20,
+        saidas: 12,
       },
     ],
   };
@@ -126,6 +210,7 @@ describe('Catalog Page Shell Integration', () => {
       setActiveShop: vi.fn(),
     });
 
+    vi.spyOn(ProductService, 'getAll').mockResolvedValue(mockProducts);
     CatalogService.getMetrics.mockResolvedValue(mockMetrics);
     CatalogService.getStockMovements.mockResolvedValue(mockMovements);
   });
@@ -144,7 +229,7 @@ describe('Catalog Page Shell Integration', () => {
     );
   };
 
-  it('renders the catalog page shell inside DashboardLayout with hero banner, breadcrumbs, and sidebar item', () => {
+  it('renders the 4 sections in exact order inside DashboardLayout and omits obsolete CatalogHeader and RentalCheckinCard', async () => {
     const { container } = renderCatalogPage();
 
     // 1. Verify Breadcrumbs in Header
@@ -165,175 +250,314 @@ describe('Catalog Page Shell Integration', () => {
     expect(catalogNavLink).toHaveAttribute('href', '/catalog');
     expect(catalogNavLink).toHaveAttribute('data-active');
 
-    // 3. Verify Hero Banner Header within Catalog Page
-    const heroTitle = screen.getByRole('heading', {
-      name: 'Catálogo',
-      level: 1,
-    });
-    expect(heroTitle).toBeInTheDocument();
+    // 3. Verify obsolete CatalogHeader and RentalCheckinCard are NOT rendered
     expect(
-      screen.getByText('Gerencie produtos, pacotes virtuais e estoque da loja')
+      screen.queryByRole('heading', { name: 'Catálogo', level: 1 })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/gerencie produtos, pacotes virtuais/i)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rental-checkin-card')).not.toBeInTheDocument();
+    expect(screen.queryByText('Controle de Locações')).not.toBeInTheDocument();
+
+    // 4. Verify the 4 sections exist and appear in exact DOM order
+    const metricsSection = await screen.findByTestId('catalog-metrics-grid');
+    const chartSection = screen.getByTestId('stock-movements-card');
+    const operationalGridSection = screen.getByTestId(
+      'catalog-operational-grid'
+    );
+    const tableSection = screen.getByTestId('catalog-table-section');
+
+    expect(
+      metricsSection.compareDocumentPosition(chartSection) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      chartSection.compareDocumentPosition(operationalGridSection) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      operationalGridSection.compareDocumentPosition(tableSection) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    // Verify the 3 operational cards inside CatalogOperationalGrid
+    expect(
+      within(operationalGridSection).getByTestId('shop-distribution-card')
+    ).toBeInTheDocument();
+    expect(
+      within(operationalGridSection).getByTestId(
+        'stock-movements-timeline-card'
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(operationalGridSection).getByTestId('popular-products-card')
     ).toBeInTheDocument();
   });
 
-  it('renders catalog health metrics cards with values and trends fetched from API', async () => {
+  it('renders live KPI cards, interactive area chart, operational 3-card grid, and product table with real data and canonical "Pacote" terminology', async () => {
     renderCatalogPage();
 
     await waitFor(() => {
+      expect(ProductService.getAll).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+        type: undefined,
+      });
       expect(CatalogService.getMetrics).toHaveBeenCalledWith({
         shopId: 'shop-1',
       });
+      expect(CatalogService.getStockMovements).toHaveBeenCalledWith({
+        shopId: 'shop-1',
+        from: undefined,
+        to: undefined,
+        period: undefined,
+      });
     });
 
-    // Catálogo Ativo
+    // Section 1: KPI Cards computed from products + metrics trends
     await waitFor(() => {
       const activeCatalogCard = screen.getByTestId(
         'metric-card-active-catalog'
       );
       expect(
-        within(activeCatalogCard).getByText('Catálogo Ativo')
+        within(activeCatalogCard).getByText('Total de Produtos')
       ).toBeInTheDocument();
-      expect(within(activeCatalogCard).getByText('52')).toBeInTheDocument();
-      expect(within(activeCatalogCard).getByText('+15%')).toBeInTheDocument();
+      expect(within(activeCatalogCard).getByText('4')).toBeInTheDocument();
+      expect(
+        within(activeCatalogCard).getByText('3 produtos simples e 1 pacotes')
+      ).toBeInTheDocument();
     });
 
-    // Locações em Andamento
-    const activeRentalsCard = screen.getByTestId('metric-card-active-rentals');
+    const catalogValueCard = screen.getByTestId('metric-card-catalog-value');
     expect(
-      within(activeRentalsCard).getByText('Locações em Andamento')
+      within(catalogValueCard).getByText('Valor do Catálogo')
     ).toBeInTheDocument();
-    expect(within(activeRentalsCard).getByText('28')).toBeInTheDocument();
-    expect(within(activeRentalsCard).getByText('+10%')).toBeInTheDocument();
 
-    // Alertas de Estoque
+    const availableUnitsCard = screen.getByTestId('metric-card-active-rentals');
+    expect(
+      within(availableUnitsCard).getByText('Unidades Disponíveis')
+    ).toBeInTheDocument();
+    expect(within(availableUnitsCard).getByText('10')).toBeInTheDocument();
+    expect(
+      within(availableUnitsCard).getByText('11 unidades reservadas em eventos')
+    ).toBeInTheDocument();
+
     const stockAlertsCard = screen.getByTestId('metric-card-stock-alerts');
     expect(
       within(stockAlertsCard).getByText('Alertas de Estoque')
     ).toBeInTheDocument();
-    expect(within(stockAlertsCard).getByText('2')).toBeInTheDocument();
-    expect(within(stockAlertsCard).getByText('-50%')).toBeInTheDocument();
-  });
+    expect(within(stockAlertsCard).getByText('3')).toBeInTheDocument();
 
-  it('renders the interactive stock movements chart with summary indicators', async () => {
-    renderCatalogPage();
-
-    await waitFor(() => {
-      expect(CatalogService.getStockMovements).toHaveBeenCalledWith({
-        shopId: 'shop-1',
-      });
-    });
-
+    // Section 2: Interactive Area Chart
     const movementsCard = screen.getByTestId('stock-movements-card');
     expect(
-      within(movementsCard).getByText('Movimentações de Estoque')
+      within(movementsCard).getByText('Fluxo de Estoque')
     ).toBeInTheDocument();
     expect(
-      within(movementsCard).getByText('Fluxo operacional semanal de itens')
+      within(movementsCard).getByRole('button', { name: 'Últimos 3 meses' })
     ).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(
-        within(movementsCard).getByTestId('summary-inbound')
-      ).toHaveTextContent('50 un');
-      expect(
-        within(movementsCard).getByTestId('summary-sale')
-      ).toHaveTextContent('18 un');
-      expect(
-        within(movementsCard).getByTestId('summary-rental')
-      ).toHaveTextContent('27 un');
-      expect(
-        within(movementsCard).getByTestId('summary-loss')
-      ).toHaveTextContent('1 un');
-    });
+    // Section 3: 3-Card Operational Grid
+    const distributionCard = screen.getByTestId('shop-distribution-card');
+    expect(
+      within(distributionCard).getByText('Festas Encantadas')
+    ).toBeInTheDocument();
+    expect(
+      within(distributionCard).getByRole('tab', { name: /aluguel/i })
+    ).toBeInTheDocument();
+    expect(
+      within(distributionCard).getByRole('tab', { name: /venda/i })
+    ).toBeInTheDocument();
+    expect(
+      within(distributionCard).getByRole('tab', { name: /^pacote$/i })
+    ).toBeInTheDocument();
+
+    const timelineCard = screen.getByTestId('stock-movements-timeline-card');
+    expect(
+      within(timelineCard).getByText('Movimentações de Estoque')
+    ).toBeInTheDocument();
+    expect(
+      within(timelineCard).getByText('2 movimentações registradas')
+    ).toBeInTheDocument();
+
+    const popularCard = screen.getByTestId('popular-products-card');
+    expect(
+      within(popularCard).getByText('Produtos Populares')
+    ).toBeInTheDocument();
+    expect(
+      within(popularCard).getByText('Total de 4 itens no catálogo')
+    ).toBeInTheDocument();
+
+    // Section 4: Product Table
+    const tableSection = screen.getByTestId('catalog-table-section');
+    expect(
+      await within(tableSection).findByText('Mesa Rústica Retangular 2m')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).getByText('Kit Festa Infantil Provençal Encantada')
+    ).toBeInTheDocument();
+
+    // Canonical "Pacote" terminology verified across the page
+    expect(within(tableSection).getByText('Pacote')).toBeInTheDocument();
+    expect(screen.queryByText(/pacote virtual/i)).not.toBeInTheDocument();
   });
 
-  it('renders the rental check-in logistics card with timeline tracking and return progress', async () => {
+  it('displays loading skeletons across all 4 sections while queries are pending', () => {
+    ProductService.getAll.mockReturnValue(new Promise(() => {}));
+    CatalogService.getMetrics.mockReturnValue(new Promise(() => {}));
+    CatalogService.getStockMovements.mockReturnValue(new Promise(() => {}));
+
     renderCatalogPage();
 
-    const rentalsCard = screen.getByTestId('rental-checkin-card');
-    expect(rentalsCard).toBeInTheDocument();
+    // Section 1: KPI skeletons
+    expect(screen.getAllByTestId('kpi-skeleton').length).toBeGreaterThan(0);
 
-    expect(
-      within(rentalsCard).getByText('Controle de Locações')
-    ).toBeInTheDocument();
-    expect(
-      within(rentalsCard).getByText(
-        'Acompanhe entregas, retiradas e devoluções para eventos'
-      )
-    ).toBeInTheDocument();
+    // Section 2: Chart loading skeleton
+    expect(screen.getByTestId('chart-loading')).toBeInTheDocument();
 
+    // Section 3: Operational grid skeletons
     expect(
-      within(rentalsCard).getByRole('tab', { name: /retorno pendente/i })
-    ).toBeInTheDocument();
-    expect(
-      within(rentalsCard).getByRole('tab', { name: /em evento/i })
-    ).toBeInTheDocument();
-    expect(
-      within(rentalsCard).getByRole('tab', { name: /reservados/i })
-    ).toBeInTheDocument();
-    expect(
-      within(rentalsCard).getByRole('tab', { name: /inspecionados/i })
-    ).toBeInTheDocument();
+      screen.getAllByTestId('operational-grid-skeleton').length
+    ).toBeGreaterThanOrEqual(3);
 
-    // Verify timeline items rendered after query resolution
-    await waitFor(() => {
-      expect(
-        within(rentalsCard).getByText(/Mariana Souza/i)
-      ).toBeInTheDocument();
-      expect(
-        within(rentalsCard).getByRole('button', { name: /registrar check-in/i })
-      ).toBeInTheDocument();
-    });
+    // Section 4: Table loading indicator
+    expect(screen.getByTestId('catalog-loading')).toBeInTheDocument();
   });
 
-  it('renders the catalog data table with search, classification tabs, and product directory', async () => {
+  it('displays friendly empty states when the active shop has no products yet', async () => {
+    ProductService.getAll.mockResolvedValue([]);
+    CatalogService.getMetrics.mockResolvedValue({
+      activeCatalog: { total: 0, simpleProducts: 0, bundles: 0, trend: 0 },
+      activeRentals: { total: 0, trend: 0 },
+      stockAlerts: {
+        total: 0,
+        outOfStock: 0,
+        criticalBottlenecks: 0,
+        trend: 0,
+      },
+    });
+    CatalogService.getStockMovements.mockResolvedValue({
+      movements: [],
+      series: [],
+    });
+
     renderCatalogPage();
 
-    // 1. Search bar and filter tabs rendered
+    // Wait for loading to complete and empty states to appear
     expect(
-      screen.getByPlaceholderText(/buscar produtos por nome/i)
-    ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /todos/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /venda/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /aluguel/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /serviço/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('tab', { name: /pacote virtual/i })
-    ).toBeInTheDocument();
-
-    // 2. Table columns rendered
-    expect(
-      screen.getByRole('columnheader', { name: /produto/i })
+      await screen.findByText('Nenhum produto encontrado')
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('columnheader', { name: /classificação/i })
+      screen.getByText('Nenhum produto cadastrado na loja.')
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('columnheader', { name: /preço/i })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('columnheader', { name: /estoque/i })
+      screen.getByText('Nenhuma movimentação registrada nesta categoria.')
     ).toBeInTheDocument();
 
-    // 3. Products rendered in table
+    const activeCatalogCard = screen.getByTestId('metric-card-active-catalog');
+    expect(within(activeCatalogCard).getByText('0')).toBeInTheDocument();
+  });
+
+  it('displays error state and retries loading products when ProductService.getAll fails', async () => {
+    const user = userEvent.setup();
+    ProductService.getAll.mockRejectedValueOnce(new Error('Falha de rede'));
+
+    renderCatalogPage();
+
+    const errorRow = await screen.findByTestId('catalog-error');
+    expect(errorRow).toBeInTheDocument();
     expect(
-      await screen.findByText('Mesa Rústica Retangular 2m')
+      within(errorRow).getByText('Erro ao carregar o catálogo')
     ).toBeInTheDocument();
+
+    ProductService.getAll.mockResolvedValueOnce(mockProducts);
+
+    const retryBtn = within(errorRow).getByRole('button', {
+      name: /tentar novamente/i,
+    });
+    await user.click(retryBtn);
+
+    const tableSection = screen.getByTestId('catalog-table-section');
     expect(
-      screen.getByText('Kit Festa Infantil Provençal Encantada')
+      await within(tableSection).findByText('Mesa Rústica Retangular 2m')
     ).toBeInTheDocument();
   });
 
-  it('opens the CreateProductDialog when clicking the "Novo Produto" header button', async () => {
+  it('filters table products by search, category select, and stock status select, and opens "+ Adicionar produto" modal', async () => {
     const user = userEvent.setup();
     renderCatalogPage();
 
-    const newProductBtn = screen.getByRole('button', {
-      name: /novo produto/i,
-    });
-    expect(newProductBtn).toBeInTheDocument();
+    const tableSection = await screen.findByTestId('catalog-table-section');
+    expect(
+      await within(tableSection).findByText('Mesa Rústica Retangular 2m')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).getByText('Arco Orgânico de Balões')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).getByText('Toalha Jacquard Dourada')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).getByText('Kit Festa Infantil Provençal Encantada')
+    ).toBeInTheDocument();
 
-    await user.click(newProductBtn);
+    // 1. Search filter
+    const searchInput = within(tableSection).getByPlaceholderText(
+      /buscar produtos por nome/i
+    );
+    await user.type(searchInput, 'Mesa Rústica');
+
+    expect(
+      within(tableSection).getByText('Mesa Rústica Retangular 2m')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).queryByText('Arco Orgânico de Balões')
+    ).not.toBeInTheDocument();
+
+    await user.clear(searchInput);
+    expect(
+      within(tableSection).getByText('Arco Orgânico de Balões')
+    ).toBeInTheDocument();
+
+    // 2. Category filter -> "Pacote"
+    const categoryTrigger = within(tableSection).getByRole('combobox', {
+      name: /filtrar por categoria/i,
+    });
+    await user.click(categoryTrigger);
+    await user.click(await screen.findByRole('option', { name: /^pacote$/i }));
+
+    expect(
+      within(tableSection).getByText('Kit Festa Infantil Provençal Encantada')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).queryByText('Mesa Rústica Retangular 2m')
+    ).not.toBeInTheDocument();
+
+    // Reset category filter -> "Todos"
+    await user.click(categoryTrigger);
+    await user.click(await screen.findByRole('option', { name: /^todos$/i }));
+
+    // 3. Stock status filter -> "Esgotado"
+    const stockStatusTrigger = within(tableSection).getByRole('combobox', {
+      name: /filtrar por status de estoque/i,
+    });
+    await user.click(stockStatusTrigger);
+    await user.click(
+      await screen.findByRole('option', { name: /^esgotado$/i })
+    );
+
+    expect(
+      within(tableSection).getByText('Toalha Jacquard Dourada')
+    ).toBeInTheDocument();
+    expect(
+      within(tableSection).queryByText('Mesa Rústica Retangular 2m')
+    ).not.toBeInTheDocument();
+
+    // 4. Open "+ Adicionar produto" modal from table toolbar
+    const addProductBtn = within(tableSection).getByRole('button', {
+      name: /adicionar produto/i,
+    });
+    await user.click(addProductBtn);
 
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toBeInTheDocument();
@@ -344,7 +568,7 @@ describe('Catalog Page Shell Integration', () => {
       within(dialog).getByRole('tab', { name: /produto simples/i })
     ).toBeInTheDocument();
     expect(
-      within(dialog).getByRole('tab', { name: /pacote virtual/i })
+      within(dialog).getByRole('tab', { name: /^pacote$/i })
     ).toBeInTheDocument();
-  });
+  }, 15000);
 });

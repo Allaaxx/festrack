@@ -1,9 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { format } from 'date-fns';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import StockMovementsChart from '@/features/catalog/components/stock-movements-chart';
+import StockMovementsChart, {
+  buildDailyStockChartData,
+} from '@/features/catalog/components/stock-movements-chart';
 
 vi.mock('recharts', async () => {
   const original = await vi.importActual('recharts');
@@ -23,71 +26,100 @@ describe('StockMovementsChart Component', () => {
   const sampleSeries = [
     {
       date: '2026-11-10',
-      day: 'Ter',
-      inbound: 20,
-      sale: 5,
-      rentalAllocation: 10,
-      loss: 1,
+      entradas: 20,
+      saidas: 16,
     },
     {
       date: '2026-11-11',
-      day: 'Qua',
-      inbound: 15,
-      sale: 10,
-      rentalAllocation: 12,
-      loss: 2,
+      entradas: 15,
+      saidas: 24,
     },
     {
       date: '2026-11-12',
-      day: 'Qui',
-      inbound: 25,
-      sale: 8,
-      rentalAllocation: 15,
-      loss: 0,
+      entradas: 25,
+      saidas: 23,
     },
   ];
 
-  it('renders the chart card header, title, and subtitle', () => {
+  it('renders with 3 months active by default and displays Fluxo de Estoque title and description', () => {
     render(<StockMovementsChart data={sampleSeries} />);
 
-    expect(screen.getByText('Movimentações de Estoque')).toBeInTheDocument();
-    expect(
-      screen.getByText('Fluxo operacional semanal de itens')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Fluxo de Estoque')).toBeInTheDocument();
+    expect(screen.getByText('Total dos últimos 3 meses')).toBeInTheDocument();
+
+    const threeMonthsBtn = screen.getByRole('button', {
+      name: 'Últimos 3 meses',
+    });
+    expect(threeMonthsBtn).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('calculates and renders summary indicators for all movement types', () => {
-    render(<StockMovementsChart data={sampleSeries} />);
+  it('updates selection and description when clicking Últimos 30 dias and Últimos 7 dias in uncontrolled mode', async () => {
+    const user = userEvent.setup();
+    render(<StockMovementsChart />);
 
-    // Total Inbound: 20 + 15 + 25 = 60
-    // Total Sale: 5 + 10 + 8 = 23
-    // Total Rental: 10 + 12 + 15 = 37
-    // Total Loss: 1 + 2 + 0 = 3
+    const thirtyDaysBtn = screen.getByRole('button', {
+      name: 'Últimos 30 dias',
+    });
+    await user.click(thirtyDaysBtn);
 
-    expect(screen.getByTestId('summary-inbound')).toHaveTextContent('60 un');
-    expect(screen.getByTestId('summary-sale')).toHaveTextContent('23 un');
-    expect(screen.getByTestId('summary-rental')).toHaveTextContent('37 un');
-    expect(screen.getByTestId('summary-loss')).toHaveTextContent('3 un');
+    expect(thirtyDaysBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Total dos últimos 30 dias')).toBeInTheDocument();
+
+    const sevenDaysBtn = screen.getByRole('button', {
+      name: 'Últimos 7 dias',
+    });
+    await user.click(sevenDaysBtn);
+
+    expect(sevenDaysBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Total dos últimos 7 dias')).toBeInTheDocument();
   });
 
-  it('renders period filter buttons and allows switching preset', async () => {
+  it('does not deselect when clicking the currently active period button', async () => {
+    const user = userEvent.setup();
+    render(<StockMovementsChart />);
+
+    const threeMonthsBtn = screen.getByRole('button', {
+      name: 'Últimos 3 meses',
+    });
+    expect(threeMonthsBtn).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(threeMonthsBtn);
+    expect(threeMonthsBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Total dos últimos 3 meses')).toBeInTheDocument();
+  });
+
+  it('calls onPeriodChange when a preset button is clicked and respects controlled period prop', async () => {
     const user = userEvent.setup();
     const handlePeriodChange = vi.fn();
 
-    render(
-      <StockMovementsChart
-        data={sampleSeries}
-        onPeriodChange={handlePeriodChange}
-      />
+    const { rerender } = render(
+      <StockMovementsChart period="90d" onPeriodChange={handlePeriodChange} />
     );
 
     const thirtyDaysBtn = screen.getByRole('button', {
-      name: /30 dias/i,
+      name: 'Últimos 30 dias',
     });
-    expect(thirtyDaysBtn).toBeInTheDocument();
-
     await user.click(thirtyDaysBtn);
     expect(handlePeriodChange).toHaveBeenCalledWith('30d');
+
+    rerender(
+      <StockMovementsChart period="7d" onPeriodChange={handlePeriodChange} />
+    );
+
+    const sevenDaysBtn = screen.getByRole('button', {
+      name: 'Últimos 7 dias',
+    });
+    expect(sevenDaysBtn).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Total dos últimos 7 dias')).toBeInTheDocument();
+  });
+
+  it('renders dual areas for entradas and saidas with primary gradient defs', () => {
+    const { container } = render(<StockMovementsChart data={sampleSeries} />);
+
+    expect(container.querySelector('#fillEntradas')).toBeInTheDocument();
+    expect(container.querySelector('#fillSaidas')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="chart"]')).toBeInTheDocument();
+    expect(screen.getByTestId('stock-movements-chart')).toBeInTheDocument();
   });
 
   it('renders loading skeleton state when isLoading is true', () => {
@@ -95,6 +127,7 @@ describe('StockMovementsChart Component', () => {
 
     const card = screen.getByTestId('stock-movements-card');
     expect(card).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByTestId('chart-loading')).toBeInTheDocument();
     expect(
       screen.getByText('Carregando gráfico de movimentações...')
     ).toBeInTheDocument();
@@ -103,10 +136,31 @@ describe('StockMovementsChart Component', () => {
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it('renders with default fixture data when data prop is omitted', () => {
-    render(<StockMovementsChart />);
+  it('builds daily series for 7d, 30d, and 90d from movements and products', () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const movements = [
+      { id: '1', type: 'INBOUND', quantity: 12, date: todayStr },
+      { id: '2', type: 'RENTAL_ALLOCATION', quantity: 5, date: todayStr },
+      { id: '3', type: 'LOSS', quantity: 2, date: todayStr },
+    ];
 
-    expect(screen.getByText('Movimentações de Estoque')).toBeInTheDocument();
-    expect(screen.getByTestId('stock-movements-chart')).toBeInTheDocument();
+    const series7d = buildDailyStockChartData({
+      movements,
+      period: '7d',
+    });
+    expect(series7d).toHaveLength(7);
+
+    const todayPoint = series7d.find((item) => item.date === todayStr);
+    expect(todayPoint).toEqual({
+      date: todayStr,
+      entradas: 12,
+      saidas: 7,
+    });
+
+    const series30d = buildDailyStockChartData({
+      movements: [],
+      period: '30d',
+    });
+    expect(series30d).toHaveLength(30);
   });
 });

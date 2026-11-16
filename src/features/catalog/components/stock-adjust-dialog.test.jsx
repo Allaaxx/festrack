@@ -56,7 +56,10 @@ describe('StockAdjustDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAuthContext.mockReturnValue({ user: mockUser });
-    useShopContext.mockReturnValue({ activeShop: mockShop, currentShop: mockShop });
+    useShopContext.mockReturnValue({
+      activeShop: mockShop,
+      currentShop: mockShop,
+    });
     vi.spyOn(ProductService, 'adjustStock').mockResolvedValue({
       stock: { quantity: 55, reserved: 12 },
       movement: { id: 'mov-1', type: 'INBOUND', quantity: 5 },
@@ -73,7 +76,9 @@ describe('StockAdjustDialog', () => {
       { wrapper: createWrapper() }
     );
 
-    expect(screen.queryByRole('heading', { name: /ajustar estoque/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: /ajustar estoque/i })
+    ).not.toBeInTheDocument();
   });
 
   it('renders modal with product details: name, current on-hand quantity, and reserved stock', () => {
@@ -86,7 +91,9 @@ describe('StockAdjustDialog', () => {
       { wrapper: createWrapper() }
     );
 
-    expect(screen.getByRole('heading', { name: /ajustar estoque/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /ajustar estoque/i })
+    ).toBeInTheDocument();
     expect(screen.getByText('Cadeira Tiffany Dourada')).toBeInTheDocument();
     expect(screen.getByText(/50\s*un/i)).toBeInTheDocument();
     expect(screen.getByText(/12\s*un/i)).toBeInTheDocument();
@@ -95,7 +102,9 @@ describe('StockAdjustDialog', () => {
     expect(screen.getByLabelText(/tipo de movimentação/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/quantidade/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/motivo/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /confirmar ajuste/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /confirmar ajuste/i })
+    ).toBeInTheDocument();
   });
 
   it('displays validation errors and prevents submission when quantity < 1 or reason < 3 characters', async () => {
@@ -115,11 +124,17 @@ describe('StockAdjustDialog', () => {
     await user.type(quantityInput, '0');
 
     // Submit with empty reason
-    const submitButton = screen.getByRole('button', { name: /confirmar ajuste/i });
+    const submitButton = screen.getByRole('button', {
+      name: /confirmar ajuste/i,
+    });
     await user.click(submitButton);
 
-    expect(await screen.findByText(/quantidade deve ser maior ou igual a 1/i)).toBeInTheDocument();
-    expect(await screen.findByText(/motivo deve ter pelo menos 3 caracteres/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/quantidade deve ser maior ou igual a 1/i)
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/motivo deve ter pelo menos 3 caracteres/i)
+    ).toBeInTheDocument();
     expect(ProductService.adjustStock).not.toHaveBeenCalled();
 
     // Type too short reason
@@ -127,7 +142,9 @@ describe('StockAdjustDialog', () => {
     await user.type(reasonInput, 'oi');
     await user.click(submitButton);
 
-    expect(await screen.findByText(/motivo deve ter pelo menos 3 caracteres/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/motivo deve ter pelo menos 3 caracteres/i)
+    ).toBeInTheDocument();
     expect(ProductService.adjustStock).not.toHaveBeenCalled();
   });
 
@@ -164,7 +181,9 @@ describe('StockAdjustDialog', () => {
     await user.type(reasonInput, 'Recebimento de novo lote do fornecedor');
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: /confirmar ajuste/i });
+    const submitButton = screen.getByRole('button', {
+      name: /confirmar ajuste/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -185,7 +204,12 @@ describe('StockAdjustDialog', () => {
       queryKey: ['catalogMetrics', 'usr-1', 'shop-1'],
     });
     expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
-      queryKey: ['stockMovements', 'usr-1', 'shop-1', { from: undefined, to: undefined, period: undefined }],
+      queryKey: [
+        'stockMovements',
+        'usr-1',
+        'shop-1',
+        { from: undefined, to: undefined, period: undefined },
+      ],
     });
 
     // Check toast and close
@@ -228,7 +252,9 @@ describe('StockAdjustDialog', () => {
     await user.type(reasonInput, 'Peças danificadas no transporte de retorno');
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: /confirmar ajuste/i });
+    const submitButton = screen.getByRole('button', {
+      name: /confirmar ajuste/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
