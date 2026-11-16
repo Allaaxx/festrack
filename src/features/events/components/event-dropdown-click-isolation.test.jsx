@@ -24,8 +24,8 @@ vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: () => ({ data: [], isLoading: false }),
 }));
 
-vi.mock('@/features/finances/api/hooks', () => ({
-  useCreateTransaction: () => ({ mutateAsync: vi.fn(), isPending: false }),
+vi.mock('@/components/ui/calendar', () => ({
+  Calendar: () => <div data-testid="mock-calendar" />,
 }));
 
 describe('Bug Repro: EventDropdownMenu item click triggers onEventCreate (New Event popup)', () => {
@@ -64,17 +64,36 @@ describe('Bug Repro: EventDropdownMenu item click triggers onEventCreate (New Ev
     );
 
     const eventButton = container.querySelector('button[data-calendar-event]');
+    expect(eventButton).toBeInTheDocument();
+
     await user.click(eventButton);
 
     const editMenuItem = await screen.findByRole('menuitem', {
       name: /editar evento/i,
     });
+    expect(editMenuItem).toBeInTheDocument();
+
     await user.click(editMenuItem);
 
+    // Sheet is open
+    expect(await screen.findByText('Editar Evento')).toBeInTheDocument();
+
+    // Click close/cancel
+    const closeButtons = screen.getAllByRole('button');
+    const closeBtn = closeButtons.find(
+      (btn) =>
+        btn.getAttribute('aria-label') === 'Fechar' ||
+        btn.textContent.includes('Cancelar')
+    );
+    if (closeBtn) {
+      await user.click(closeBtn);
+    }
+
+    // Verify onEventCreate was NEVER called during open, interaction, or close
     expect(onEventCreate).not.toHaveBeenCalled();
   });
 
-  it('does NOT trigger onEventCreate when interacting with and closing AddTransaction modal from dropdown', async () => {
+  it('does NOT trigger onEventCreate when clicking "Abrir evento" in MonthView dropdown', async () => {
     const user = userEvent.setup();
     const onEventCreate = vi.fn();
     const onEventSelect = vi.fn();
@@ -93,21 +112,12 @@ describe('Bug Repro: EventDropdownMenu item click triggers onEventCreate (New Ev
     const eventButton = container.querySelector('button[data-calendar-event]');
     await user.click(eventButton);
 
-    const addTxMenuItem = await screen.findByRole('menuitem', {
-      name: /adicionar transação/i,
+    const abrirMenuItem = await screen.findByRole('menuitem', {
+      name: /abrir evento/i,
     });
-    await user.click(addTxMenuItem);
+    await user.click(abrirMenuItem);
 
-    // Modal is open
-    expect(
-      await screen.findByRole('heading', { name: /adicionar transação/i })
-    ).toBeInTheDocument();
-
-    // Click cancel button inside modal
-    const cancelButton = screen.getByRole('button', { name: /cancelar/i });
-    await user.click(cancelButton);
-
-    // Verify onEventCreate was NEVER called during open, interaction, or close
+    // Verify onEventCreate was NEVER called during click
     expect(onEventCreate).not.toHaveBeenCalled();
   });
 });

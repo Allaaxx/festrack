@@ -70,7 +70,7 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
     vi.clearAllMocks();
   });
 
-  it('opens dropdown menu with 4 quick actions when clicking an event in MonthView', async () => {
+  it('opens dropdown menu with 2 quick actions when clicking an event in MonthView', async () => {
     const user = userEvent.setup();
 
     const { container } = render(
@@ -91,19 +91,18 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
 
     expect(
       await screen.findByRole('menuitem', {
-        name: /ver detalhes e transações/i,
+        name: /abrir evento/i,
       })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('menuitem', { name: /editar evento/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('menuitem', { name: /adicionar transação/i })
-    ).toBeInTheDocument();
+      screen.queryByRole('menuitem', { name: /adicionar transação/i })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('menuitem', { name: /excluir evento/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('separator')).toBeInTheDocument();
+      screen.queryByRole('menuitem', { name: /excluir evento/i })
+    ).not.toBeInTheDocument();
   });
 
   it('opens dropdown menu when clicking an event in WeekView timed block and all-day header', async () => {
@@ -131,7 +130,7 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
 
     expect(
       await screen.findByRole('menuitem', {
-        name: /ver detalhes e transações/i,
+        name: /abrir evento/i,
       })
     ).toBeInTheDocument();
   });
@@ -160,7 +159,7 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
 
     expect(
       await screen.findByRole('menuitem', {
-        name: /ver detalhes e transações/i,
+        name: /abrir evento/i,
       })
     ).toBeInTheDocument();
   });
@@ -195,7 +194,7 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
 
     expect(
       await screen.findByRole('menuitem', {
-        name: /ver detalhes e transações/i,
+        name: /abrir evento/i,
       })
     ).toBeInTheDocument();
     expect(

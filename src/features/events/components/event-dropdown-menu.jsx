@@ -1,9 +1,4 @@
-import {
-  PencilIcon,
-  PlusIcon,
-  ReceiptTextIcon,
-  Trash2Icon,
-} from 'lucide-react';
+import { CalendarPlusIcon, PencilIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -12,12 +7,9 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import DeleteEventButton from '@/features/events/components/delete-event-button';
 import EditEventSheet from '@/features/events/components/edit-event-sheet';
-import { AddTransactionButton } from '@/features/finances';
 import { cn } from '@/lib/utils';
 
 /**
@@ -44,8 +36,6 @@ const EventDropdownMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isAddTxOpen, setIsAddTxOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const pointerDownRef = useRef(null);
   const navigate = useNavigate();
@@ -101,18 +91,6 @@ const EventDropdownMenu = ({
     setIsEditOpen(true);
   };
 
-  const handleAddTransaction = (e) => {
-    e?.stopPropagation?.();
-    setIsOpen(false);
-    setIsAddTxOpen(true);
-  };
-
-  const handleDeleteEvent = (e) => {
-    e?.stopPropagation?.();
-    setIsOpen(false);
-    setIsDeleteOpen(true);
-  };
-
   return (
     <>
       <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
@@ -125,28 +103,17 @@ const EventDropdownMenu = ({
         <DropdownMenuContent
           align={align}
           side={side}
-          className={cn('min-w-52', className)}
+          className={cn('min-w-44', className)}
           onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={handleViewDetails}>
-              <ReceiptTextIcon />
-              Ver detalhes e transações
+              <CalendarPlusIcon />
+              Abrir evento
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleEditEvent}>
               <PencilIcon />
               Editar evento
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleAddTransaction}>
-              <PlusIcon />
-              Adicionar transação
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem variant="destructive" onClick={handleDeleteEvent}>
-              <Trash2Icon />
-              Excluir evento
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -161,32 +128,6 @@ const EventDropdownMenu = ({
             event={rawEvent}
             open={isEditOpen}
             onOpenChange={setIsEditOpen}
-          />
-        </div>
-      )}
-
-      {isAddTxOpen && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <AddTransactionButton
-            initialEventId={eventId}
-            open={isAddTxOpen}
-            onOpenChange={setIsAddTxOpen}
-          />
-        </div>
-      )}
-
-      {isDeleteOpen && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <DeleteEventButton
-            event={rawEvent}
-            open={isDeleteOpen}
-            onOpenChange={setIsDeleteOpen}
           />
         </div>
       )}
