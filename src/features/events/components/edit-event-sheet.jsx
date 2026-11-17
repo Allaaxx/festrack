@@ -12,8 +12,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
+import { useShopContext } from '@/contexts/shop';
 import EventForm from '@/features/events/components/event-form';
 import { useEditEventForm } from '@/features/events/forms/hooks';
+import { isShopOwner as checkIsShopOwner } from '@/features/events/helpers/event';
 import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calendar-sync';
 
 import { DeleteEventButton } from '..';
@@ -29,6 +31,8 @@ const EditEventSheet = ({
   const [internalOpen, setInternalOpen] = useState(false);
   const sheetOpen = isControlled ? open : internalOpen;
   const { isSyncEnabled } = useGoogleCalendarSync();
+  const { role, activeShop } = useShopContext();
+  const isShopOwner = checkIsShopOwner(role, activeShop);
 
   const handleOpenChange = (value) => {
     if (!isControlled) setInternalOpen(value);
@@ -39,7 +43,7 @@ const EditEventSheet = ({
     event,
     onSuccess: (updatedEvent) => {
       handleOpenChange(false);
-      if (isSyncEnabled && updatedEvent?.syncError) {
+      if (isShopOwner && isSyncEnabled && updatedEvent?.syncError) {
         toast.add({
           type: 'warning',
           title: 'Evento editado com aviso',

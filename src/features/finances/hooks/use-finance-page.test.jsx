@@ -268,6 +268,22 @@ describe('useFinancePage Hook', () => {
       expect(result.current.params.to).toBe('2026-03-31');
     });
 
+    it('formats late-evening local Date instances as local yyyy-MM-dd without UTC shift', async () => {
+      const { result } = renderHook(() => useFinancePage(), {
+        wrapper: createWrapper(),
+      });
+
+      act(() => {
+        result.current.handlers.setDateRange({
+          from: new Date(2026, 10, 17, 22, 59, 0),
+          to: new Date(2026, 10, 17, 23, 59, 59),
+        });
+      });
+
+      expect(result.current.params.from).toBe('2026-11-17');
+      expect(result.current.params.to).toBe('2026-11-17');
+    });
+
     it('calculates proper 7d preset range ending on current date', async () => {
       const { result } = renderHook(() => useFinancePage(), {
         wrapper: createWrapper(),

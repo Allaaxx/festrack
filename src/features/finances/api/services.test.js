@@ -86,6 +86,20 @@ describe('TransactionService', () => {
       );
       expect(result).toEqual(mockTransactions);
     });
+
+    it('formats Date and ISO string from/to parameters defensively to yyyy-MM-dd', async () => {
+      protectedApi.get.mockResolvedValue({ data: [] });
+
+      await TransactionService.getAll({
+        shopId: 'shop-1',
+        from: new Date(2026, 10, 1, 22, 30, 0),
+        to: '2026-11-30T00:00:00.000Z',
+      });
+
+      expect(protectedApi.get).toHaveBeenCalledWith(
+        '/shops/shop-1/transactions?from=2026-11-01&to=2026-11-30'
+      );
+    });
   });
 
   describe('create', () => {
@@ -113,6 +127,26 @@ describe('TransactionService', () => {
         }
       );
       expect(result).toEqual(mockCreated);
+    });
+
+    it('formats a Date instance as local yyyy-MM-dd string instead of UTC ISO timestamp', async () => {
+      protectedApi.post.mockResolvedValue({ data: { id: 'tx-late' } });
+      const lateEveningLocal = new Date(2026, 10, 17, 22, 59, 0);
+
+      await TransactionService.create({
+        shopId: 'shop-1',
+        name: 'Compra Noturna',
+        amount: 99,
+        date: lateEveningLocal,
+        type: 'EXPENSE',
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-1/transactions',
+        expect.objectContaining({
+          date: '2026-11-17',
+        })
+      );
     });
   });
 
@@ -142,6 +176,27 @@ describe('TransactionService', () => {
         }
       );
       expect(result).toEqual(mockUpdated);
+    });
+
+    it('formats a Date instance as local yyyy-MM-dd string on update', async () => {
+      protectedApi.patch.mockResolvedValue({ data: { id: 'tx-1' } });
+      const lateEveningLocal = new Date(2026, 10, 17, 22, 59, 0);
+
+      await TransactionService.update({
+        shopId: 'shop-1',
+        id: 'tx-1',
+        name: 'Compra Noturna',
+        amount: 99,
+        date: lateEveningLocal,
+        type: 'EXPENSE',
+      });
+
+      expect(protectedApi.patch).toHaveBeenCalledWith(
+        '/shops/shop-1/transactions/tx-1',
+        expect.objectContaining({
+          date: '2026-11-17',
+        })
+      );
     });
   });
 
@@ -198,5 +253,19 @@ describe('BalanceService', () => {
       '/shops/shop-1/balance?from=2026-01-01&to=2026-01-31&event_id=ev-99'
     );
     expect(result).toEqual(mockBalance);
+  });
+
+  it('formats Date and ISO string from/to parameters defensively to yyyy-MM-dd', async () => {
+    protectedApi.get.mockResolvedValue({ data: { balance: 0 } });
+
+    await BalanceService.getBalance({
+      shopId: 'shop-1',
+      from: new Date(2026, 10, 1, 22, 30, 0),
+      to: '2026-11-30T00:00:00.000Z',
+    });
+
+    expect(protectedApi.get).toHaveBeenCalledWith(
+      '/shops/shop-1/balance?from=2026-11-01&to=2026-11-30'
+    );
   });
 });

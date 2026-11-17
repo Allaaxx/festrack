@@ -7,6 +7,7 @@ import { useAuthContext } from '@/contexts/auth';
 import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
 import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
 import { TransactionActionsCell } from '@/features/finances/components/transaction-columns';
+import { parseDateSafely } from '@/features/finances/helpers/date';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),
@@ -288,5 +289,21 @@ describe('TransactionActionsCell & Modal Isolation', () => {
         name: /excluir transação\?/i,
       })
     ).toBeInTheDocument();
+  });
+});
+
+describe('parseDateSafely', () => {
+  it('parses YYYY-MM-DD as local civil date without shifting day', () => {
+    const parsed = parseDateSafely('2026-11-17');
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(10);
+    expect(parsed.getDate()).toBe(17);
+  });
+
+  it('parses YYYY-MM-DDT00:00:00.000Z from API as local civil date without shifting backward in UTC-3', () => {
+    const parsed = parseDateSafely('2026-11-17T00:00:00.000Z');
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(10);
+    expect(parsed.getDate()).toBe(17);
   });
 });

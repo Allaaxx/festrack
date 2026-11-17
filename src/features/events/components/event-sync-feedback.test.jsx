@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { toast } from '@/components/ui/toast';
+import { useShopContext } from '@/contexts/shop';
 import {
   useCreateEvent,
   useDeleteEvent,
@@ -16,6 +17,10 @@ vi.mock('@/components/ui/toast', () => ({
   toast: {
     add: vi.fn(),
   },
+}));
+
+vi.mock('@/contexts/shop', () => ({
+  useShopContext: vi.fn(),
 }));
 
 vi.mock('@/features/events/hooks/use-google-calendar-sync', () => ({
@@ -40,6 +45,10 @@ describe('Event Lifecycle Mutations - Google Calendar Sync Feedback', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    useShopContext.mockReturnValue({
+      role: 'OWNER',
+      activeShop: { id: 'shop-1', role: 'OWNER' },
+    });
     useCreateEvent.mockReturnValue({
       mutateAsync: mockCreateMutateAsync,
     });
@@ -166,6 +175,49 @@ describe('Event Lifecycle Mutations - Google Calendar Sync Feedback', () => {
         );
       });
     });
+
+    it('shows standard success toast instead of warning when user is a MEMBER of activeShop even if personal isSyncEnabled is true', async () => {
+      useShopContext.mockReturnValue({
+        role: 'MEMBER',
+        activeShop: { id: 'shop-1', role: 'MEMBER' },
+      });
+      useGoogleCalendarSync.mockReturnValue({
+        isSyncEnabled: true,
+      });
+
+      mockCreateMutateAsync.mockResolvedValueOnce({
+        id: 'ev-member-1',
+        name: 'Festa do Membro',
+        googleEventId: null,
+        syncError: true,
+      });
+
+      render(
+        <CreateEventDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          initialDate={new Date(2026, 11, 1)}
+        />
+      );
+
+      const nameInput = screen.getByLabelText(/nome do evento/i);
+      fireEvent.change(nameInput, { target: { value: 'Festa do Membro' } });
+
+      const saveButton = screen.getByRole('button', { name: /criar evento/i });
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'success',
+            title: expect.stringMatching(/evento criado com sucesso/i),
+          })
+        );
+        expect(toast.add).not.toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'warning' })
+        );
+      });
+    });
   });
 
   describe('EditEventSheet', () => {
@@ -207,6 +259,51 @@ describe('Event Lifecycle Mutations - Google Calendar Sync Feedback', () => {
               /alterações salvas localmente, mas não foi possível atualizar no google agenda/i
             ),
           })
+        );
+      });
+    });
+
+    it('shows standard success toast instead of warning when user is a MEMBER of activeShop even if personal isSyncEnabled is true', async () => {
+      useShopContext.mockReturnValue({
+        role: 'MEMBER',
+        activeShop: { id: 'shop-1', role: 'MEMBER' },
+      });
+      useGoogleCalendarSync.mockReturnValue({
+        isSyncEnabled: true,
+      });
+
+      const validEventId = '123e4567-e89b-12d3-a456-426614174000';
+      mockEditMutateAsync.mockResolvedValueOnce({
+        id: validEventId,
+        name: 'Festa Alterada por Membro',
+        googleEventId: null,
+        syncError: true,
+      });
+
+      const mockEvent = {
+        id: validEventId,
+        name: 'Festa',
+        startDate: '2026-12-01T09:00:00.000Z',
+        endDate: '2026-12-01T10:00:00.000Z',
+        allDay: false,
+      };
+
+      render(
+        <EditEventSheet event={mockEvent} open={true} onOpenChange={vi.fn()} />
+      );
+
+      const form = document.getElementById('editEvent');
+      fireEvent.submit(form);
+
+      await waitFor(() => {
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'success',
+            title: expect.stringMatching(/evento editado com sucesso/i),
+          })
+        );
+        expect(toast.add).not.toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'warning' })
         );
       });
     });

@@ -14,8 +14,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/toast';
+import { useShopContext } from '@/contexts/shop';
 import EventForm from '@/features/events/components/event-form';
 import { useCreateEventForm } from '@/features/events/forms/hooks';
+import { isShopOwner as checkIsShopOwner } from '@/features/events/helpers/event';
 import { useGoogleCalendarSync } from '@/features/events/hooks/use-google-calendar-sync';
 
 const FORM_ID = 'createEvent';
@@ -25,11 +27,14 @@ const CreateEventDialog = ({ trigger, open, onOpenChange, initialDate }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const dialogOpen = isControlled ? open : internalOpen;
   const { isSyncEnabled } = useGoogleCalendarSync();
+  const { role, activeShop } = useShopContext();
+  const isShopOwner = checkIsShopOwner(role, activeShop);
 
   const { form, onSubmit } = useCreateEventForm({
     onSuccess: (createdEvent) => {
       handleOpenChange(false);
       if (
+        isShopOwner &&
         isSyncEnabled &&
         (!createdEvent?.googleEventId || createdEvent?.syncError)
       ) {

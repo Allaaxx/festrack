@@ -67,6 +67,7 @@ The confidential identity proofs supplied by a user to authenticate against the 
 A single financial movement (earning, expense, or investment) associated with a user and optionally tied to a specific calendar event.
 
 - **Types:** Categorized strictly as `EARNING` (Receita), `EXPENSE` (Despesa), or `INVESTMENT` (Investimento).
+- **Date Semantics:** Recorded against a pure civil calendar date (`YYYY-MM-DD`) representing the financial competence day, independent of time-of-day or timezone offsets.
 - **Event Association:** When tied to an Event, the transaction belongs to that event's financial ledger unconditionally, regardless of whether the transaction date falls within the event's start and end dates (e.g., advance purchases or post-event expenses).
 
 ---
@@ -84,6 +85,8 @@ The aggregate financial management domain encompassing overall balance metrics, 
 
 A scheduled occasion or budget bucket (e.g., travel, wedding, party) with start and end dates used to group related financial transactions.
 
+- **Authorship:** Every event is attributed to the Shop Member (Author) who created it, preserving visibility across collaborative shops.
+- **External Calendar Sync:** Calendar synchronization for a Shop is centralized on the Shop `OWNER`'s connected Google Calendar account, regardless of which Shop Member creates, updates, or removes the event.
 - **Financial Scope:** Acts as an aggregate financial container. Transactions linked to an event are grouped by event identity rather than restricted to its active calendar timeframe.
 
 ---
@@ -216,8 +219,9 @@ An immutable ledger entry recording a discrete change or adjustment in a product
 A visual classification label or category assigned to an Event to organize, filter, and color-code scheduled occasions on the calendar.
 
 - **Attributes:** Unique identifier or key (`value`), display title (`label`), and visual accent color (`dotClass` / `color`).
-- **Defaults:** Standard built-in classifications include Família (`family`), Negócios (`business`), Pessoal (`personal`), Feriado (`holiday`), and Outros (`etc`).
-- **Customization:** Shop members can dynamically create new custom tags or remove non-default tags within their workspace.
+- **Origin:** Não existem etiquetas padrão ou de sistema. Toda etiqueta é criada sob demanda por um membro da Shop e pertence exclusivamente a ela.
+- **Optionality:** A etiqueta de um Evento é opcional. Um Evento sem etiqueta (ou cuja etiqueta foi excluída) é exibido na cor neutra padrão do calendário (rosa).
+- **Customization:** Shop members can create new tags and delete any tag within their workspace. Excluir uma etiqueta deixa seus Eventos sem etiqueta.
 - **Filtering:** Filters event visibility across all calendar views (month, week, day, year, and agenda).
 - **Avoid:** Category, EventType, Classificação, Label.
 

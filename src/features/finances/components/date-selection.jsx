@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import DatePickerWithRange from '@/components/ui/date-picker-with-range';
 import { LOCAL_STORAGE_FINANCE_FILTERS_KEY } from '@/constants/local-storage';
+import { parseDateSafely } from '@/features/finances/helpers/date';
 import useStoredSearchParams from '@/hooks/use-stored-search-params';
 
 const formatDateToQueryParam = (date) => format(date, 'yyyy-MM-dd');
@@ -27,12 +28,7 @@ const ControlledDateSelection = ({
   const selectedRange = useMemo(() => {
     const parseParam = (val) => {
       if (!val) return null;
-      if (val instanceof Date) return isValid(val) ? val : null;
-      if (typeof val === 'string' && val.length === 10) {
-        const d = new Date(val + 'T00:00:00');
-        return isValid(d) ? d : null;
-      }
-      const d = new Date(val);
+      const d = parseDateSafely(val);
       return isValid(d) ? d : null;
     };
 
