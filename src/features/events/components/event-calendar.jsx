@@ -100,7 +100,7 @@ const EventCalendar = ({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col lg:h-full lg:min-h-0 lg:overflow-hidden">
         <CalendarHeader
           view={view}
           viewTitle={viewTitle}
@@ -117,10 +117,10 @@ const EventCalendar = ({
           onSidebarDateChange={onSidebarDateChange}
           tagFilter={tagFilter}
         />
-        <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
+        <div className="flex flex-1 flex-row lg:min-h-0 lg:overflow-hidden">
           <div
             className={cn(
-              'bg-card flex min-h-0 flex-1 flex-col overflow-hidden',
+              'bg-card flex flex-1 flex-col lg:min-h-0 lg:overflow-hidden',
               className
             )}
             style={{
@@ -129,7 +129,7 @@ const EventCalendar = ({
               '--week-cells-height': `${WeekCellsHeight}px`,
             }}
           >
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex flex-1 flex-col lg:min-h-0 lg:overflow-hidden">
               {view === 'month' && (
                 <MonthView
                   currentDate={currentDate}

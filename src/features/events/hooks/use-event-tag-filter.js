@@ -1,26 +1,32 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { toast } from '@/components/ui/toast';
 import { useShopContext } from '@/contexts/shop';
 import {
   useCreateEventTag,
   useDeleteEventTag,
   useGetEventTags,
 } from '@/features/events/api/hooks';
-import {
-  DEFAULT_EVENT_TAGS,
-  SYSTEM_TAG_VALUES,
-  TAG_COLOR_PALETTE,
-} from '@/features/events/constants';
+import { TAG_COLOR_PALETTE } from '@/features/events/constants';
 
 const EMPTY_EVENTS = [];
 
-function readStoredTags(storageKey) {
-  try {
-    const stored = localStorage.getItem(storageKey);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
+/**
+ * Picks the first free color from TAG_COLOR_PALETTE not currently used by existing tags.
+ * If all colors are in use, repeats from the beginning of the palette.
+ *
+ * @param {Array<Object>} existingTags Array of tag option objects
+ * @returns {string} Tailwind background color class
+ */
+export function getNextTagColor(existingTags = []) {
+  const usedColors = new Set(
+    existingTags.map((opt) => opt.dotClass || opt.color).filter(Boolean)
+  );
+  const freeColor = TAG_COLOR_PALETTE.find((color) => !usedColors.has(color));
+  if (freeColor) {
+    return freeColor;
   }
+  return TAG_COLOR_PALETTE[existingTags.length % TAG_COLOR_PALETTE.length];
 }
 
 function readStoredFilters(storageKey) {
@@ -42,7 +48,7 @@ function readStoredFilters(storageKey) {
 }
 
 /**
- * Deep hook for Event Tag lifecycle management, storage persistence, and calendar event filtering.
+ * Deep hook for Event Tag lifecycle management, server-driven tags, and calendar event filtering.
  *
  * @param {Array<Object>|Object} [eventsOrOptions=[]] List of calendar events or an options bag.
  * @param {Object} [maybeOptions={}] Additional options such as explicit shopId.
@@ -63,39 +69,21 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
   const shopId =
     options.shopId !== undefined ? options.shopId : shopContext?.activeShop?.id;
 
-  const tagsStorageKey = shopId
-    ? `festrack:${shopId}:event_tags`
-    : 'festrack:event_tags';
   const filtersStorageKey = shopId
     ? `festrack:${shopId}:event_tag_filters`
     : 'festrack:event_tag_filters';
 
-  const [prevStorageKey, setPrevStorageKey] = useState(tagsStorageKey);
-  const [customTagOptions, setCustomTagOptions] = useState(() =>
-    readStoredTags(tagsStorageKey)
-  );
-
+  const [prevFiltersStorageKey, setPrevFiltersStorageKey] =
+    useState(filtersStorageKey);
   const [filterState, setFilterState] = useState(() =>
     readStoredFilters(filtersStorageKey)
   );
 
   // Synchronize state during render when shop/storage key changes
-  if (prevStorageKey !== tagsStorageKey) {
-    setPrevStorageKey(tagsStorageKey);
-    setCustomTagOptions(readStoredTags(tagsStorageKey));
+  if (prevFiltersStorageKey !== filtersStorageKey) {
+    setPrevFiltersStorageKey(filtersStorageKey);
     setFilterState(readStoredFilters(filtersStorageKey));
   }
-
-  const persistTags = useCallback(
-    (tags) => {
-      try {
-        localStorage.setItem(tagsStorageKey, JSON.stringify(tags));
-      } catch (err) {
-        void err;
-      }
-    },
-    [tagsStorageKey]
-  );
 
   const persistFilters = useCallback(
     (filters) => {
@@ -113,17 +101,17 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
   const deleteTagMutation = useDeleteEventTag();
 
   const allTagOptions = useMemo(() => {
-    if (serverTags && serverTags.length > 0) {
-      return serverTags.map((t) => ({
+    const rawTags = options.serverTags || options.tagOptions || serverTags;
+    if (Array.isArray(rawTags) && rawTags.length > 0) {
+      return rawTags.map((t) => ({
         id: t.id,
         value: t.slug || t.value,
         label: t.name || t.label,
         dotClass: t.color || t.dotClass,
-        isSystem: t.is_system ?? t.isSystem,
       }));
     }
-    return [...DEFAULT_EVENT_TAGS, ...customTagOptions];
-  }, [serverTags, customTagOptions]);
+    return [];
+  }, [options.serverTags, options.tagOptions, serverTags]);
 
   const showAllTags = filterState.showAllTags;
   const selectedTags = filterState.selectedTags;
@@ -184,7 +172,7 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
   );
 
   const handleAddTagOption = useCallback(
-    (name) => {
+    async (name) => {
       if (typeof name !== 'string') return;
       const trimmed = name.trim();
       if (!trimmed) return;
@@ -192,37 +180,51 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
       if (
         allTagOptions.some(
           (opt) =>
-            opt.value.toLowerCase() === value.toLowerCase() ||
+            opt.value?.toLowerCase() === value.toLowerCase() ||
             (opt.label && opt.label.toLowerCase() === trimmed.toLowerCase())
         )
       ) {
         return;
       }
 
-      const color =
-        TAG_COLOR_PALETTE[customTagOptions.length % TAG_COLOR_PALETTE.length];
-      const newOption = { value, label: trimmed, dotClass: color };
+      const color = getNextTagColor(allTagOptions);
 
-      setCustomTagOptions((prev) => {
-        const next = [...prev, newOption];
-        persistTags(next);
-        return next;
-      });
-
-      createTagMutation?.mutate?.({
-        name: trimmed,
-        color,
-        slug: value,
-        ...(shopId ? { shopId } : {}),
-      });
+      try {
+        let result;
+        if (typeof createTagMutation?.mutateAsync === 'function') {
+          result = await createTagMutation.mutateAsync({
+            name: trimmed,
+            color,
+            slug: value,
+            ...(shopId ? { shopId } : {}),
+          });
+        } else if (typeof createTagMutation?.mutate === 'function') {
+          result = await new Promise((resolve, reject) => {
+            createTagMutation.mutate(
+              {
+                name: trimmed,
+                color,
+                slug: value,
+                ...(shopId ? { shopId } : {}),
+              },
+              {
+                onSuccess: resolve,
+                onError: reject,
+              }
+            );
+          });
+        }
+        return result;
+      } catch (err) {
+        void err;
+        toast.add({
+          type: 'error',
+          title: 'Erro ao criar etiqueta',
+          description: 'Não foi possível criar a etiqueta. Tente novamente.',
+        });
+      }
     },
-    [
-      allTagOptions,
-      customTagOptions.length,
-      persistTags,
-      createTagMutation,
-      shopId,
-    ]
+    [allTagOptions, createTagMutation, shopId]
   );
 
   const handleRemoveTagOption = useCallback(
@@ -230,25 +232,12 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
       const targetTag = allTagOptions.find(
         (opt) => opt.value === value || (id && opt.id === id)
       );
-      const isSystem =
-        Boolean(targetTag?.isSystem) || SYSTEM_TAG_VALUES.includes(value);
-
-      if (isSystem) {
-        return;
-      }
-
-      setCustomTagOptions((prev) => {
-        const next = prev.filter(
-          (opt) => opt.value !== value && (!id || opt.id !== id)
-        );
-        persistTags(next);
-        return next;
-      });
 
       setFilterState((prev) => {
-        const nextSelected = prev.selectedTags.filter((v) => v !== value);
+        const tagValue = targetTag?.value || value;
+        const nextSelected = prev.selectedTags.filter((v) => v !== tagValue);
         const remainingOptions = allTagOptions.filter(
-          (opt) => opt.value !== value && (!id || opt.id !== id)
+          (opt) => opt.value !== tagValue && (!id || opt.id !== id)
         );
         const shouldResetShowAll =
           nextSelected.length === 0 ||
@@ -271,7 +260,7 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
         });
       }
     },
-    [allTagOptions, persistTags, persistFilters, deleteTagMutation, shopId]
+    [allTagOptions, persistFilters, deleteTagMutation, shopId]
   );
 
   const filteredEvents = useMemo(() => {
