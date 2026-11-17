@@ -149,43 +149,59 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
     expect(screen.queryByTestId('month-event-2')).not.toBeInTheDocument();
   });
 
-  it('forwards tagFilterProps and tagFilter package to CalendarHeader and EventsSidebar', async () => {
+  it('forwards cohesive tagFilter package to CalendarHeader and EventsSidebar without prop-drilling 16 attributes (#138)', async () => {
     const { CalendarHeader } = await import('@/features/events/components/calendar-header');
     const { EventsSidebar } = await import('..');
 
     render(<EventCalendar events={sampleEvents} />);
 
-    // Verify CalendarHeader received tag filter props including tagFilter package and aliases
+    // Verify CalendarHeader received only the cohesive tagFilter package and calendar props
     expect(CalendarHeader).toHaveBeenCalledWith(
       expect.objectContaining({
-        showAllTags: false,
-        selectedTags: ['family'],
-        tagOptions: mockTagFilterResult.tagOptions,
-        onSetShowAllTags: mockTagFilterResult.onSetShowAllTags,
-        onToggleTagFilter: mockTagFilterResult.onToggleTagFilter,
-        onAddTagOption: mockTagFilterResult.onAddTagOption,
-        onRemoveTagOption: mockTagFilterResult.onRemoveTagOption,
-        showAllTypes: false,
-        selectedTypes: ['family'],
-        eventTypeOptions: mockTagFilterResult.tagOptions,
-        onSetShowAllTypes: mockTagFilterResult.onSetShowAllTags,
-        onToggleTypeFilter: mockTagFilterResult.onToggleTagFilter,
-        onAddEventTypeOption: mockTagFilterResult.onAddTagOption,
-        onRemoveEventTypeOption: mockTagFilterResult.onRemoveTagOption,
         tagFilter: mockTagFilterResult.tagFilter,
       }),
       undefined
     );
 
-    // Verify EventsSidebar received tag filter props
+    const headerProps = CalendarHeader.mock.calls[0][0];
+    expect(headerProps.showAllTags).toBeUndefined();
+    expect(headerProps.selectedTags).toBeUndefined();
+    expect(headerProps.tagOptions).toBeUndefined();
+    expect(headerProps.onSetShowAllTags).toBeUndefined();
+    expect(headerProps.onToggleTagFilter).toBeUndefined();
+    expect(headerProps.onAddTagOption).toBeUndefined();
+    expect(headerProps.onRemoveTagOption).toBeUndefined();
+    expect(headerProps.showAllTypes).toBeUndefined();
+    expect(headerProps.selectedTypes).toBeUndefined();
+    expect(headerProps.eventTypeOptions).toBeUndefined();
+    expect(headerProps.onSetShowAllTypes).toBeUndefined();
+    expect(headerProps.onToggleTypeFilter).toBeUndefined();
+    expect(headerProps.onAddEventTypeOption).toBeUndefined();
+    expect(headerProps.onRemoveEventTypeOption).toBeUndefined();
+
+    // Verify EventsSidebar received only the cohesive tagFilter package and calendar props
     expect(EventsSidebar).toHaveBeenCalledWith(
       expect.objectContaining({
-        showAllTags: false,
-        selectedTags: ['family'],
         tagFilter: mockTagFilterResult.tagFilter,
       }),
       undefined
     );
+
+    const sidebarProps = EventsSidebar.mock.calls[0][0];
+    expect(sidebarProps.showAllTags).toBeUndefined();
+    expect(sidebarProps.selectedTags).toBeUndefined();
+    expect(sidebarProps.tagOptions).toBeUndefined();
+    expect(sidebarProps.onSetShowAllTags).toBeUndefined();
+    expect(sidebarProps.onToggleTagFilter).toBeUndefined();
+    expect(sidebarProps.onAddTagOption).toBeUndefined();
+    expect(sidebarProps.onRemoveTagOption).toBeUndefined();
+    expect(sidebarProps.showAllTypes).toBeUndefined();
+    expect(sidebarProps.selectedTypes).toBeUndefined();
+    expect(sidebarProps.eventTypeOptions).toBeUndefined();
+    expect(sidebarProps.onSetShowAllTypes).toBeUndefined();
+    expect(sidebarProps.onToggleTypeFilter).toBeUndefined();
+    expect(sidebarProps.onAddEventTypeOption).toBeUndefined();
+    expect(sidebarProps.onRemoveEventTypeOption).toBeUndefined();
   });
 
   it('supports switching calendar views and feeding filtered events to WeekView, DayView, YearView, and AgendaView', () => {

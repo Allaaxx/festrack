@@ -5,7 +5,16 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 import { EventsSidebarContent } from './events-sidebar-content';
 
-export function EventsSidebarSheet(props) {
+export function EventsSidebarSheet({
+  events,
+  currentDate,
+  onDateChange,
+  sidebarDate,
+  onSidebarDateChange,
+  onEventCreate,
+  tagFilter,
+  ...rest
+}) {
   return (
     <Sheet>
       <SheetTrigger
@@ -24,7 +33,16 @@ export function EventsSidebarSheet(props) {
         className="w-80 p-0 sm:max-w-sm"
         showCloseButton={false}
       >
-        <EventsSidebarContent {...props} />
+        <EventsSidebarContent
+          events={events}
+          currentDate={currentDate}
+          onDateChange={onDateChange}
+          sidebarDate={sidebarDate}
+          onSidebarDateChange={onSidebarDateChange}
+          onEventCreate={onEventCreate}
+          tagFilter={tagFilter}
+          {...rest}
+        />
       </SheetContent>
     </Sheet>
   );

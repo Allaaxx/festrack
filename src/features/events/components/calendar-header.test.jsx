@@ -69,4 +69,21 @@ describe('CalendarHeader Component', () => {
       })
     ).not.toBeInTheDocument();
   });
+
+  it('accepts cohesive tagFilter prop without requiring legacy tag props (#138)', () => {
+    const mockTagFilter = {
+      showAllTags: true,
+      selectedTags: [],
+      tagOptions: [],
+      onSetShowAllTags: vi.fn(),
+      onToggleTagFilter: vi.fn(),
+      onAddTagOption: vi.fn(),
+      onRemoveTagOption: vi.fn(),
+    };
+
+    render(<CalendarHeader {...defaultProps} tagFilter={mockTagFilter} />);
+
+    // EventsSidebarSheet renders the mobile/tablet Mini button
+    expect(screen.getByRole('button', { name: /mini/i })).toBeInTheDocument();
+  });
 });

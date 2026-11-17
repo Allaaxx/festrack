@@ -199,4 +199,64 @@ describe('EventTagFilterDropdown (#132)', () => {
     await user.click(todasOption);
     expect(onSetShowAllTags).toHaveBeenCalledWith(true);
   });
+
+  describe('Cohesive tagFilter prop (#138)', () => {
+    it('accepts cohesive tagFilter prop and triggers handlers', async () => {
+      const user = userEvent.setup();
+      const onSetShowAllTags = vi.fn();
+      const onToggleTagFilter = vi.fn();
+      const onAddTagOption = vi.fn();
+      const onRemoveTagOption = vi.fn();
+
+      const tagFilter = {
+        showAllTags: false,
+        selectedTags: ['family'],
+        tagOptions: [
+          ...DEFAULT_EVENT_TAGS,
+          {
+            value: 'custom-pack',
+            label: 'Custom Pack',
+            dotClass: 'bg-indigo-400',
+            isSystem: false,
+          },
+        ],
+        onSetShowAllTags,
+        onToggleTagFilter,
+        onAddTagOption,
+        onRemoveTagOption,
+      };
+
+      render(<EventTagFilterDropdown tagFilter={tagFilter} />);
+
+      await user.click(
+        screen.getByRole('button', { name: /filtro de etiquetas/i })
+      );
+
+      // Verify custom tag from tagFilter is present
+      expect(await screen.findByText('Custom Pack')).toBeInTheDocument();
+
+      // Click Todas
+      await user.click(screen.getByText('Todas'));
+      expect(onSetShowAllTags).toHaveBeenCalledWith(true);
+
+      // Toggle a tag
+      await user.click(screen.getByText('Negócios'));
+      expect(onToggleTagFilter).toHaveBeenCalledWith('business', true);
+
+      // Add tag
+      const input = screen.getByPlaceholderText('Nova etiqueta...');
+      await user.type(input, 'Academia');
+      await user.click(
+        screen.getByRole('button', { name: /adicionar etiqueta/i })
+      );
+      expect(onAddTagOption).toHaveBeenCalledWith('Academia');
+
+      // Remove tag
+      const removeBtn = screen.getByRole('button', {
+        name: /remover etiqueta custom pack/i,
+      });
+      await user.click(removeBtn);
+      expect(onRemoveTagOption).toHaveBeenCalledWith('custom-pack', undefined);
+    });
+  });
 });

@@ -73,25 +73,6 @@ const EventCalendar = ({
 
   const tagFilter = useEventTagFilter(events);
 
-  const tagFilterProps = {
-    showAllTags: tagFilter.showAllTags,
-    selectedTags: tagFilter.selectedTags,
-    tagOptions: tagFilter.tagOptions,
-    onSetShowAllTags: tagFilter.onSetShowAllTags,
-    onToggleTagFilter: tagFilter.onToggleTagFilter,
-    onAddTagOption: tagFilter.onAddTagOption,
-    onRemoveTagOption: tagFilter.onRemoveTagOption,
-    // Backward-compatibility aliases
-    showAllTypes: tagFilter.showAllTags,
-    selectedTypes: tagFilter.selectedTags,
-    eventTypeOptions: tagFilter.tagOptions,
-    onSetShowAllTypes: tagFilter.onSetShowAllTags,
-    onToggleTypeFilter: tagFilter.onToggleTagFilter,
-    onAddEventTypeOption: tagFilter.onAddTagOption,
-    onRemoveEventTypeOption: tagFilter.onRemoveTagOption,
-    tagFilter: tagFilter.tagFilter,
-  };
-
   const {
     calendarEvents,
     activeEvent,
@@ -134,7 +115,7 @@ const EventCalendar = ({
           onDateChange={onDateChange}
           sidebarDate={sidebarDate}
           onSidebarDateChange={onSidebarDateChange}
-          {...tagFilterProps}
+          tagFilter={tagFilter.tagFilter}
         />
         <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
           <div
@@ -203,7 +184,7 @@ const EventCalendar = ({
             onSidebarDateChange={onSidebarDateChange}
             events={calendarEvents}
             onEventCreate={onEventCreate}
-            {...tagFilterProps}
+            tagFilter={tagFilter.tagFilter}
           />
         </div>
       </div>

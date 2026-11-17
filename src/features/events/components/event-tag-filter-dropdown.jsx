@@ -19,6 +19,7 @@ import { DEFAULT_EVENT_TAGS, SYSTEM_TAG_VALUES } from '../constants';
 export { DEFAULT_EVENT_TAGS, SYSTEM_TAG_VALUES };
 
 export function EventTagFilterDropdown({
+  tagFilter,
   showAllTags,
   selectedTags,
   tagOptions,
@@ -35,14 +36,50 @@ export function EventTagFilterDropdown({
   onAddEventTypeOption,
   onRemoveEventTypeOption,
 }) {
-  const isShowAll = showAllTags ?? showAllTypes ?? true;
-  const currentSelectedTags = selectedTags ?? selectedTypes ?? [];
+  const isShowAll =
+    tagFilter?.showAllTags ??
+    tagFilter?.showAllTypes ??
+    showAllTags ??
+    showAllTypes ??
+    true;
+
+  const currentSelectedTags =
+    tagFilter?.selectedTags ??
+    tagFilter?.selectedTypes ??
+    selectedTags ??
+    selectedTypes ??
+    [];
+
   const currentTagOptions =
-    tagOptions ?? eventTypeOptions ?? DEFAULT_EVENT_TAGS;
-  const handleSetShowAll = onSetShowAllTags ?? onSetShowAllTypes;
-  const handleToggle = onToggleTagFilter ?? onToggleTypeFilter;
-  const handleAdd = onAddTagOption ?? onAddEventTypeOption;
-  const handleRemove = onRemoveTagOption ?? onRemoveEventTypeOption;
+    tagFilter?.tagOptions ??
+    tagFilter?.eventTypeOptions ??
+    tagOptions ??
+    eventTypeOptions ??
+    DEFAULT_EVENT_TAGS;
+
+  const handleSetShowAll =
+    tagFilter?.onSetShowAllTags ??
+    tagFilter?.onSetShowAllTypes ??
+    onSetShowAllTags ??
+    onSetShowAllTypes;
+
+  const handleToggle =
+    tagFilter?.onToggleTagFilter ??
+    tagFilter?.onToggleTypeFilter ??
+    onToggleTagFilter ??
+    onToggleTypeFilter;
+
+  const handleAdd =
+    tagFilter?.onAddTagOption ??
+    tagFilter?.onAddEventTypeOption ??
+    onAddTagOption ??
+    onAddEventTypeOption;
+
+  const handleRemove =
+    tagFilter?.onRemoveTagOption ??
+    tagFilter?.onRemoveEventTypeOption ??
+    onRemoveTagOption ??
+    onRemoveEventTypeOption;
 
   const [newFilterName, setNewFilterName] = useState('');
 

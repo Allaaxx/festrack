@@ -31,21 +31,7 @@ export function CalendarHeader({
   onDateChange,
   sidebarDate,
   onSidebarDateChange,
-  showAllTags,
-  selectedTags,
-  tagOptions,
-  onSetShowAllTags,
-  onToggleTagFilter,
-  onAddTagOption,
-  onRemoveTagOption,
-  // Backward-compatibility aliases
-  showAllTypes,
-  selectedTypes,
-  eventTypeOptions,
-  onSetShowAllTypes,
-  onToggleTypeFilter,
-  onAddEventTypeOption,
-  onRemoveEventTypeOption,
+  tagFilter,
 }) {
   return (
     <div className="bg-card z-20 flex shrink-0 flex-col border-b">
@@ -68,13 +54,7 @@ export function CalendarHeader({
               sidebarDate={sidebarDate}
               onSidebarDateChange={onSidebarDateChange}
               onEventCreate={onEventCreate}
-              showAllTags={showAllTags ?? showAllTypes}
-              selectedTags={selectedTags ?? selectedTypes}
-              tagOptions={tagOptions ?? eventTypeOptions}
-              onSetShowAllTags={onSetShowAllTags ?? onSetShowAllTypes}
-              onToggleTagFilter={onToggleTagFilter ?? onToggleTypeFilter}
-              onAddTagOption={onAddTagOption ?? onAddEventTypeOption}
-              onRemoveTagOption={onRemoveTagOption ?? onRemoveEventTypeOption}
+              tagFilter={tagFilter}
             />
           </div>
           <div className="flex items-center gap-1">
