@@ -9,16 +9,16 @@ import {
 
 describe('EventTagFilterDropdown (#132)', () => {
   const defaultProps = {
-    showAllTypes: true,
-    selectedTypes: [],
-    eventTypeOptions: [
+    showAllTags: true,
+    selectedTags: [],
+    tagOptions: [
       ...DEFAULT_EVENT_TAGS,
       { value: 'custom-tag', label: 'Custom Tag', dotClass: 'bg-indigo-400' },
     ],
-    onSetShowAllTypes: vi.fn(),
-    onToggleTypeFilter: vi.fn(),
-    onAddEventTypeOption: vi.fn(),
-    onRemoveEventTypeOption: vi.fn(),
+    onSetShowAllTags: vi.fn(),
+    onToggleTagFilter: vi.fn(),
+    onAddTagOption: vi.fn(),
+    onRemoveTagOption: vi.fn(),
   };
 
   beforeEach(() => {
@@ -46,9 +46,9 @@ describe('EventTagFilterDropdown (#132)', () => {
     expect(screen.getByText('Custom Tag')).toBeInTheDocument();
   });
 
-  it('invokes onSetShowAllTypes when clicking Todas', async () => {
+  it('invokes onSetShowAllTags when clicking Todas', async () => {
     const user = userEvent.setup();
-    render(<EventTagFilterDropdown {...defaultProps} showAllTypes={false} />);
+    render(<EventTagFilterDropdown {...defaultProps} showAllTags={false} />);
 
     await user.click(
       screen.getByRole('button', { name: /filtro de etiquetas/i })
@@ -56,16 +56,16 @@ describe('EventTagFilterDropdown (#132)', () => {
     const todasOption = await screen.findByText('Todas');
     await user.click(todasOption);
 
-    expect(defaultProps.onSetShowAllTypes).toHaveBeenCalledWith(true);
+    expect(defaultProps.onSetShowAllTags).toHaveBeenCalledWith(true);
   });
 
-  it('invokes onToggleTypeFilter when selecting a tag option', async () => {
+  it('invokes onToggleTagFilter when selecting a tag option', async () => {
     const user = userEvent.setup();
     render(
       <EventTagFilterDropdown
         {...defaultProps}
-        showAllTypes={false}
-        selectedTypes={['family']}
+        showAllTags={false}
+        selectedTags={['family']}
       />
     );
 
@@ -75,7 +75,7 @@ describe('EventTagFilterDropdown (#132)', () => {
     const negocioOption = await screen.findByText('Negócios');
     await user.click(negocioOption);
 
-    expect(defaultProps.onToggleTypeFilter).toHaveBeenCalledWith(
+    expect(defaultProps.onToggleTagFilter).toHaveBeenCalledWith(
       'business',
       true
     );
@@ -95,10 +95,10 @@ describe('EventTagFilterDropdown (#132)', () => {
     const addBtn = screen.getByRole('button', { name: /adicionar etiqueta/i });
     await user.click(addBtn);
 
-    expect(defaultProps.onAddEventTypeOption).toHaveBeenCalledWith('Viagens');
+    expect(defaultProps.onAddTagOption).toHaveBeenCalledWith('Viagens');
   });
 
-  it('renders trash button only for non-default tags and invokes onRemoveEventTypeOption', async () => {
+  it('renders trash button only for non-default tags and invokes onRemoveTagOption', async () => {
     const user = userEvent.setup();
     render(<EventTagFilterDropdown {...defaultProps} />);
 
@@ -117,7 +117,7 @@ describe('EventTagFilterDropdown (#132)', () => {
     ).not.toBeInTheDocument();
 
     await user.click(removeBtn);
-    expect(defaultProps.onRemoveEventTypeOption).toHaveBeenCalledWith(
+    expect(defaultProps.onRemoveTagOption).toHaveBeenCalledWith(
       'custom-tag',
       undefined
     );
@@ -198,5 +198,173 @@ describe('EventTagFilterDropdown (#132)', () => {
     const todasOption = screen.getByText('Todas');
     await user.click(todasOption);
     expect(onSetShowAllTags).toHaveBeenCalledWith(true);
+  });
+
+  describe('Cohesive tagFilter prop (#138)', () => {
+    it('accepts cohesive tagFilter prop and triggers handlers', async () => {
+      const user = userEvent.setup();
+      const onSetShowAllTags = vi.fn();
+      const onToggleTagFilter = vi.fn();
+      const onAddTagOption = vi.fn();
+      const onRemoveTagOption = vi.fn();
+
+      const tagFilter = {
+        showAllTags: false,
+        selectedTags: ['family'],
+        tagOptions: [
+          ...DEFAULT_EVENT_TAGS,
+          {
+            value: 'custom-pack',
+            label: 'Custom Pack',
+            dotClass: 'bg-indigo-400',
+            isSystem: false,
+          },
+        ],
+        onSetShowAllTags,
+        onToggleTagFilter,
+        onAddTagOption,
+        onRemoveTagOption,
+      };
+
+      render(<EventTagFilterDropdown tagFilter={tagFilter} />);
+
+      await user.click(
+        screen.getByRole('button', { name: /filtro de etiquetas/i })
+      );
+
+      // Verify custom tag from tagFilter is present
+      expect(await screen.findByText('Custom Pack')).toBeInTheDocument();
+
+      // Click Todas
+      await user.click(screen.getByText('Todas'));
+      expect(onSetShowAllTags).toHaveBeenCalledWith(true);
+
+      // Toggle a tag
+      await user.click(screen.getByText('Negócios'));
+      expect(onToggleTagFilter).toHaveBeenCalledWith('business', true);
+
+      // Add tag
+      const input = screen.getByPlaceholderText('Nova etiqueta...');
+      await user.type(input, 'Academia');
+      await user.click(
+        screen.getByRole('button', { name: /adicionar etiqueta/i })
+      );
+      expect(onAddTagOption).toHaveBeenCalledWith('Academia');
+
+      // Remove tag
+      const removeBtn = screen.getByRole('button', {
+        name: /remover etiqueta custom pack/i,
+      });
+      await user.click(removeBtn);
+      expect(onRemoveTagOption).toHaveBeenCalledWith('custom-pack', undefined);
+    });
+
+    it('accepts concise action names (setShowAll, toggleTag, addTag, removeTag) in tagFilter prop (#135)', async () => {
+      const user = userEvent.setup();
+      const setShowAll = vi.fn();
+      const toggleTag = vi.fn();
+      const addTag = vi.fn();
+      const removeTag = vi.fn();
+
+      const tagFilter = {
+        showAllTags: false,
+        selectedTags: ['family'],
+        tagOptions: [
+          ...DEFAULT_EVENT_TAGS,
+          {
+            value: 'custom-concise',
+            label: 'Custom Concise',
+            dotClass: 'bg-indigo-400',
+            isSystem: false,
+          },
+        ],
+        setShowAll,
+        toggleTag,
+        addTag,
+        removeTag,
+      };
+
+      render(<EventTagFilterDropdown tagFilter={tagFilter} />);
+
+      await user.click(
+        screen.getByRole('button', { name: /filtro de etiquetas/i })
+      );
+
+      // Wait for menu to open and click Todas
+      const todasOption = await screen.findByText('Todas');
+      await user.click(todasOption);
+      expect(setShowAll).toHaveBeenCalledWith(true);
+
+      // Toggle tag invokes toggleTag
+      await user.click(screen.getByText('Negócios'));
+      expect(toggleTag).toHaveBeenCalledWith('business', true);
+
+      // Add tag invokes addTag
+      const input = screen.getByPlaceholderText('Nova etiqueta...');
+      await user.type(input, 'Workshop');
+      await user.click(
+        screen.getByRole('button', { name: /adicionar etiqueta/i })
+      );
+      expect(addTag).toHaveBeenCalledWith('Workshop');
+
+      // Remove tag invokes removeTag
+      const removeBtn = screen.getByRole('button', {
+        name: /remover etiqueta custom concise/i,
+      });
+      await user.click(removeBtn);
+      expect(removeTag).toHaveBeenCalledWith('custom-concise', undefined);
+    });
+
+    it('accepts direct concise action props on EventTagFilterDropdown', async () => {
+      const user = userEvent.setup();
+      const setShowAll = vi.fn();
+      const toggleTag = vi.fn();
+      const addTag = vi.fn();
+      const removeTag = vi.fn();
+
+      render(
+        <EventTagFilterDropdown
+          showAllTags={false}
+          selectedTags={['family']}
+          tagOptions={[
+            ...DEFAULT_EVENT_TAGS,
+            {
+              value: 'custom-direct',
+              label: 'Custom Direct',
+              dotClass: 'bg-indigo-400',
+              isSystem: false,
+            },
+          ]}
+          setShowAll={setShowAll}
+          toggleTag={toggleTag}
+          addTag={addTag}
+          removeTag={removeTag}
+        />
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: /filtro de etiquetas/i })
+      );
+
+      const todasOption = await screen.findByText('Todas');
+      await user.click(todasOption);
+      expect(setShowAll).toHaveBeenCalledWith(true);
+
+      await user.click(screen.getByText('Negócios'));
+      expect(toggleTag).toHaveBeenCalledWith('business', true);
+
+      const input = screen.getByPlaceholderText('Nova etiqueta...');
+      await user.type(input, 'Festival');
+      await user.click(
+        screen.getByRole('button', { name: /adicionar etiqueta/i })
+      );
+      expect(addTag).toHaveBeenCalledWith('Festival');
+
+      const removeBtn = screen.getByRole('button', {
+        name: /remover etiqueta custom direct/i,
+      });
+      await user.click(removeBtn);
+      expect(removeTag).toHaveBeenCalledWith('custom-direct', undefined);
+    });
   });
 });

@@ -20,21 +20,8 @@ export function EventsSidebarContent({
   onSidebarDateChange,
   events = [],
   onEventCreate,
-  showAllTags,
-  selectedTags,
-  tagOptions,
-  onSetShowAllTags,
-  onToggleTagFilter,
-  onAddTagOption,
-  onRemoveTagOption,
-  // Backward-compatibility aliases
-  showAllTypes,
-  selectedTypes,
-  eventTypeOptions,
-  onSetShowAllTypes,
-  onToggleTypeFilter,
-  onAddEventTypeOption,
-  onRemoveEventTypeOption,
+  tagFilter,
+  ...legacyProps
 }) {
   const {
     dotsByDate,
@@ -171,15 +158,7 @@ export function EventsSidebarContent({
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2 border-t p-4">
-        <EventTagFilterDropdown
-          showAllTags={showAllTags ?? showAllTypes}
-          selectedTags={selectedTags ?? selectedTypes}
-          tagOptions={tagOptions ?? eventTypeOptions}
-          onSetShowAllTags={onSetShowAllTags ?? onSetShowAllTypes}
-          onToggleTagFilter={onToggleTagFilter ?? onToggleTypeFilter}
-          onAddTagOption={onAddTagOption ?? onAddEventTypeOption}
-          onRemoveTagOption={onRemoveTagOption ?? onRemoveEventTypeOption}
-        />
+        <EventTagFilterDropdown tagFilter={tagFilter} {...legacyProps} />
         <Button
           className="flex-1"
           size="default"
