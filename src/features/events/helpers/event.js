@@ -294,7 +294,7 @@ export const normalizeEventAuthor = (event, fallbackUser = null) => {
       event?.user_id ??
       event?.rawEvent?.user_id;
 
-    if (!createdByUserId || createdByUserId === fallbackUser.id) {
+    if (createdByUserId && createdByUserId === fallbackUser.id) {
       return normalizeEventAuthor(fallbackUser);
     }
   }

@@ -88,6 +88,55 @@ describe('normalizeEventAuthor', () => {
     expect(result.initials).toBe('AR');
     expect(result.hasAuthor).toBe(true);
   });
+
+  it('returns "Membro" fallback when createdByUserId is null even if fallbackUser is provided', () => {
+    const mockUser = {
+      id: 'usr-123',
+      name: 'Allan Rodrigues',
+      image: 'https://example.com/allan.png',
+    };
+
+    const result = normalizeEventAuthor(
+      { createdByUserId: null, author: null },
+      mockUser
+    );
+    expect(result).toEqual({
+      name: 'Membro',
+      email: '',
+      avatar: null,
+      initials: '—',
+      hasAuthor: false,
+    });
+  });
+
+  it('prefers API author object over fallbackUser even when another member created the event', () => {
+    const mockUser = {
+      id: 'usr-123',
+      name: 'Allan Rodrigues',
+    };
+
+    const result = normalizeEventAuthor(
+      {
+        createdByUserId: 'usr-other',
+        author: {
+          id: 'usr-other',
+          name: '',
+          first_name: 'João',
+          last_name: 'Souza',
+          email: 'joao@example.com',
+          image: null,
+        },
+      },
+      mockUser
+    );
+    expect(result).toEqual({
+      name: 'João Souza',
+      email: 'joao@example.com',
+      avatar: null,
+      initials: 'JS',
+      hasAuthor: true,
+    });
+  });
 });
 
 describe('mapEventToCalendarItem', () => {

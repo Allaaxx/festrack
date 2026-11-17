@@ -336,4 +336,39 @@ describe('EventService', () => {
       expect(result).toEqual(deletedTag);
     });
   });
+
+  describe('author preservation', () => {
+    it('preserves author object from API on getAll and getById', async () => {
+      const apiAuthor = {
+        id: 'user-owner',
+        name: 'Maria Silva',
+        first_name: 'Maria',
+        last_name: 'Silva',
+        email: 'maria@example.com',
+        image: 'https://example.com/maria.png',
+      };
+
+      const rawEvent = {
+        id: 'ev-auth-1',
+        shop_id: 'shop-10',
+        created_by_user_id: 'user-owner',
+        name: 'Workshop',
+        description: null,
+        start_date: '2026-11-01T10:00:00.000Z',
+        end_date: '2026-11-01T12:00:00.000Z',
+        author: apiAuthor,
+      };
+
+      protectedApi.get.mockResolvedValueOnce({ data: [rawEvent] });
+      const list = await EventService.getAll({ shopId: 'shop-10' });
+      expect(list[0].author).toEqual(apiAuthor);
+
+      protectedApi.get.mockResolvedValueOnce({ data: rawEvent });
+      const single = await EventService.getById({
+        shopId: 'shop-10',
+        id: 'ev-auth-1',
+      });
+      expect(single.author).toEqual(apiAuthor);
+    });
+  });
 });
