@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { mapEventToCalendarItem, normalizeEventAuthor } from './event';
+import {
+  formatEventDateToApi,
+  mapEventToCalendarItem,
+  normalizeEventAuthor,
+} from './event';
 
 describe('normalizeEventAuthor', () => {
   it('returns default fallback when event and user have no author data', () => {
@@ -107,5 +111,45 @@ describe('mapEventToCalendarItem', () => {
     expect(item.description).toBe('Planejamento estratégico e metas');
     expect(item.author).toEqual({ name: 'Diretoria' });
     expect(item.rawEvent).toBe(rawEvent);
+  });
+});
+
+describe('formatEventDateToApi', () => {
+  it('formats a timed event with explicit local timezone offset instead of .000Z', () => {
+    const result = formatEventDateToApi('2026-10-20', 'start', false, '14:00');
+
+    expect(result).not.toContain('.000Z');
+    expect(result).toMatch(/^2026-10-20T14:00:00([+-]\d{2}:\d{2}|Z)$/);
+
+    const parsed = new Date(result);
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(9);
+    expect(parsed.getDate()).toBe(20);
+    expect(parsed.getHours()).toBe(14);
+    expect(parsed.getMinutes()).toBe(0);
+  });
+
+  it('formats all-day start and end dates with explicit local timezone offset', () => {
+    const start = formatEventDateToApi('2026-10-20', 'start', true);
+    const end = formatEventDateToApi('2026-10-20', 'end', true);
+
+    expect(start).not.toContain('.000Z');
+    expect(end).not.toContain('.000Z');
+    expect(start).toMatch(/^2026-10-20T00:00:00([+-]\d{2}:\d{2}|Z)$/);
+    expect(end).toMatch(/^2026-10-20T23:59:59([+-]\d{2}:\d{2}|Z)$/);
+  });
+
+  it('extracts hours and minutes from a Date instance when timeStr is omitted', () => {
+    const localDate = new Date(2026, 9, 20, 16, 30, 0);
+    const result = formatEventDateToApi(localDate, 'start', false);
+
+    expect(result).not.toContain('.000Z');
+    expect(result).toMatch(/^2026-10-20T16:30:00([+-]\d{2}:\d{2}|Z)$/);
+  });
+
+  it('returns empty string for empty or invalid date values', () => {
+    expect(formatEventDateToApi(null)).toBe('');
+    expect(formatEventDateToApi('')).toBe('');
+    expect(formatEventDateToApi('invalid-date')).toBe('');
   });
 });
