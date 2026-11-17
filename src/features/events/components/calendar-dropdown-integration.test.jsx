@@ -202,7 +202,7 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
     ).toBeInTheDocument();
   });
 
-  it('limits upcoming events list height to prevent infinite page expansion (max-h-72 and scrollable)', () => {
+  it('limits upcoming events list height to prevent infinite page expansion (max-h-48 and scrollable)', () => {
     const { getByTestId } = render(
       <MemoryRouter>
         <EventsSidebarContent
@@ -218,6 +218,6 @@ describe('Calendar Event Dropdown Menu Integration across surfaces', () => {
 
     const scrollArea = getByTestId('upcoming-events-scroll-area');
     expect(scrollArea).toBeInTheDocument();
-    expect(scrollArea).toHaveClass('max-h-72');
+    expect(scrollArea).toHaveClass('max-h-48');
   });
 });

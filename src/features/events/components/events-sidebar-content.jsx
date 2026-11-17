@@ -125,7 +125,7 @@ export function EventsSidebarContent({
 
       {/* UP NEXT List */}
       <ScrollArea
-        className="relative max-h-72 min-h-0 flex-1 px-4"
+        className="relative max-h-48 min-h-0 flex-1 px-4"
         data-testid="upcoming-events-scroll-area"
       >
         <div className="flex flex-col gap-2 pb-4">
