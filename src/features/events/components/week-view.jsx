@@ -36,7 +36,7 @@ export function WeekView({
       data-slot="week-view"
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     >
-      <div className="bg-background border-border/70 z-10 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
+      <div className="bg-card border-border/70 z-10 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
         <div className="text-muted-foreground/70 py-2 text-center text-sm">
           <span className="max-[479px]:sr-only">{format(new Date(), 'O')}</span>
         </div>
@@ -130,7 +130,7 @@ export function WeekView({
                 className="border-border/70 relative min-h-(--week-cells-height) border-b last:border-b-0"
               >
                 {index > 0 && (
-                  <span className="bg-background text-muted-foreground/70 absolute -top-3 left-0 flex h-6 w-16 max-w-full items-center justify-end pe-1 text-[10px] sm:pe-4 sm:text-xs">
+                  <span className="bg-card text-muted-foreground/70 absolute -top-3 left-0 flex h-6 w-16 max-w-full items-center justify-end pe-1 text-[10px] sm:pe-4 sm:text-xs">
                     {format(hour, 'HH:mm')}
                   </span>
                 )}

@@ -53,21 +53,23 @@ const EventPage = () => {
   }
 
   return (
-    <div className="flex h-[calc(100dvh-var(--header-height,3.5rem)-5.5rem)] min-h-[640px] flex-1 flex-col overflow-hidden">
-      <div className="bg-card relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border shadow-xs">
-        <EventCalendar
-          events={events}
-          view={currentView}
-          onViewChange={handlers.handleViewChange}
-          currentDate={currentDate}
-          onDateChange={handlers.handleDateChange}
-          sidebarDate={sidebarDate}
-          onSidebarDateChange={handlers.handleSidebarDateChange}
-          onEventCreate={handlers.handleEventCreate}
-          onEventSelect={handlers.handleEventSelect}
-          onEventUpdate={handlers.handleEventUpdate}
-          className="h-full rounded-none border-0 shadow-none"
-        />
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="bg-card absolute inset-0 flex flex-row overflow-hidden rounded-lg border">
+        <div className="bg-card flex min-w-0 flex-1 flex-col">
+          <EventCalendar
+            events={events}
+            view={currentView}
+            onViewChange={handlers.handleViewChange}
+            currentDate={currentDate}
+            onDateChange={handlers.handleDateChange}
+            sidebarDate={sidebarDate}
+            onSidebarDateChange={handlers.handleSidebarDateChange}
+            onEventCreate={handlers.handleEventCreate}
+            onEventSelect={handlers.handleEventSelect}
+            onEventUpdate={handlers.handleEventUpdate}
+            className="rounded-none border-0 shadow-none"
+          />
+        </div>
       </div>
 
       <CreateEventDialog
