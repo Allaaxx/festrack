@@ -1,6 +1,26 @@
+import { format, isValid } from 'date-fns';
 import queryString from 'query-string';
 
 import protectedApi from '@/lib/axios';
+
+const formatTransactionDate = (date) => {
+  if (!date) return date;
+  if (date instanceof Date) {
+    return isValid(date) ? format(date, 'yyyy-MM-dd') : date;
+  }
+  if (typeof date === 'string') {
+    const trimmed = date.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T00:00:00(?:\.000)?Z?$/.test(trimmed)) {
+      return trimmed.slice(0, 10);
+    }
+    const parsed = new Date(trimmed);
+    return isValid(parsed) ? format(parsed, 'yyyy-MM-dd') : trimmed;
+  }
+  return date;
+};
 
 export const TransactionService = {
   /**
@@ -19,7 +39,7 @@ export const TransactionService = {
       {
         name: input.name,
         amount: input.amount,
-        date: input.date,
+        date: formatTransactionDate(input.date),
         type: input.type,
         event_id: input.eventId,
       }
@@ -65,7 +85,7 @@ export const TransactionService = {
       {
         name: input.name,
         amount: input.amount,
-        date: input.date,
+        date: formatTransactionDate(input.date),
         type: input.type,
         event_id: input.eventId,
       }

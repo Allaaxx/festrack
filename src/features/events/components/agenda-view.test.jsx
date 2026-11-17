@@ -3,6 +3,21 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AgendaView from '@/features/events/components/agenda-view';
+import { EventItem } from '@/features/events/components/event-item';
+import { mapEventToCalendarItem } from '@/features/events/helpers/event';
+
+vi.mock('@/contexts/auth', () => ({
+  useAuthContext: () => ({
+    user: {
+      id: 'user-logged-in',
+      name: 'Usuário Logado',
+      first_name: 'Usuário',
+      last_name: 'Logado',
+      email: 'logado@example.com',
+      image: null,
+    },
+  }),
+}));
 
 describe('AgendaView (#131)', () => {
   const today = new Date();
@@ -115,5 +130,81 @@ describe('AgendaView (#131)', () => {
     expect(
       screen.getByText('Alinhamento de design tokens')
     ).toBeInTheDocument();
+  });
+
+  it('displays creator avatar initials and full name when event is created by another Shop Member (#147)', () => {
+    const memberEvent = mapEventToCalendarItem({
+      id: 'ev-member-1',
+      name: 'Evento de Outro Membro',
+      description: 'Detalhes do evento',
+      createdByUserId: 'user-other',
+      author: {
+        id: 'user-other',
+        name: 'Maria Clara',
+        first_name: 'Maria',
+        last_name: 'Clara',
+        email: 'maria@example.com',
+        image: null,
+      },
+      startDate: today,
+      endDate: new Date(today.getTime() + 3600000),
+      allDay: false,
+    });
+
+    render(<AgendaView currentDate={today} events={[memberEvent]} />);
+
+    expect(screen.getByText('Evento de Outro Membro')).toBeInTheDocument();
+    expect(screen.getByText('Maria Clara')).toBeInTheDocument();
+    expect(screen.getByText('MC')).toBeInTheDocument();
+  });
+
+  it('renders "Membro" fallback when created_by_user_id is null even when a user is logged in (#147)', () => {
+    const orphanEvent = mapEventToCalendarItem({
+      id: 'ev-orphan-1',
+      name: 'Evento Sem Autor',
+      description: null,
+      createdByUserId: null,
+      author: null,
+      startDate: today,
+      endDate: new Date(today.getTime() + 3600000),
+      allDay: false,
+    });
+
+    render(<AgendaView currentDate={today} events={[orphanEvent]} />);
+
+    expect(screen.getByText('Evento Sem Autor')).toBeInTheDocument();
+    expect(screen.getByText('Membro')).toBeInTheDocument();
+    expect(screen.queryByText('Usuário Logado')).not.toBeInTheDocument();
+  });
+
+  it('does NOT render author name in month, week, or day views (#147)', () => {
+    const calendarItem = mapEventToCalendarItem({
+      id: 'ev-other-views',
+      name: 'Reunião Mensal',
+      description: null,
+      createdByUserId: 'user-other',
+      author: {
+        id: 'user-other',
+        name: 'Carlos Drummond',
+        first_name: 'Carlos',
+        last_name: 'Drummond',
+        email: 'carlos@example.com',
+        image: null,
+      },
+      startDate: today,
+      endDate: new Date(today.getTime() + 3600000),
+      allDay: false,
+    });
+
+    const { rerender } = render(
+      <EventItem event={calendarItem} view="month" />
+    );
+    expect(screen.queryByText('Carlos Drummond')).not.toBeInTheDocument();
+
+    rerender(<EventItem event={calendarItem} view="week" />);
+    expect(screen.queryByText('Carlos Drummond')).not.toBeInTheDocument();
+
+    rerender(<EventItem event={calendarItem} view="day" />);
+    expect(screen.queryByText('Carlos Drummond')).not.toBeInTheDocument();
   });
 });

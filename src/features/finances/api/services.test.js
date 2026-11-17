@@ -114,6 +114,26 @@ describe('TransactionService', () => {
       );
       expect(result).toEqual(mockCreated);
     });
+
+    it('formats a Date instance as local yyyy-MM-dd string instead of UTC ISO timestamp', async () => {
+      protectedApi.post.mockResolvedValue({ data: { id: 'tx-late' } });
+      const lateEveningLocal = new Date(2026, 10, 17, 22, 59, 0);
+
+      await TransactionService.create({
+        shopId: 'shop-1',
+        name: 'Compra Noturna',
+        amount: 99,
+        date: lateEveningLocal,
+        type: 'EXPENSE',
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-1/transactions',
+        expect.objectContaining({
+          date: '2026-11-17',
+        })
+      );
+    });
   });
 
   describe('update', () => {
@@ -142,6 +162,27 @@ describe('TransactionService', () => {
         }
       );
       expect(result).toEqual(mockUpdated);
+    });
+
+    it('formats a Date instance as local yyyy-MM-dd string on update', async () => {
+      protectedApi.patch.mockResolvedValue({ data: { id: 'tx-1' } });
+      const lateEveningLocal = new Date(2026, 10, 17, 22, 59, 0);
+
+      await TransactionService.update({
+        shopId: 'shop-1',
+        id: 'tx-1',
+        name: 'Compra Noturna',
+        amount: 99,
+        date: lateEveningLocal,
+        type: 'EXPENSE',
+      });
+
+      expect(protectedApi.patch).toHaveBeenCalledWith(
+        '/shops/shop-1/transactions/tx-1',
+        expect.objectContaining({
+          date: '2026-11-17',
+        })
+      );
     });
   });
 
