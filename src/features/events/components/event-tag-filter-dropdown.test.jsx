@@ -123,9 +123,10 @@ describe('EventTagFilterDropdown (#132)', () => {
     );
   });
 
-  it('renders trash button as a separate sibling to prevent overlapping checkbox selection', async () => {
+  it('renders trash button inside the tag row to the left of the checkmark indicator (#144)', async () => {
     const user = userEvent.setup();
     const onRemoveTagOption = vi.fn();
+    const onToggleTagFilter = vi.fn();
 
     render(
       <EventTagFilterDropdown
@@ -140,6 +141,7 @@ describe('EventTagFilterDropdown (#132)', () => {
           },
         ]}
         onRemoveTagOption={onRemoveTagOption}
+        onToggleTagFilter={onToggleTagFilter}
       />
     );
 
@@ -154,11 +156,22 @@ describe('EventTagFilterDropdown (#132)', () => {
       name: /custom tag/i,
     });
 
-    // Trash button is not a descendant of the checkbox item (prevents overlap & misclick)
-    expect(checkboxItem).not.toContainElement(removeBtn);
+    // Trash button is inside the tag row
+    expect(checkboxItem).toContainElement(removeBtn);
 
+    // Trash button is positioned to the left of the checkmark indicator
+    const indicator = checkboxItem.querySelector(
+      '[data-slot="tag-picker-indicator"]'
+    );
+    expect(indicator).toBeInTheDocument();
+    expect(removeBtn.compareDocumentPosition(indicator)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+
+    // Clicking trash invokes onRemoveTagOption without toggling checkbox
     await user.click(removeBtn);
     expect(onRemoveTagOption).toHaveBeenCalledWith('custom-tag', 'tag-123');
+    expect(onToggleTagFilter).not.toHaveBeenCalled();
   });
 
   it('supports canonical domain naming props (tagOptions, onToggleTagFilter, etc.)', async () => {

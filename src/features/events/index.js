@@ -18,6 +18,7 @@ export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
 export { default as MetricAreaCard } from './components/metric-area-card';
 export { default as StatCards } from './components/stat-cards';
+export { default as TagPicker } from './components/tag-picker';
 export { default as TotalRevenueCard } from './components/total-revenue-card';
 export { default as YearView } from './components/year-view';
 
