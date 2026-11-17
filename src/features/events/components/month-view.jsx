@@ -104,7 +104,10 @@ export function MonthView({
   } = useMonthView({ currentDate, onEventSelect, onEventCreate });
 
   return (
-    <div data-slot="month-view" className="flex min-h-0 flex-1 flex-col">
+    <div
+      data-slot="month-view"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+    >
       <div className="bg-background border-border/70 grid shrink-0 grid-cols-7 border-b">
         {weekdays.map((day) => (
           <div
@@ -116,7 +119,7 @@ export function MonthView({
           </div>
         ))}
       </div>
-      <div className="grid min-h-0 flex-1 auto-rows-fr">
+      <div className="grid min-h-0 flex-1 auto-rows-fr overflow-y-auto">
         {weeks.map((week, weekIndex) => (
           <div
             key={`week-${weekIndex}`}
@@ -216,10 +219,7 @@ export function MonthView({
                             </div>
                             <div className="space-y-1">
                               {sortEvents(allEvents).map((event) => (
-                                <EventDropdownMenu
-                                  key={event.id}
-                                  event={event}
-                                >
+                                <EventDropdownMenu key={event.id} event={event}>
                                   <EventItem
                                     event={event}
                                     view="month"

@@ -113,7 +113,7 @@ export function EventTagFilterDropdown({
                   onCheckedChange={(checked) =>
                     handleToggle?.(opt.value, Boolean(checked))
                   }
-                  className="flex-1 pr-6"
+                  className="flex-1 pr-2"
                 >
                   <span
                     className={cn('size-2 shrink-0 rounded-full', opt.dotClass)}

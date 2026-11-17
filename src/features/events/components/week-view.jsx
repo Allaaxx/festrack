@@ -32,8 +32,11 @@ export function WeekView({
   } = useWeekView({ currentDate, events, onEventSelect });
 
   return (
-    <div data-slot="week-view" className="flex min-h-0 flex-1 flex-col">
-      <div className="bg-background border-border/70 sticky top-14 z-30 grid shrink-0 grid-cols-8 rounded-t-lg border-b sm:top-16">
+    <div
+      data-slot="week-view"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+    >
+      <div className="bg-background border-border/70 z-10 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
         <div className="text-muted-foreground/70 py-2 text-center text-sm">
           <span className="max-[479px]:sr-only">{format(new Date(), 'O')}</span>
         </div>

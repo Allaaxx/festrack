@@ -48,8 +48,8 @@ export function CalendarHeader({
   onRemoveEventTypeOption,
 }) {
   return (
-    <div className="flex flex-col">
-      <div className="sm:p-4h-14 sticky flex flex-wrap items-center justify-between gap-2 border-b p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
+    <div className="bg-background z-20 flex shrink-0 flex-col border-b">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
         {/* Left Side: Today & Navigation */}
         <div className="flex w-full flex-row-reverse items-center justify-between gap-2 sm:w-fit sm:flex-row sm:gap-4">
           <div className="flex space-x-2">

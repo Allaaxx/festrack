@@ -311,91 +311,93 @@ const EventCalendar = ({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <CalendarHeader
-        view={view}
-        viewTitle={viewTitle}
-        viewLabels={viewLabels}
-        onViewChange={handleViewChange}
-        onEventCreate={onEventCreate}
-        onToday={goToToday}
-        onPrevious={goToPrevious}
-        onNext={goToNext}
-        events={calendarEvents}
-        currentDate={currentDate}
-        onDateChange={onDateChange}
-        sidebarDate={sidebarDate}
-        onSidebarDateChange={onSidebarDateChange}
-        {...tagFilterProps}
-      />
-      <div className="flex min-h-0 flex-1 flex-row">
-        <div
-          className={cn(
-            'bg-card flex min-h-0 flex-1 flex-col rounded-lg border',
-            className
-          )}
-          style={{
-            '--event-height': `${EventHeight}px`,
-            '--event-gap': `${EventGap}px`,
-            '--week-cells-height': `${WeekCellsHeight}px`,
-          }}
-        >
-          <div className="flex min-h-0 flex-1 flex-col">
-            {view === 'month' && (
-              <MonthView
-                currentDate={currentDate}
-                events={calendarEvents}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-              />
-            )}
-            {view === 'week' && (
-              <WeekView
-                currentDate={currentDate}
-                events={calendarEvents}
-                dragOverSlot={dragOverSlot}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-                onEventResize={handleEventResize}
-                onEventResizeEnd={handleEventCommit}
-              />
-            )}
-            {view === 'day' && (
-              <DayView
-                currentDate={currentDate}
-                events={calendarEvents}
-                dragOverSlot={dragOverSlot}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-                onEventResize={handleEventResize}
-                onEventResizeEnd={handleEventCommit}
-              />
-            )}
-            {view === 'year' && (
-              <YearView
-                currentDate={currentDate}
-                events={calendarEvents}
-                onEventSelect={onEventSelect}
-                onEventCreate={onEventCreate}
-              />
-            )}
-            {view === 'agenda' && (
-              <AgendaView
-                currentDate={currentDate}
-                events={calendarEvents}
-                onEventSelect={onEventSelect}
-              />
-            )}
-          </div>
-        </div>
-        <EventsSidebar
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+        <CalendarHeader
+          view={view}
+          viewTitle={viewTitle}
+          viewLabels={viewLabels}
+          onViewChange={handleViewChange}
+          onEventCreate={onEventCreate}
+          onToday={goToToday}
+          onPrevious={goToPrevious}
+          onNext={goToNext}
+          events={calendarEvents}
           currentDate={currentDate}
           onDateChange={onDateChange}
           sidebarDate={sidebarDate}
           onSidebarDateChange={onSidebarDateChange}
-          events={calendarEvents}
-          onEventCreate={onEventCreate}
           {...tagFilterProps}
         />
+        <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
+          <div
+            className={cn(
+              'bg-card flex min-h-0 flex-1 flex-col overflow-hidden',
+              className
+            )}
+            style={{
+              '--event-height': `${EventHeight}px`,
+              '--event-gap': `${EventGap}px`,
+              '--week-cells-height': `${WeekCellsHeight}px`,
+            }}
+          >
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {view === 'month' && (
+                <MonthView
+                  currentDate={currentDate}
+                  events={calendarEvents}
+                  onEventSelect={onEventSelect}
+                  onEventCreate={onEventCreate}
+                />
+              )}
+              {view === 'week' && (
+                <WeekView
+                  currentDate={currentDate}
+                  events={calendarEvents}
+                  dragOverSlot={dragOverSlot}
+                  onEventSelect={onEventSelect}
+                  onEventCreate={onEventCreate}
+                  onEventResize={handleEventResize}
+                  onEventResizeEnd={handleEventCommit}
+                />
+              )}
+              {view === 'day' && (
+                <DayView
+                  currentDate={currentDate}
+                  events={calendarEvents}
+                  dragOverSlot={dragOverSlot}
+                  onEventSelect={onEventSelect}
+                  onEventCreate={onEventCreate}
+                  onEventResize={handleEventResize}
+                  onEventResizeEnd={handleEventCommit}
+                />
+              )}
+              {view === 'year' && (
+                <YearView
+                  currentDate={currentDate}
+                  events={calendarEvents}
+                  onEventSelect={onEventSelect}
+                  onEventCreate={onEventCreate}
+                />
+              )}
+              {view === 'agenda' && (
+                <AgendaView
+                  currentDate={currentDate}
+                  events={calendarEvents}
+                  onEventSelect={onEventSelect}
+                />
+              )}
+            </div>
+          </div>
+          <EventsSidebar
+            currentDate={currentDate}
+            onDateChange={onDateChange}
+            sidebarDate={sidebarDate}
+            onSidebarDateChange={onSidebarDateChange}
+            events={calendarEvents}
+            onEventCreate={onEventCreate}
+            {...tagFilterProps}
+          />
+        </div>
       </div>
       <CalendarDragOverlay
         activeEvent={activeEvent}
