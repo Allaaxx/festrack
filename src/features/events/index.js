@@ -24,21 +24,28 @@ export { default as YearView } from './components/year-view';
 // Hooks & Queries
 export {
   createEventMutationKey,
+  createEventTagMutationKey,
   deleteEventMutationKey,
+  deleteEventTagMutationKey,
   editEventMutationKey,
   getEventQueryKey,
   getEventsQueryKey,
+  getEventTagsQueryKey,
   useCreateEvent,
+  useCreateEventTag,
   useDeleteEvent,
+  useDeleteEventTag,
   useEditEvent,
   useGetEvent,
   useGetEvents,
+  useGetEventTags,
 } from './api/hooks';
 export { default as EventService } from './api/services';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';
 export { useCalendarNavigation } from './hooks/use-calendar-navigation';
 export { useEventCalendarPage } from './hooks/use-event-calendar-page';
 export { useEventResizable } from './hooks/use-event-resizable';
+export { useEventTagFilter } from './hooks/use-event-tag-filter';
 export { useGoogleCalendarSync } from './hooks/use-google-calendar-sync';
 
 // Forms
@@ -46,12 +53,15 @@ export { useCreateEventForm, useEditEventForm } from './forms/hooks';
 
 // Constants
 export {
+  DEFAULT_EVENT_TAGS,
   DefaultStartHour,
   EndHour,
   EventGap,
   EventHeight,
   MinutesPerQuarter,
   StartHour,
+  SYSTEM_TAG_VALUES,
+  TAG_COLOR_PALETTE,
   VIEW_LABELS,
   WeekCellsHeight,
 } from './constants';

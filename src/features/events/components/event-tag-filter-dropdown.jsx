@@ -14,21 +14,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-export const DEFAULT_EVENT_TAGS = [
-  { value: 'family', label: 'Família', dotClass: 'bg-amber-400' },
-  { value: 'business', label: 'Negócios', dotClass: 'bg-violet-400' },
-  { value: 'personal', label: 'Pessoal', dotClass: 'bg-rose-400' },
-  { value: 'holiday', label: 'Feriado', dotClass: 'bg-emerald-400' },
-  { value: 'etc', label: 'Outros', dotClass: 'bg-sky-400' },
-];
+import { DEFAULT_EVENT_TAGS, SYSTEM_TAG_VALUES } from '../constants';
 
-export const SYSTEM_TAG_VALUES = [
-  'family',
-  'business',
-  'personal',
-  'holiday',
-  'etc',
-];
+export { DEFAULT_EVENT_TAGS, SYSTEM_TAG_VALUES };
 
 export function EventTagFilterDropdown({
   showAllTags,
