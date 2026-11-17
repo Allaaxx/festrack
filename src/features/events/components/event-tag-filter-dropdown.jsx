@@ -113,14 +113,14 @@ export function EventTagFilterDropdown({
                   onCheckedChange={(checked) =>
                     handleToggle?.(opt.value, Boolean(checked))
                   }
-                  className="flex-1"
+                  className="flex-1 pr-6"
                 >
                   <span
                     className={cn('size-2 shrink-0 rounded-full', opt.dotClass)}
                   />
                   <span className="truncate">{opt.label}</span>
                 </DropdownMenuCheckboxItem>
-                {/* Trash icon to remove custom tags - separated sibling to prevent overlap */}
+                {/* Trash icon to remove custom tags - separated from checkbox to prevent overlap */}
                 {!isSystemTag && (
                   <button
                     type="button"

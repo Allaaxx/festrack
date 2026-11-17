@@ -127,15 +127,7 @@ export function EventItem({
   if (view === 'agenda') {
     const timeText = getEventTime();
     const rawDescription =
-      event.description ??
-      event.rawEvent?.description ??
-      event.details ??
-      event.rawEvent?.details ??
-      event.notes ??
-      event.rawEvent?.notes ??
-      event.desc ??
-      event.rawEvent?.desc ??
-      '';
+      event.description ?? event.rawEvent?.description ?? '';
     const descriptionText =
       typeof rawDescription === 'string' ? rawDescription.trim() : '';
 
@@ -147,7 +139,7 @@ export function EventItem({
         isLastDay={isLastDay}
         onClick={onClick}
         className={cn(
-          'h-auto w-full flex-col items-start gap-1 rounded-lg border border-current/15 p-3 text-left transition hover:border-current/30 data-past-event:no-underline sm:p-3.5',
+          'flex-col items-start gap-1 rounded-lg border border-current/15 p-3 text-left transition hover:border-current/30 sm:p-3.5',
           className
         )}
         {...props}
@@ -174,11 +166,11 @@ export function EventItem({
             </>
           )}
         </div>
-        <div className="mt-1 w-full min-w-0 text-xs leading-relaxed font-normal break-words opacity-75">
-          {descriptionText || (
-            <span className="italic opacity-60">Sem descrição</span>
-          )}
-        </div>
+        {descriptionText ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-75">
+            {descriptionText}
+          </p>
+        ) : null}
       </EventWrapper>
     );
   }
