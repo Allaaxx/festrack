@@ -223,4 +223,21 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
     rerender(<EventCalendar events={sampleEvents} view="agenda" />);
     expect(screen.getByTestId('agenda-view')).toHaveAttribute('data-event-count', '1');
   });
+
+  it('handles empty server tagOptions cleanly when shop has no tags (#142)', () => {
+    useEventTagFilter.mockReturnValue({
+      ...mockTagFilterResult,
+      tagOptions: [],
+      tagFilter: {
+        ...mockTagFilterResult.tagFilter,
+        tagOptions: [],
+      },
+    });
+
+    render(<EventCalendar events={sampleEvents} />);
+
+    expect(screen.getByTestId('calendar-header')).toBeInTheDocument();
+    expect(screen.getByTestId('events-sidebar')).toBeInTheDocument();
+    expect(screen.getByTestId('month-view')).toBeInTheDocument();
+  });
 });
