@@ -29,9 +29,12 @@ export function DayView({
   } = useDayView({ currentDate, events, onEventSelect });
 
   return (
-    <div data-slot="day-view" className="flex min-h-0 flex-1 flex-col">
+    <div
+      data-slot="day-view"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+    >
       {showAllDaySection && (
-        <div className="border-border/70 bg-muted/50 rounded-t-lg border-b">
+        <div className="border-border/70 bg-muted/50 shrink-0 rounded-t-lg border-b">
           <div className="grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]">
             <div className="relative">
               <span className="text-muted-foreground/70 absolute bottom-0 left-0 h-6 w-16 max-w-full pe-2 text-right text-[10px] sm:pe-4 sm:text-xs">
@@ -40,10 +43,7 @@ export function DayView({
             </div>
             <div className="border-border/70 relative border-r p-1 last:border-r-0">
               {allDayEvents.map((event) => (
-                <EventDropdownMenu
-                  key={`spanning-${event.id}`}
-                  event={event}
-                >
+                <EventDropdownMenu key={`spanning-${event.id}`} event={event}>
                   <EventItem
                     event={event}
                     view="month"
@@ -59,7 +59,7 @@ export function DayView({
         </div>
       )}
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="h-full min-h-0 flex-1">
         <div
           className={cn(
             'border-border/70 grid flex-1 grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]',

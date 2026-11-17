@@ -39,7 +39,7 @@ function MonthDayCell({ day, isCurrentMonth, isToday, children, onClick }) {
       data-over={isOver || undefined}
       onClick={onClick}
       className={cn(
-        'group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 flex min-h-0 flex-col overflow-visible border-r border-b px-0.5 py-1 transition-colors last:border-r-0 sm:px-1',
+        'group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 flex min-h-0 flex-col overflow-hidden border-r border-b px-0.5 py-1 transition-colors last:border-r-0 sm:px-1',
         isOver && 'bg-primary/10 ring-primary/20 ring-1'
       )}
     >
@@ -106,7 +106,7 @@ export function MonthView({
   return (
     <div
       data-slot="month-view"
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     >
       <div className="bg-background border-border/70 grid shrink-0 grid-cols-7 border-b">
         {weekdays.map((day) => (
@@ -123,7 +123,7 @@ export function MonthView({
         {weeks.map((week, weekIndex) => (
           <div
             key={`week-${weekIndex}`}
-            className="grid min-h-0 grid-cols-7 [&:last-child>*]:border-b-0"
+            className="border-border/70 grid min-h-[95px] min-w-0 grid-cols-7 border-b last:border-b-0 sm:min-h-[110px]"
           >
             {week.map((day, dayIndex) => {
               const dayEvents = getEventsForDay(events, day);
@@ -157,7 +157,7 @@ export function MonthView({
                   </div>
                   <div
                     ref={isReferenceCell ? contentRef : null}
-                    className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] flex-1 overflow-visible"
+                    className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] flex-1 space-y-1 overflow-hidden"
                   >
                     {sortEvents(allDayEvents).map((event, index) => {
                       const isFirstDay = isSameDay(day, event.start);

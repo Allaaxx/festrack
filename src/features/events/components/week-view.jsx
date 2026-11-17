@@ -34,7 +34,7 @@ export function WeekView({
   return (
     <div
       data-slot="week-view"
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     >
       <div className="bg-background border-border/70 z-10 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
         <div className="text-muted-foreground/70 py-2 text-center text-sm">
@@ -121,7 +121,7 @@ export function WeekView({
         </div>
       )}
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="h-full min-h-0 flex-1">
         <div className="grid grid-cols-8">
           <div className="border-border/70 grid auto-cols-fr border-r">
             {hours.map((hour, index) => (
