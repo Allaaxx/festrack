@@ -8,7 +8,7 @@ import { Calendar, CalendarDayButton } from '@/components/ui/calendar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-import { EVENT_STATUSES } from '../helpers/event';
+import { getEventDotColor } from '../helpers/calendar-styles';
 import { useEventsSidebar } from '../hooks/use-events-sidebar';
 import EventDropdownMenu from './event-dropdown-menu';
 import { EventTagFilterDropdown } from './event-tag-filter-dropdown';
@@ -31,6 +31,7 @@ export function EventsSidebarContent({
     getEventInitials,
   } = useEventsSidebar({
     events,
+    tagOptions: tagFilter?.tagOptions,
     onDateChange,
     sidebarDate,
     onSidebarDateChange,
@@ -117,8 +118,7 @@ export function EventsSidebarContent({
       >
         <div className="flex flex-col gap-2 pb-4">
           {upcomingEvents.map((event) => {
-            const dotColor =
-              EVENT_STATUSES[event.color]?.dotClass || 'bg-sky-400';
+            const dotColor = getEventDotColor(event, tagFilter?.tagOptions);
             const eventTime = event.allDay
               ? 'O dia todo'
               : `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`;

@@ -110,4 +110,45 @@ describe('YearView (#130)', () => {
 
     expect(onEventCreate).toHaveBeenCalledTimes(1);
   });
+
+  it('renders untagged events and orphan tags with neutral pink dot and pink event item (#145)', async () => {
+    const user = userEvent.setup();
+    const untaggedEvent = {
+      id: 'ev-pink',
+      title: 'Evento Sem Etiqueta',
+      start: new Date(2027, 0, 5, 14, 0),
+      end: new Date(2027, 0, 5, 15, 0),
+      tag: null,
+    };
+    const orphanEvent = {
+      id: 'ev-orphan',
+      title: 'Evento com Tag Órfã',
+      start: new Date(2027, 0, 8, 14, 0),
+      end: new Date(2027, 0, 8, 15, 0),
+      tag: 'deleted-tag',
+    };
+    const shopTags = [
+      { value: 'active-tag', label: 'Tag Ativa', dotClass: 'bg-indigo-400' },
+    ];
+
+    const { container } = render(
+      <YearView
+        currentDate={currentDate}
+        events={[untaggedEvent, orphanEvent]}
+        tagOptions={shopTags}
+      />
+    );
+
+    // Both untagged and orphan events should have pink indicator dots (bg-pink-400)
+    const pinkDots = container.querySelectorAll('.bg-pink-400');
+    expect(pinkDots.length).toBeGreaterThanOrEqual(2);
+
+    // Clicking day 5 opens dialog with pink EventItem
+    const day5Buttons = screen.getAllByRole('button', { name: /^5/i });
+    await user.click(day5Buttons[0]);
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    const eventItem = screen.getByText('Evento Sem Etiqueta').closest('button');
+    expect(eventItem.className).toContain('bg-pink-200/50');
+  });
 });

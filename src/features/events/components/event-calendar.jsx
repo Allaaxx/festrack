@@ -164,6 +164,7 @@ const EventCalendar = ({
                 <YearView
                   currentDate={currentDate}
                   events={calendarEvents}
+                  tagOptions={tagFilter.tagOptions}
                   onEventSelect={onEventSelect}
                   onEventCreate={onEventCreate}
                 />

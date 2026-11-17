@@ -54,6 +54,7 @@ function DraggableMonthEvent({
   isLastDay,
   spansLeft,
   spansRight,
+  tagOptions,
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `month-event-${event.id}`,
@@ -80,6 +81,7 @@ function DraggableMonthEvent({
           isLastDay={isLastDay}
           spansLeft={spansLeft}
           spansRight={spansRight}
+          tagOptions={tagOptions}
         />
       </EventDropdownMenu>
     </div>
@@ -89,6 +91,7 @@ function DraggableMonthEvent({
 export function MonthView({
   currentDate,
   events,
+  tagOptions,
   onEventSelect,
   onEventCreate,
 }) {
@@ -185,6 +188,7 @@ export function MonthView({
                             isLastDay={isLastDay}
                             spansLeft={spansLeft}
                             spansRight={spansRight}
+                            tagOptions={tagOptions}
                           />
                         </div>
                       );
@@ -225,6 +229,7 @@ export function MonthView({
                                     view="month"
                                     isFirstDay={isSameDay(day, event.start)}
                                     isLastDay={isSameDay(day, event.end)}
+                                    tagOptions={tagOptions}
                                   />
                                 </EventDropdownMenu>
                               ))}

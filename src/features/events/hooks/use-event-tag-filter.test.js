@@ -482,27 +482,28 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       { id: '1', title: 'Almoço em Família', tag: 'family' },
       { id: '2', title: 'Reunião de Negócios', rawEvent: { tag: 'business' } },
       { id: '3', title: 'Consulta Médica', rawEvent: { category: 'personal' } },
-      { id: '4', title: 'Sem etiqueta explícita' }, // fallback to 'etc'
+      { id: '4', title: 'Sem etiqueta explícita', tag: null },
+      { id: '5', title: 'Evento com tag órfã', tag: 'deleted-tag-slug' },
     ];
 
-    it('returns all events when showAllTags is true', () => {
+    it('returns all events (including untagged and orphan) when showAllTags is true (#145)', () => {
       const { result } = renderHook(() => useEventTagFilter(mockEvents));
 
-      expect(result.current.filteredEvents).toHaveLength(4);
+      expect(result.current.filteredEvents).toHaveLength(5);
       expect(result.current.filteredEvents).toEqual(mockEvents);
     });
 
-    it('filters events matching the selectedTags', () => {
+    it('filters events matching the selectedTags without fallback to etc (#145)', () => {
       const { result } = renderHook(() => useEventTagFilter(mockEvents));
 
       act(() => {
         result.current.toggleTagFilter('family', false);
       });
-      // Now all except 'family' are selected: business, personal, holiday, etc
+      // Now all except 'family' are selected: business, personal, holiday, etc.
+      // Untagged event '4' and orphan event '5' must NOT match any named tag filter.
       expect(result.current.filteredEvents.map((e) => e.id)).toEqual([
         '2',
         '3',
-        '4',
       ]);
 
       act(() => {
@@ -518,6 +519,24 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       });
 
       expect(result.current.filteredEvents.map((e) => e.id)).toEqual(['1']);
+    });
+
+    it('does not falsely match untagged or orphan events when filtering by named tags (#145)', () => {
+      const { result } = renderHook(() => useEventTagFilter(mockEvents));
+
+      act(() => {
+        result.current.setShowAllTags(false);
+      });
+      // Select only 'business'
+      act(() => {
+        DEFAULT_EVENT_TAGS.forEach((t) => {
+          if (t.value !== 'business') {
+            result.current.toggleTagFilter(t.value, false);
+          }
+        });
+      });
+
+      expect(result.current.filteredEvents.map((e) => e.id)).toEqual(['2']);
     });
   });
 

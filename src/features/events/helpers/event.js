@@ -330,6 +330,7 @@ export const mapEventToCalendarItem = (event) => {
   const start = parseEventDate(event.startDate) ?? new Date();
   const end = parseEventDate(event.endDate) ?? start;
   const status = getEventStatus(event);
+  const tag = event.tag ?? event.rawEvent?.tag ?? null;
 
   return {
     id: event.id,
@@ -344,11 +345,12 @@ export const mapEventToCalendarItem = (event) => {
       event.rawEvent?.createdByUserId ??
       event.rawEvent?.created_by_user_id ??
       null,
-    tag: event.tag ?? null,
+    tag,
     start,
     end,
     allDay: event.allDay ?? false,
-    color: status,
+    status,
+    color: tag ?? event.color ?? null,
     rawEvent: event,
   };
 };

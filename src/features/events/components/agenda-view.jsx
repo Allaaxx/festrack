@@ -14,7 +14,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { EventItem } from '@/features/events/components/event-item';
 import { cn } from '@/lib/utils';
 
-export function AgendaView({ currentDate, events = [], onEventSelect }) {
+export function AgendaView({
+  currentDate,
+  events = [],
+  tagOptions,
+  onEventSelect,
+}) {
   const AGENDA_DAYS = 30;
 
   const daysList = useMemo(() => {
@@ -101,6 +106,7 @@ export function AgendaView({ currentDate, events = [], onEventSelect }) {
                           key={ev.id}
                           event={ev}
                           view="agenda"
+                          tagOptions={tagOptions}
                           onClick={() => onEventSelect?.(ev)}
                         />
                       ))}

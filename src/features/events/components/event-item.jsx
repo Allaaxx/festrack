@@ -18,6 +18,7 @@ const formatEventTime = (date) => format(date, 'HH:mm');
 function EventWrapper({
   ref,
   event,
+  tagOptions,
   isFirstDay = true,
   isLastDay = true,
   onClick,
@@ -30,7 +31,7 @@ function EventWrapper({
       ref={ref}
       className={cn(
         'focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full text-left font-medium transition outline-none select-none focus-visible:ring-[3px] data-past-event:line-through',
-        getEventColorClasses(event.color),
+        getEventColorClasses(event, tagOptions),
         getBorderRadiusClasses(isFirstDay, isLastDay),
         className
       )}
@@ -57,6 +58,7 @@ export function EventItem({
   isOverlay = false,
   children,
   className,
+  tagOptions,
   ...props
 }) {
   const durationMinutes = useMemo(
@@ -94,6 +96,7 @@ export function EventItem({
       <EventWrapper
         ref={ref}
         event={event}
+        tagOptions={tagOptions}
         isFirstDay={isFirstDay}
         isLastDay={isLastDay}
         onClick={onClick}
@@ -135,6 +138,7 @@ export function EventItem({
       <EventWrapper
         ref={ref}
         event={event}
+        tagOptions={tagOptions}
         isFirstDay={isFirstDay}
         isLastDay={isLastDay}
         onClick={onClick}
@@ -179,6 +183,7 @@ export function EventItem({
     <EventWrapper
       ref={ref}
       event={event}
+      tagOptions={tagOptions}
       isFirstDay={isFirstDay}
       isLastDay={isLastDay}
       onClick={onClick}

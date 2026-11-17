@@ -283,11 +283,15 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
         event?.rawEvent?.tag ||
         event?.rawEvent?.category ||
         event?.event ||
-        event?.color ||
-        'etc';
+        null;
+      if (!eventTag) return false;
+      const isValidTag = allTagOptions.some(
+        (opt) => (opt.value || opt.slug || opt.id) === eventTag
+      );
+      if (!isValidTag) return false;
       return selectedTags.includes(eventTag);
     });
-  }, [events, showAllTags, selectedTags]);
+  }, [events, showAllTags, selectedTags, allTagOptions]);
 
   const tagFilter = useMemo(
     () => ({

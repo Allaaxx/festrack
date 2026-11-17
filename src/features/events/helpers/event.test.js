@@ -161,6 +161,41 @@ describe('mapEventToCalendarItem', () => {
     expect(item.author).toEqual({ name: 'Diretoria' });
     expect(item.rawEvent).toBe(rawEvent);
   });
+
+  it('sets tag to null and color to null for untagged events (#145)', () => {
+    const rawEventWithoutTag = {
+      id: 'ev-untagged',
+      name: 'Reunião Geral',
+      startDate: '2026-11-20T10:00:00',
+      endDate: '2026-11-20T11:00:00',
+    };
+
+    const item = mapEventToCalendarItem(rawEventWithoutTag);
+    expect(item.tag).toBeNull();
+    expect(item.color).toBeNull();
+
+    const rawEventWithNullTag = {
+      ...rawEventWithoutTag,
+      tag: null,
+    };
+    const itemNull = mapEventToCalendarItem(rawEventWithNullTag);
+    expect(itemNull.tag).toBeNull();
+    expect(itemNull.color).toBeNull();
+  });
+
+  it('maps tag and assigns tag to color when tag is provided (#145)', () => {
+    const rawEventWithTag = {
+      id: 'ev-tagged',
+      name: 'Workshop de Design',
+      startDate: '2026-11-20T10:00:00',
+      endDate: '2026-11-20T11:00:00',
+      tag: 'workshop',
+    };
+
+    const item = mapEventToCalendarItem(rawEventWithTag);
+    expect(item.tag).toBe('workshop');
+    expect(item.color).toBe('workshop');
+  });
 });
 
 describe('formatEventDateToApi', () => {

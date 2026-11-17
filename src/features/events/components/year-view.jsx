@@ -16,37 +16,17 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { EventItem } from '@/features/events/components/event-item';
+import { getEventDotColor } from '@/features/events/helpers/calendar-styles';
 import { cn } from '@/lib/utils';
 
 const capitalize = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
 
-const STATUS_DOT_COLORS = {
-  scheduled: 'bg-violet-500',
-  in_progress: 'bg-amber-500',
-  completed: 'bg-rose-500',
-};
-
-const TAG_DOT_COLORS = {
-  family: 'bg-amber-400',
-  business: 'bg-violet-400',
-  personal: 'bg-rose-400',
-  holiday: 'bg-emerald-400',
-  etc: 'bg-sky-400',
-};
-
-function getEventDotBg(ev) {
-  if (ev.color && STATUS_DOT_COLORS[ev.color]) {
-    return STATUS_DOT_COLORS[ev.color];
-  }
-  const tag = ev.tag || ev.event;
-  if (tag && TAG_DOT_COLORS[tag]) {
-    return TAG_DOT_COLORS[tag];
-  }
-  return 'bg-sky-400';
+function getEventDotBg(ev, tagOptions) {
+  return getEventDotColor(ev, tagOptions);
 }
 
-function MiniMonth({ monthDate, events = [], onDayClick }) {
+function MiniMonth({ monthDate, events = [], tagOptions, onDayClick }) {
   const monthStart = startOfMonth(monthDate);
   const monthEnd = endOfMonth(monthDate);
   const startDate = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -115,7 +95,7 @@ function MiniMonth({ monthDate, events = [], onDayClick }) {
                 {dayEvents.length > 0 && isCurMonth && (
                   <span className="mt-0.5 flex min-h-1 w-full items-center justify-center gap-0.5 overflow-hidden">
                     {dayEvents.slice(0, 3).map((ev, i) => {
-                      const dotBg = getEventDotBg(ev);
+                      const dotBg = getEventDotBg(ev, tagOptions);
                       return (
                         <span
                           key={i}
@@ -140,6 +120,7 @@ function MiniMonth({ monthDate, events = [], onDayClick }) {
 export function YearView({
   currentDate,
   events = [],
+  tagOptions,
   onEventSelect,
   onEventCreate,
 }) {
@@ -163,6 +144,7 @@ export function YearView({
               key={idx}
               monthDate={monthDate}
               events={events}
+              tagOptions={tagOptions}
               onDayClick={handleDayClick}
             />
           ))}
@@ -223,6 +205,7 @@ export function YearView({
                       key={ev.id}
                       event={ev}
                       view="month"
+                      tagOptions={tagOptions}
                       onClick={(clicked) => {
                         setSelectedDayInfo(null);
                         onEventSelect?.(clicked);

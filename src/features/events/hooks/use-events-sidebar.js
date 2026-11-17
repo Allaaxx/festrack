@@ -2,7 +2,7 @@ import { addDays, format, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useMemo } from 'react';
 
-import { EVENT_STATUSES } from '../helpers/event';
+import { getEventDotColor } from '../helpers/calendar-styles';
 
 const getEventInitials = (title) => {
   if (!title) return 'E';
@@ -11,6 +11,7 @@ const getEventInitials = (title) => {
 
 export function useEventsSidebar({
   events = [],
+  tagOptions,
   onDateChange,
   sidebarDate,
   onSidebarDateChange,
@@ -24,7 +25,7 @@ export function useEventsSidebar({
 
       while (current <= endDate) {
         const dateKey = format(current, 'yyyy-MM-dd');
-        const color = EVENT_STATUSES[event.color]?.dotClass || 'bg-sky-400';
+        const color = getEventDotColor(event, tagOptions);
 
         if (!map.has(dateKey)) {
           map.set(dateKey, { colors: [], moreCount: 0 });
@@ -41,7 +42,7 @@ export function useEventsSidebar({
       }
     });
     return map;
-  }, [events]);
+  }, [events, tagOptions]);
 
   const upcomingEvents = useMemo(() => {
     const today = startOfDay(new Date());

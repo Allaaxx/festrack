@@ -68,8 +68,11 @@ export {
   sortEvents,
 } from './helpers/calendar-layout';
 export {
+  DEFAULT_UNTAGGED_CALENDAR_CLASS,
+  DEFAULT_UNTAGGED_DOT_CLASS,
   getBorderRadiusClasses,
   getEventColorClasses,
+  getEventDotColor,
   getMonthViewBleedClasses,
   getMonthViewEventPaddingClasses,
 } from './helpers/calendar-styles';
