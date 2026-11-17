@@ -1,26 +1,7 @@
-import { format, isValid } from 'date-fns';
 import queryString from 'query-string';
 
+import { formatTransactionDate } from '@/features/finances/helpers/date';
 import protectedApi from '@/lib/axios';
-
-const formatTransactionDate = (date) => {
-  if (!date) return date;
-  if (date instanceof Date) {
-    return isValid(date) ? format(date, 'yyyy-MM-dd') : date;
-  }
-  if (typeof date === 'string') {
-    const trimmed = date.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      return trimmed;
-    }
-    if (/^\d{4}-\d{2}-\d{2}T00:00:00(?:\.000)?Z?$/.test(trimmed)) {
-      return trimmed.slice(0, 10);
-    }
-    const parsed = new Date(trimmed);
-    return isValid(parsed) ? format(parsed, 'yyyy-MM-dd') : trimmed;
-  }
-  return date;
-};
 
 export const TransactionService = {
   /**
@@ -57,8 +38,8 @@ export const TransactionService = {
    */
   getAll: async (input = {}) => {
     const params = {};
-    if (input?.from) params.from = input.from;
-    if (input?.to) params.to = input.to;
+    if (input?.from) params.from = formatTransactionDate(input.from);
+    if (input?.to) params.to = formatTransactionDate(input.to);
     if (input?.eventId) params.event_id = input.eventId;
 
     const query = queryString.stringify(params);
@@ -118,8 +99,12 @@ export const BalanceService = {
    */
   getBalance: async (input = {}) => {
     const queryParams = new URLSearchParams();
-    if (input?.from) queryParams.set('from', input.from);
-    if (input?.to) queryParams.set('to', input.to);
+    if (input?.from) {
+      queryParams.set('from', formatTransactionDate(input.from));
+    }
+    if (input?.to) {
+      queryParams.set('to', formatTransactionDate(input.to));
+    }
     if (input?.eventId) queryParams.set('event_id', input.eventId);
 
     const query = queryParams.toString();

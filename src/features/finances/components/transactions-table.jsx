@@ -74,9 +74,9 @@ import DeleteTransactionButton from '@/features/finances/components/delete-trans
 import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
 import transactionColumns, {
   normalizeTransactionAuthor,
-  parseDateSafely,
 } from '@/features/finances/components/transaction-columns';
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
+import { parseDateSafely } from '@/features/finances/helpers/date';
 import { formatCurrency } from '@/helpers/currency';
 import { useIsMobile } from '@/hooks/use-mobile';
 

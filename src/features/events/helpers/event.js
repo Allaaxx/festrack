@@ -352,3 +352,13 @@ export const mapEventToCalendarItem = (event) => {
     rawEvent: event,
   };
 };
+
+/**
+ * Verifica se o usuário atual possui papel de proprietário (OWNER) na loja ativa.
+ *
+ * @param {string | null | undefined} role
+ * @param {{ role?: string } | null | undefined} activeShop
+ * @returns {boolean}
+ */
+export const isShopOwner = (role, activeShop) =>
+  (role ?? activeShop?.role) === 'OWNER';

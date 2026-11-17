@@ -95,8 +95,6 @@ export const normalizeTransactionAuthor = (transaction) => {
   };
 };
 
-export { parseDateSafely };
-
 /**
  * Célula isolada de ações para uma linha de transação.
  * Renderiza o dropdown de ações e monta os modais de edição e exclusão

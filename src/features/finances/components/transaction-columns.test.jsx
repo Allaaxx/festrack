@@ -6,10 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useAuthContext } from '@/contexts/auth';
 import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
 import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
-import {
-  parseDateSafely,
-  TransactionActionsCell,
-} from '@/features/finances/components/transaction-columns';
+import { TransactionActionsCell } from '@/features/finances/components/transaction-columns';
+import { parseDateSafely } from '@/features/finances/helpers/date';
 
 vi.mock('@/contexts/auth', () => ({
   useAuthContext: vi.fn(),

@@ -86,6 +86,20 @@ describe('TransactionService', () => {
       );
       expect(result).toEqual(mockTransactions);
     });
+
+    it('formats Date and ISO string from/to parameters defensively to yyyy-MM-dd', async () => {
+      protectedApi.get.mockResolvedValue({ data: [] });
+
+      await TransactionService.getAll({
+        shopId: 'shop-1',
+        from: new Date(2026, 10, 1, 22, 30, 0),
+        to: '2026-11-30T00:00:00.000Z',
+      });
+
+      expect(protectedApi.get).toHaveBeenCalledWith(
+        '/shops/shop-1/transactions?from=2026-11-01&to=2026-11-30'
+      );
+    });
   });
 
   describe('create', () => {
@@ -239,5 +253,19 @@ describe('BalanceService', () => {
       '/shops/shop-1/balance?from=2026-01-01&to=2026-01-31&event_id=ev-99'
     );
     expect(result).toEqual(mockBalance);
+  });
+
+  it('formats Date and ISO string from/to parameters defensively to yyyy-MM-dd', async () => {
+    protectedApi.get.mockResolvedValue({ data: { balance: 0 } });
+
+    await BalanceService.getBalance({
+      shopId: 'shop-1',
+      from: new Date(2026, 10, 1, 22, 30, 0),
+      to: '2026-11-30T00:00:00.000Z',
+    });
+
+    expect(protectedApi.get).toHaveBeenCalledWith(
+      '/shops/shop-1/balance?from=2026-11-01&to=2026-11-30'
+    );
   });
 });
