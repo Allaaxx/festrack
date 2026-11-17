@@ -74,7 +74,7 @@ export const parseEventTime = (dateValue) => {
 };
 
 /**
- * Formata uma data local para o padrão ISO esperado pela API Swagger.
+ * Formata uma data local para o padrão ISO com offset explícito esperado pela API.
  * Se allDay for true, zera o horário ou coloca no final do dia.
  * Se houver timeStr ("HH:mm"), injeta ele.
  *
@@ -94,27 +94,39 @@ export const formatEventDateToApi = (
   const date =
     dateValue instanceof Date ? dateValue : parseEventDate(dateValue);
   if (!date || !isValid(date)) return '';
-  const datePart = format(date, 'yyyy-MM-dd');
 
-  if (allDay) {
-    return type === 'start'
-      ? `${datePart}T00:00:00.000Z`
-      : `${datePart}T23:59:59.000Z`;
-  }
+  let hours = type === 'start' ? 0 : 23;
+  let minutes = type === 'start' ? 0 : 59;
+  const seconds = allDay && type === 'end' ? 59 : 0;
 
-  // Se tem hora específica
-  let finalTime = timeStr;
-  if (!finalTime && dateValue instanceof Date) {
-    const hours = dateValue.getHours();
-    const minutes = dateValue.getMinutes();
-    if (hours !== 0 || minutes !== 0) {
-      finalTime = format(dateValue, 'HH:mm');
+  if (!allDay) {
+    let finalTime = timeStr;
+    if (!finalTime && dateValue instanceof Date) {
+      const dateHours = dateValue.getHours();
+      const dateMinutes = dateValue.getMinutes();
+      if (dateHours !== 0 || dateMinutes !== 0) {
+        finalTime = format(dateValue, 'HH:mm');
+      }
+    }
+    if (finalTime) {
+      const [parsedHours, parsedMinutes] = finalTime.split(':').map(Number);
+      if (!Number.isNaN(parsedHours) && !Number.isNaN(parsedMinutes)) {
+        hours = parsedHours;
+        minutes = parsedMinutes;
+      }
     }
   }
-  if (!finalTime) {
-    finalTime = type === 'start' ? '00:00' : '23:59';
-  }
-  return `${datePart}T${finalTime}:00.000Z`;
+
+  const localDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    hours,
+    minutes,
+    seconds
+  );
+
+  return format(localDate, "yyyy-MM-dd'T'HH:mm:ssXXX");
 };
 
 /**
@@ -294,7 +306,7 @@ export const normalizeEventAuthor = (event, fallbackUser = null) => {
       event?.user_id ??
       event?.rawEvent?.user_id;
 
-    if (!createdByUserId || createdByUserId === fallbackUser.id) {
+    if (createdByUserId && createdByUserId === fallbackUser.id) {
       return normalizeEventAuthor(fallbackUser);
     }
   }

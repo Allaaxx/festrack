@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { mapEventToCalendarItem, normalizeEventAuthor } from './event';
+import {
+  formatEventDateToApi,
+  mapEventToCalendarItem,
+  normalizeEventAuthor,
+} from './event';
 
 describe('normalizeEventAuthor', () => {
   it('returns default fallback when event and user have no author data', () => {
@@ -88,6 +92,55 @@ describe('normalizeEventAuthor', () => {
     expect(result.initials).toBe('AR');
     expect(result.hasAuthor).toBe(true);
   });
+
+  it('returns "Membro" fallback when createdByUserId is null even if fallbackUser is provided', () => {
+    const mockUser = {
+      id: 'usr-123',
+      name: 'Allan Rodrigues',
+      image: 'https://example.com/allan.png',
+    };
+
+    const result = normalizeEventAuthor(
+      { createdByUserId: null, author: null },
+      mockUser
+    );
+    expect(result).toEqual({
+      name: 'Membro',
+      email: '',
+      avatar: null,
+      initials: '—',
+      hasAuthor: false,
+    });
+  });
+
+  it('prefers API author object over fallbackUser even when another member created the event', () => {
+    const mockUser = {
+      id: 'usr-123',
+      name: 'Allan Rodrigues',
+    };
+
+    const result = normalizeEventAuthor(
+      {
+        createdByUserId: 'usr-other',
+        author: {
+          id: 'usr-other',
+          name: '',
+          first_name: 'João',
+          last_name: 'Souza',
+          email: 'joao@example.com',
+          image: null,
+        },
+      },
+      mockUser
+    );
+    expect(result).toEqual({
+      name: 'João Souza',
+      email: 'joao@example.com',
+      avatar: null,
+      initials: 'JS',
+      hasAuthor: true,
+    });
+  });
 });
 
 describe('mapEventToCalendarItem', () => {
@@ -107,5 +160,45 @@ describe('mapEventToCalendarItem', () => {
     expect(item.description).toBe('Planejamento estratégico e metas');
     expect(item.author).toEqual({ name: 'Diretoria' });
     expect(item.rawEvent).toBe(rawEvent);
+  });
+});
+
+describe('formatEventDateToApi', () => {
+  it('formats a timed event with explicit local timezone offset instead of .000Z', () => {
+    const result = formatEventDateToApi('2026-10-20', 'start', false, '14:00');
+
+    expect(result).not.toContain('.000Z');
+    expect(result).toMatch(/^2026-10-20T14:00:00([+-]\d{2}:\d{2}|Z)$/);
+
+    const parsed = new Date(result);
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(9);
+    expect(parsed.getDate()).toBe(20);
+    expect(parsed.getHours()).toBe(14);
+    expect(parsed.getMinutes()).toBe(0);
+  });
+
+  it('formats all-day start and end dates with explicit local timezone offset', () => {
+    const start = formatEventDateToApi('2026-10-20', 'start', true);
+    const end = formatEventDateToApi('2026-10-20', 'end', true);
+
+    expect(start).not.toContain('.000Z');
+    expect(end).not.toContain('.000Z');
+    expect(start).toMatch(/^2026-10-20T00:00:00([+-]\d{2}:\d{2}|Z)$/);
+    expect(end).toMatch(/^2026-10-20T23:59:59([+-]\d{2}:\d{2}|Z)$/);
+  });
+
+  it('extracts hours and minutes from a Date instance when timeStr is omitted', () => {
+    const localDate = new Date(2026, 9, 20, 16, 30, 0);
+    const result = formatEventDateToApi(localDate, 'start', false);
+
+    expect(result).not.toContain('.000Z');
+    expect(result).toMatch(/^2026-10-20T16:30:00([+-]\d{2}:\d{2}|Z)$/);
+  });
+
+  it('returns empty string for empty or invalid date values', () => {
+    expect(formatEventDateToApi(null)).toBe('');
+    expect(formatEventDateToApi('')).toBe('');
+    expect(formatEventDateToApi('invalid-date')).toBe('');
   });
 });
