@@ -18,6 +18,7 @@ const eventBaseSchema = z.object({
   allDay: z.boolean().default(false),
   startTime: z.string().optional(),
   endTime: z.string().optional(),
+  tag: z.string().nullable().default(null),
 });
 
 const validateEventDates = (data, ctx) => {

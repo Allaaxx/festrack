@@ -130,6 +130,64 @@ describe('EventService', () => {
       expect(result.googleEventId).toBeNull();
       expect(result.syncError).toBe(true);
     });
+
+    it('forwards tag: null in payload when event is created without a tag', async () => {
+      protectedApi.post.mockResolvedValue({
+        data: {
+          id: 'ev-no-tag',
+          shop_id: 'shop-10',
+          name: 'Evento Sem Tag',
+          tag: null,
+          start_date: '2026-12-10T14:00:00.000Z',
+          end_date: '2026-12-10T18:00:00.000Z',
+        },
+      });
+
+      await EventService.create({
+        shopId: 'shop-10',
+        name: 'Evento Sem Tag',
+        tag: null,
+        startDate: '2026-12-10',
+        endDate: '2026-12-10',
+        allDay: true,
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-10/events',
+        expect.objectContaining({
+          tag: null,
+        })
+      );
+    });
+
+    it('forwards tag slug in payload when event is created with a tag', async () => {
+      protectedApi.post.mockResolvedValue({
+        data: {
+          id: 'ev-with-tag',
+          shop_id: 'shop-10',
+          name: 'Evento Com Tag',
+          tag: 'trabalho',
+          start_date: '2026-12-10T14:00:00.000Z',
+          end_date: '2026-12-10T18:00:00.000Z',
+        },
+      });
+
+      await EventService.create({
+        shopId: 'shop-10',
+        name: 'Evento Com Tag',
+        tag: 'trabalho',
+        startDate: '2026-12-10',
+        endDate: '2026-12-10',
+        allDay: true,
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-10/events',
+        expect.objectContaining({
+          tag: 'trabalho',
+        })
+      );
+    });
   });
 
   describe('update', () => {

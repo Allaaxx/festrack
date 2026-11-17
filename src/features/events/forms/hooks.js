@@ -25,6 +25,7 @@ export const useCreateEventForm = ({ onSuccess, onError }) => {
       allDay: false,
       startTime: '09:00',
       endTime: '10:00',
+      tag: null,
     },
   });
 
@@ -57,6 +58,7 @@ const getEditEventFormDefaultValues = (event) => {
       !isAllDay && event?.startDate ? parseEventTime(event.startDate) : '09:00',
     endTime:
       !isAllDay && event?.endDate ? parseEventTime(event.endDate) : '10:00',
+    tag: event?.tag ?? null,
   };
 };
 
