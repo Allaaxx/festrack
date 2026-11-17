@@ -10,6 +10,7 @@ import {
   createTransactionFormSchema,
   editTransactionFormSchema,
 } from '@/features/finances/forms/schemas';
+import { parseDateSafely } from '@/features/finances/helpers/date';
 
 export const getDefaultTransactionValues = (initialEventId = null) => ({
   name: '',
@@ -50,10 +51,10 @@ export const useCreateTransactionForm = ({
   return { form, onSubmit };
 };
 
-const getEditTransactionFormDefaultValues = (transaction) => ({
+export const getEditTransactionFormDefaultValues = (transaction) => ({
   name: transaction?.name ?? '',
   amount: transaction?.amount ? parseFloat(transaction.amount) : 0,
-  date: transaction?.date ? new Date(transaction.date) : new Date(),
+  date: transaction?.date ? parseDateSafely(transaction.date) : new Date(),
   type: transaction?.type ?? 'EARNING',
   eventId: transaction?.event_id ?? transaction?.event?.id ?? null,
 });

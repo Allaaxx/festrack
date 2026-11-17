@@ -20,6 +20,7 @@ import {
 import DeleteTransactionButton from '@/features/finances/components/delete-transaction-button';
 import EditTransactionButton from '@/features/finances/components/edit-transaction-button';
 import TransactionTypeBadge from '@/features/finances/components/transaction-type-badge';
+import { parseDateSafely } from '@/features/finances/helpers/date';
 import { formatCurrency } from '@/helpers/currency';
 
 export const normalizeTransactionAuthor = (transaction) => {
@@ -94,17 +95,7 @@ export const normalizeTransactionAuthor = (transaction) => {
   };
 };
 
-export const parseDateSafely = (dateValue) => {
-  if (!dateValue) return new Date();
-  if (dateValue instanceof Date) return dateValue;
-  const str = String(dateValue).trim();
-  const matchDate = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (matchDate && !str.includes('T')) {
-    const [, year, month, day] = matchDate;
-    return new Date(Number(year), Number(month) - 1, Number(day));
-  }
-  return new Date(dateValue);
-};
+export { parseDateSafely };
 
 /**
  * Célula isolada de ações para uma linha de transação.
