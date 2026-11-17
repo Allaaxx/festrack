@@ -201,6 +201,114 @@ export const getEventStatusLabel = (status) => {
 };
 
 /**
+ * Normaliza o autor de um evento para exibição uniforme (nome, email, avatar, iniciais).
+ * Suporta formatos de objeto (user, creator, author) ou string direta,
+ * com fallback inteligente para o usuário autenticado caso o evento pertença a ele ou não tenha autor.
+ *
+ * @param {Object} event
+ * @param {Object} [fallbackUser]
+ * @returns {{ name: string, email: string, avatar: string | null, initials: string, hasAuthor: boolean }}
+ */
+export const normalizeEventAuthor = (event, fallbackUser = null) => {
+  const rawAuthor =
+    event?.author ??
+    event?.creator ??
+    event?.user ??
+    event?.created_by ??
+    event?.createdBy ??
+    event?.rawEvent?.author ??
+    event?.rawEvent?.creator ??
+    event?.rawEvent?.user ??
+    event?.rawEvent?.created_by ??
+    event?.rawEvent?.createdBy ??
+    event?.rawEvent?.created_by_user_name ??
+    (event?.firstName ||
+    event?.lastName ||
+    (event?.name && !event?.title && !event?.startDate) ||
+    event?.email
+      ? event
+      : null);
+
+  if (rawAuthor) {
+    if (typeof rawAuthor === 'string') {
+      const trimmed = rawAuthor.trim();
+      const parts = trimmed.split(/\s+/).filter(Boolean);
+      const initials =
+        parts.length >= 2
+          ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+          : (trimmed.slice(0, 2) || '—').toUpperCase();
+      return {
+        name: trimmed || 'Membro',
+        email: '',
+        avatar: null,
+        initials,
+        hasAuthor: Boolean(trimmed),
+      };
+    }
+
+    const firstName = String(
+      rawAuthor.firstName ?? rawAuthor.first_name ?? ''
+    ).trim();
+    const lastName = String(
+      rawAuthor.lastName ?? rawAuthor.last_name ?? ''
+    ).trim();
+    const joinedName = [firstName, lastName].filter(Boolean).join(' ').trim();
+    const rawName = String(rawAuthor.name ?? '').trim();
+    const email = String(rawAuthor.email ?? '').trim();
+    const avatar = rawAuthor.image || rawAuthor.avatar || null;
+
+    const name =
+      rawName || joinedName || (email ? email.split('@')[0] : '') || 'Membro';
+    const hasAuthor = Boolean(rawName || joinedName || email || avatar);
+
+    let initials = '—';
+    if (firstName && lastName) {
+      initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+    } else {
+      const parts = (rawName || joinedName || email.split('@')[0] || '')
+        .split(/\s+/)
+        .filter(Boolean);
+      if (parts.length >= 2) {
+        initials = `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      } else if (parts.length === 1 && parts[0]) {
+        initials = parts[0].slice(0, 2).toUpperCase();
+      }
+    }
+
+    return {
+      name,
+      email,
+      avatar,
+      initials,
+      hasAuthor,
+    };
+  }
+
+  // Se houver fallbackUser disponível
+  if (fallbackUser) {
+    const createdByUserId =
+      event?.createdByUserId ??
+      event?.created_by_user_id ??
+      event?.rawEvent?.createdByUserId ??
+      event?.rawEvent?.created_by_user_id ??
+      event?.user_id ??
+      event?.rawEvent?.user_id;
+
+    if (!createdByUserId || createdByUserId === fallbackUser.id) {
+      return normalizeEventAuthor(fallbackUser);
+    }
+  }
+
+  return {
+    name: 'Membro',
+    email: '',
+    avatar: null,
+    initials: '—',
+    hasAuthor: false,
+  };
+};
+
+/**
  * Mapeia um evento do domínio para o formato esperado pelo EventCalendar.
  *
  * @param {{ id: string, name: string, description: string | null, startDate: string | Date, endDate: string | Date, allDay?: boolean }} event
@@ -214,7 +322,17 @@ export const mapEventToCalendarItem = (event) => {
   return {
     id: event.id,
     title: event.name,
-    description: event.description,
+    description: event.description ?? event.rawEvent?.description ?? null,
+    author: event.author ?? event.creator ?? event.user ?? null,
+    creator: event.creator ?? null,
+    user: event.user ?? null,
+    createdByUserId:
+      event.createdByUserId ??
+      event.created_by_user_id ??
+      event.rawEvent?.createdByUserId ??
+      event.rawEvent?.created_by_user_id ??
+      null,
+    tag: event.tag ?? null,
     start,
     end,
     allDay: event.allDay ?? false,

@@ -104,7 +104,9 @@ const renderEventPageWithShopSwitcher = () => {
     ...render(
       <QueryClientProvider client={queryClient}>
         <ShopContextProvider>
-          <MemoryRouter initialEntries={[`/events?view=month&date=${todayStr}`]}>
+          <MemoryRouter
+            initialEntries={[`/events?view=month&date=${todayStr}`]}
+          >
             <SidebarProvider defaultOpen={true}>
               <ShopSwitcher />
               <Routes>
@@ -223,5 +225,17 @@ describe('EventPage - Shop-Scoped Events & ShopSwitcher Integration (#83)', () =
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: ['getEvents', 'shop-1'],
     });
+  });
+
+  it('renders page container with fixed layout ensuring header and sidebar stay fixed', async () => {
+    const { container } = renderEventPageWithShopSwitcher();
+
+    await screen.findAllByText('Casamento Imperial');
+
+    const pageContainer = container.querySelector(
+      '.flex.min-h-0.flex-1.flex-col'
+    );
+    expect(pageContainer).toBeInTheDocument();
+    expect(pageContainer).not.toHaveClass('absolute');
   });
 });

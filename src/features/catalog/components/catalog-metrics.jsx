@@ -245,13 +245,19 @@ const CatalogMetrics = ({
         }
         footerIcon={
           alertsTrend >= 0 ? (
-            <TrendingUpIcon className="size-4" />
+            <TrendingUpIcon
+              className={cn('size-4', alertsCount > 0 && 'text-destructive')}
+            />
           ) : (
             <TrendingDownIcon className="size-4" />
           )
         }
         footerSubtitle="Produtos esgotados ou pacotes com gargalo"
         isLoading={isLoading}
+        className={cn(
+          alertsCount > 0 &&
+            'border-destructive/30 from-destructive/10 dark:from-destructive/15'
+        )}
       />
     </div>
   );

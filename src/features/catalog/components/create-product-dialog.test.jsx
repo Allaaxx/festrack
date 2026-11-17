@@ -156,7 +156,8 @@ describe('CreateProductDialog', () => {
     await user.type(descInput, 'Cadeira elegante para casamentos e banquetes.');
 
     const typeSelect = screen.getByLabelText(/classificação/i);
-    await user.selectOptions(typeSelect, 'rent');
+    await user.click(typeSelect);
+    await user.click(await screen.findByRole('option', { name: /^aluguel$/i }));
 
     const priceInput = screen.getByLabelText(/preço do produto/i);
     await user.type(priceInput, '18');
@@ -197,7 +198,8 @@ describe('CreateProductDialog', () => {
     expect(screen.getByLabelText(/estoque inicial/i)).toBeInTheDocument();
 
     const typeSelect = screen.getByLabelText(/classificação/i);
-    await user.selectOptions(typeSelect, 'service');
+    await user.click(typeSelect);
+    await user.click(await screen.findByRole('option', { name: /^serviço$/i }));
 
     expect(screen.queryByLabelText(/estoque inicial/i)).not.toBeInTheDocument();
   });
@@ -238,7 +240,10 @@ describe('CreateProductDialog', () => {
     await user.type(priceInput, '190');
 
     const picker = await screen.findByLabelText(/selecionar componente/i);
-    await user.selectOptions(picker, 'prod-1');
+    await user.click(picker);
+    await user.click(
+      await screen.findByRole('option', { name: /mesa rústica retangular 2m/i })
+    );
 
     const addBtn = screen.getByRole('button', {
       name: /adicionar componente/i,
@@ -252,7 +257,10 @@ describe('CreateProductDialog', () => {
       )
     ).toBeInTheDocument();
 
-    await user.selectOptions(picker, 'prod-2');
+    await user.click(picker);
+    await user.click(
+      await screen.findByRole('option', { name: /suporte para doces dourado/i })
+    );
     await user.click(addBtn);
     expect(screen.getByTestId('bundle-item-prod-2')).toBeInTheDocument();
 
@@ -310,7 +318,10 @@ describe('CreateProductDialog', () => {
       name: /adicionar componente/i,
     });
 
-    await user.selectOptions(picker, 'prod-1');
+    await user.click(picker);
+    await user.click(
+      await screen.findByRole('option', { name: /mesa rústica retangular 2m/i })
+    );
     await user.click(addBtn);
     expect(screen.getByTestId('bundle-item-prod-1')).toBeInTheDocument();
 

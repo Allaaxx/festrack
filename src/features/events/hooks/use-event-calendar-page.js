@@ -52,12 +52,14 @@ export function useEventCalendarPage() {
     {
       requiredKeys: ['view', 'date'],
       validate: (data) =>
-        ['month', 'week', 'day'].includes(data?.view) &&
+        ['month', 'week', 'day', 'year', 'agenda'].includes(data?.view) &&
         isValidDateString(data?.date),
     }
   );
 
-  const currentView = ['month', 'week', 'day'].includes(params.view)
+  const currentView = ['month', 'week', 'day', 'year', 'agenda'].includes(
+    params.view
+  )
     ? params.view
     : 'month';
 
@@ -91,7 +93,7 @@ export function useEventCalendarPage() {
   const editEventMutation = useEditEvent();
 
   const handleEventCreate = (date) => {
-    setCreateInitialDate(date instanceof Date ? date : new Date());
+    setCreateInitialDate(date instanceof Date ? date : currentDate);
     setCreateDialogOpen(true);
   };
 

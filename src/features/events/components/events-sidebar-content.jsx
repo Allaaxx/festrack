@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { EVENT_STATUSES } from '../helpers/event';
 import { useEventsSidebar } from '../hooks/use-events-sidebar';
 import EventDropdownMenu from './event-dropdown-menu';
+import { EventTagFilterDropdown } from './event-tag-filter-dropdown';
 
 export function EventsSidebarContent({
   currentDate,
@@ -19,6 +20,21 @@ export function EventsSidebarContent({
   onSidebarDateChange,
   events = [],
   onEventCreate,
+  showAllTags,
+  selectedTags,
+  tagOptions,
+  onSetShowAllTags,
+  onToggleTagFilter,
+  onAddTagOption,
+  onRemoveTagOption,
+  // Backward-compatibility aliases
+  showAllTypes,
+  selectedTypes,
+  eventTypeOptions,
+  onSetShowAllTypes,
+  onToggleTypeFilter,
+  onAddEventTypeOption,
+  onRemoveEventTypeOption,
 }) {
   const {
     dotsByDate,
@@ -108,7 +124,10 @@ export function EventsSidebarContent({
       </p>
 
       {/* UP NEXT List */}
-      <ScrollArea className="relative min-h-0 flex-1 px-4">
+      <ScrollArea
+        className="relative max-h-52 min-h-0 flex-1 px-4"
+        data-testid="upcoming-events-scroll-area"
+      >
         <div className="flex flex-col gap-2 pb-4">
           {upcomingEvents.map((event) => {
             const dotColor =
@@ -128,7 +147,9 @@ export function EventsSidebarContent({
                     aria-hidden="true"
                   />
                   <div className="min-w-0 flex-1 py-0.5">
-                    <p className="truncate text-sm font-medium">{event.title}</p>
+                    <p className="truncate text-sm font-medium">
+                      {event.title}
+                    </p>
                     <p className="text-muted-foreground text-xs">{eventTime}</p>
                   </div>
                   <Avatar className="my-auto size-6 shrink-0">
@@ -149,8 +170,21 @@ export function EventsSidebarContent({
       </ScrollArea>
 
       {/* Action Buttons */}
-      <div className="flex flex-col gap-2 border-t p-4">
-        <Button className="w-full" size="default" onClick={onEventCreate}>
+      <div className="flex items-center gap-2 border-t p-4">
+        <EventTagFilterDropdown
+          showAllTags={showAllTags ?? showAllTypes}
+          selectedTags={selectedTags ?? selectedTypes}
+          tagOptions={tagOptions ?? eventTypeOptions}
+          onSetShowAllTags={onSetShowAllTags ?? onSetShowAllTypes}
+          onToggleTagFilter={onToggleTagFilter ?? onToggleTypeFilter}
+          onAddTagOption={onAddTagOption ?? onAddEventTypeOption}
+          onRemoveTagOption={onRemoveTagOption ?? onRemoveEventTypeOption}
+        />
+        <Button
+          className="flex-1"
+          size="default"
+          onClick={() => onEventCreate(currentDate)}
+        >
           <PlusIcon className="mr-2 size-4" />
           Novo Evento
         </Button>

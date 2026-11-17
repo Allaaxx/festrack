@@ -38,7 +38,7 @@ const DashboardLayout = () => {
               <Outlet />
             </div>
             <footer>
-              <div className="text-muted-foreground flex size-full w-full max-w-11/12 items-center justify-between gap-3 px-4 py-3 max-sm:flex-col sm:gap-6 sm:px-6">
+              <div className="text-muted-foreground flex size-full w-full items-center justify-between gap-3 px-4 py-3 max-sm:flex-col sm:gap-6 sm:px-6">
                 <p className="text-sm text-balance max-sm:text-center">
                   {`©${new Date().getFullYear()}`}{' '}
                   <a href="#" className="text-primary">
@@ -46,7 +46,7 @@ const DashboardLayout = () => {
                   </a>
                   , Celebre a vida
                 </p>
-                <div className="text-muted-foreground *:hover:text-primary flex items-center gap-5">
+                <div className="text-muted-foreground *:hover:text-primary mr-0 flex items-center gap-5 sm:mr-10">
                   <a href="#" aria-label="Facebook">
                     <FacebookIcon className="size-4" />
                   </a>

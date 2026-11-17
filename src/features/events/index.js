@@ -1,4 +1,5 @@
 // Components
+export { default as AgendaView } from './components/agenda-view';
 export { default as CreateEventDialog } from './components/create-event-dialog';
 export { default as DeleteEventButton } from './components/delete-event-button';
 export { default as EditEventSheet } from './components/edit-event-sheet';
@@ -11,12 +12,14 @@ export { default as EventDropdownMenu } from './components/event-dropdown-menu';
 export { default as EventFinancialCards } from './components/event-financial-cards';
 export { default as EventForm } from './components/event-form';
 export { default as EventStatusBadge } from './components/event-status-badge';
+export { default as EventTagFilterDropdown } from './components/event-tag-filter-dropdown';
 export { default as EventTransactionsTable } from './components/event-transactions-table';
 export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
 export { default as MetricAreaCard } from './components/metric-area-card';
 export { default as StatCards } from './components/stat-cards';
 export { default as TotalRevenueCard } from './components/total-revenue-card';
+export { default as YearView } from './components/year-view';
 
 // Hooks & Queries
 export {
@@ -75,6 +78,7 @@ export {
   getEventStatus,
   getEventStatusLabel,
   mapEventToCalendarItem,
+  normalizeEventAuthor,
   parseEventDate,
 } from './helpers/event';
 export {

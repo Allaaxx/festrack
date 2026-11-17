@@ -1,6 +1,8 @@
 import { differenceInMinutes, format, isPast } from 'date-fns';
 import { useMemo } from 'react';
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuthContext } from '@/contexts/auth';
 import { cn } from '@/lib/utils';
 
 import {
@@ -9,6 +11,7 @@ import {
   getMonthViewBleedClasses,
   getMonthViewEventPaddingClasses,
 } from '../helpers/calendar-styles';
+import { normalizeEventAuthor } from '../helpers/event';
 
 const formatEventTime = (date) => format(date, 'HH:mm');
 
@@ -59,6 +62,11 @@ export function EventItem({
   const durationMinutes = useMemo(
     () => differenceInMinutes(event.end, event.start),
     [event.start, event.end]
+  );
+  const { user } = useAuthContext();
+  const author = useMemo(
+    () => normalizeEventAuthor(event, user),
+    [event, user]
   );
 
   const getEventTime = () => {
@@ -113,6 +121,57 @@ export function EventItem({
 
     return (
       <div className="relative mt-(--event-gap) w-full">{eventWrapper}</div>
+    );
+  }
+
+  if (view === 'agenda') {
+    const timeText = getEventTime();
+    const rawDescription =
+      event.description ?? event.rawEvent?.description ?? '';
+    const descriptionText =
+      typeof rawDescription === 'string' ? rawDescription.trim() : '';
+
+    return (
+      <EventWrapper
+        ref={ref}
+        event={event}
+        isFirstDay={isFirstDay}
+        isLastDay={isLastDay}
+        onClick={onClick}
+        className={cn(
+          'flex-col items-start gap-1 rounded-lg border border-current/15 p-3 text-left transition hover:border-current/30 sm:p-3.5',
+          className
+        )}
+        {...props}
+      >
+        <div className="text-sm font-semibold tracking-tight">
+          {event.title}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs font-normal opacity-85">
+          <span>{timeText}</span>
+          {(author.hasAuthor || author.name) && (
+            <>
+              <span className="opacity-40">·</span>
+              <div className="inline-flex items-center gap-1.5">
+                <Avatar className="size-5 shrink-0">
+                  {author.avatar && (
+                    <AvatarImage src={author.avatar} alt={author.name} />
+                  )}
+                  <AvatarFallback className="text-[9px]">
+                    {author.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{author.name}</span>
+              </div>
+            </>
+          )}
+        </div>
+        {descriptionText ? (
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed opacity-75">
+            {descriptionText}
+          </p>
+        ) : null}
+      </EventWrapper>
     );
   }
 

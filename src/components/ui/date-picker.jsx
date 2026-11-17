@@ -16,7 +16,11 @@ const DatePicker = ({
   value,
   onChange,
   placeholder = 'Selecione uma data',
+  defaultMonth,
 }) => {
+  const resolvedDefaultMonth =
+    value instanceof Date ? value : value ? new Date(value) : defaultMonth;
+
   return (
     <Popover>
       <PopoverTrigger
@@ -40,6 +44,7 @@ const DatePicker = ({
           mode="single"
           selected={value}
           onSelect={onChange}
+          defaultMonth={resolvedDefaultMonth}
           locale={ptBR}
         />
       </PopoverContent>

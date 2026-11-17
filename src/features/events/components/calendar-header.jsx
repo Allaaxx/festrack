@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { EventStatusFilters } from './event-status-filters';
 import { EventsSidebarSheet } from './events-sidebar-sheet';
 
 export function CalendarHeader({
@@ -32,12 +31,25 @@ export function CalendarHeader({
   onDateChange,
   sidebarDate,
   onSidebarDateChange,
-  selectedStatuses,
-  onToggleStatus,
+  showAllTags,
+  selectedTags,
+  tagOptions,
+  onSetShowAllTags,
+  onToggleTagFilter,
+  onAddTagOption,
+  onRemoveTagOption,
+  // Backward-compatibility aliases
+  showAllTypes,
+  selectedTypes,
+  eventTypeOptions,
+  onSetShowAllTypes,
+  onToggleTypeFilter,
+  onAddEventTypeOption,
+  onRemoveEventTypeOption,
 }) {
   return (
-    <div className="flex flex-col">
-      <div className="sm:p-4h-14 sticky flex flex-wrap items-center justify-between gap-2 border-b p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
+    <div className="bg-card z-20 flex shrink-0 flex-col border-b">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 p-3 px-2 sm:h-16 sm:flex-nowrap sm:px-4">
         {/* Left Side: Today & Navigation */}
         <div className="flex w-full flex-row-reverse items-center justify-between gap-2 sm:w-fit sm:flex-row sm:gap-4">
           <div className="flex space-x-2">
@@ -56,6 +68,13 @@ export function CalendarHeader({
               sidebarDate={sidebarDate}
               onSidebarDateChange={onSidebarDateChange}
               onEventCreate={onEventCreate}
+              showAllTags={showAllTags ?? showAllTypes}
+              selectedTags={selectedTags ?? selectedTypes}
+              tagOptions={tagOptions ?? eventTypeOptions}
+              onSetShowAllTags={onSetShowAllTags ?? onSetShowAllTypes}
+              onToggleTagFilter={onToggleTagFilter ?? onToggleTypeFilter}
+              onAddTagOption={onAddTagOption ?? onAddEventTypeOption}
+              onRemoveTagOption={onRemoveTagOption ?? onRemoveEventTypeOption}
             />
           </div>
           <div className="flex items-center gap-1">
@@ -114,11 +133,17 @@ export function CalendarHeader({
               <DropdownMenuItem onClick={() => onViewChange('day')}>
                 Dia <DropdownMenuShortcut>D</DropdownMenuShortcut>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('year')}>
+                Ano <DropdownMenuShortcut>A</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('agenda')}>
+                Agenda <DropdownMenuShortcut>G</DropdownMenuShortcut>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <Button
-            onClick={() => onEventCreate(new Date())}
+            onClick={() => onEventCreate(currentDate)}
             className="w-12 max-sm:h-8 sm:w-fit md:max-lg:h-8"
           >
             <PlusIcon className="h-4 w-4 sm:mr-2" />
@@ -126,12 +151,6 @@ export function CalendarHeader({
           </Button>
         </div>
       </div>
-
-      {/* Filters Bar */}
-      <EventStatusFilters
-        selectedStatuses={selectedStatuses}
-        onToggleStatus={onToggleStatus}
-      />
     </div>
   );
 }

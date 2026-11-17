@@ -1,10 +1,4 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,7 +9,6 @@ import {
   useGetEvents,
 } from '@/features/events/api/hooks';
 import EventDropdownMenu from '@/features/events/components/event-dropdown-menu';
-import { useCreateTransaction } from '@/features/finances';
 
 vi.mock('@/components/ui/toast', () => ({
   toast: {
@@ -37,10 +30,6 @@ vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: vi.fn(),
 }));
 
-vi.mock('@/features/finances/api/hooks', () => ({
-  useCreateTransaction: vi.fn(),
-}));
-
 vi.mock('@/components/ui/calendar', () => ({
   Calendar: () => <div data-testid="mock-calendar" />,
 }));
@@ -48,7 +37,6 @@ vi.mock('@/components/ui/calendar', () => ({
 describe('EventDropdownMenu', () => {
   const mockDeleteMutateAsync = vi.fn();
   const mockEditMutateAsync = vi.fn();
-  const mockCreateTransactionMutateAsync = vi.fn();
 
   const mockEvent = {
     id: 'b6f284ea-3617-48f8-8bb3-4700d6aa0967',
@@ -74,10 +62,6 @@ describe('EventDropdownMenu', () => {
     useGetEvents.mockReturnValue({
       data: [mockEvent],
       isLoading: false,
-    });
-    useCreateTransaction.mockReturnValue({
-      mutateAsync: mockCreateTransactionMutateAsync,
-      isPending: false,
     });
   });
 
@@ -106,7 +90,7 @@ describe('EventDropdownMenu', () => {
     );
   };
 
-  it('renders trigger button and opens menu with all 4 items and separator on click', async () => {
+  it('renders trigger button and opens menu with 2 items on click', async () => {
     const user = userEvent.setup();
     renderDropdown();
 
@@ -117,28 +101,27 @@ describe('EventDropdownMenu', () => {
 
     expect(
       await screen.findByRole('menuitem', {
-        name: /ver detalhes e transações/i,
+        name: /abrir evento/i,
       })
     ).toBeInTheDocument();
     expect(
       screen.getByRole('menuitem', { name: /editar evento/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('menuitem', { name: /adicionar transação/i })
-    ).toBeInTheDocument();
+      screen.queryByRole('menuitem', { name: /adicionar transação/i })
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('menuitem', { name: /excluir evento/i })
-    ).toBeInTheDocument();
-    expect(screen.getByRole('separator')).toBeInTheDocument();
+      screen.queryByRole('menuitem', { name: /excluir evento/i })
+    ).not.toBeInTheDocument();
   });
 
-  it('navigates to /events/:eventId when clicking "Ver detalhes e transações"', async () => {
+  it('navigates to /events/:eventId when clicking "Abrir evento"', async () => {
     const user = userEvent.setup();
     renderDropdown();
 
     await user.click(screen.getByTestId('event-trigger'));
     const item = await screen.findByRole('menuitem', {
-      name: /ver detalhes e transações/i,
+      name: /abrir evento/i,
     });
     await user.click(item);
 
@@ -163,58 +146,6 @@ describe('EventDropdownMenu', () => {
     });
   });
 
-  it('opens transaction creation modal with eventId pre-selected when clicking "Adicionar transação"', async () => {
-    const user = userEvent.setup();
-    renderDropdown();
-
-    await user.click(screen.getByTestId('event-trigger'));
-    const item = await screen.findByRole('menuitem', {
-      name: /adicionar transação/i,
-    });
-    await user.click(item);
-
-    await waitFor(() => {
-      const dialog = screen.getByRole('dialog');
-      expect(dialog).toBeInTheDocument();
-      expect(
-        within(dialog).getByText('Adicionar Transação')
-      ).toBeInTheDocument();
-      // Should show the pre-selected event in the combobox button and be disabled/locked
-      const combobox = within(dialog).getByRole('combobox');
-      expect(combobox).toHaveTextContent(mockEvent.name);
-      expect(combobox).toBeDisabled();
-    });
-  });
-
-  it('opens delete confirmation dialog and deletes event on confirm when clicking "Excluir evento"', async () => {
-    const user = userEvent.setup();
-    mockDeleteMutateAsync.mockResolvedValueOnce({ id: mockEvent.id });
-    renderDropdown();
-
-    await user.click(screen.getByTestId('event-trigger'));
-    const item = await screen.findByRole('menuitem', {
-      name: /excluir evento/i,
-    });
-    await user.click(item);
-
-    await waitFor(() => {
-      const dialog = screen.getByRole('dialog');
-      expect(within(dialog).getByText('Excluir evento?')).toBeInTheDocument();
-      expect(
-        within(dialog).getByText(new RegExp(mockEvent.name, 'i'))
-      ).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByRole('button', {
-      name: /^excluir evento$/i,
-    });
-    await user.click(confirmButton);
-
-    await waitFor(() => {
-      expect(mockDeleteMutateAsync).toHaveBeenCalledWith({ id: mockEvent.id });
-    });
-  });
-
   it('does not open menu when disabled is true (e.g. during dragging or resizing)', async () => {
     const user = userEvent.setup();
     renderDropdown({ disabled: true });
@@ -222,7 +153,7 @@ describe('EventDropdownMenu', () => {
     await user.click(screen.getByTestId('event-trigger'));
 
     expect(
-      screen.queryByRole('menuitem', { name: /ver detalhes e transações/i })
+      screen.queryByRole('menuitem', { name: /abrir evento/i })
     ).not.toBeInTheDocument();
   });
 
@@ -235,7 +166,7 @@ describe('EventDropdownMenu', () => {
     fireEvent.click(trigger);
 
     expect(
-      screen.queryByRole('menuitem', { name: /ver detalhes e transações/i })
+      screen.queryByRole('menuitem', { name: /abrir evento/i })
     ).not.toBeInTheDocument();
   });
 });

@@ -10,4 +10,6 @@ export const VIEW_LABELS = {
   month: 'Mês',
   week: 'Semana',
   day: 'Dia',
+  year: 'Ano',
+  agenda: 'Agenda',
 };
