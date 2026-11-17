@@ -227,15 +227,30 @@ describe('EventPage - Shop-Scoped Events & ShopSwitcher Integration (#83)', () =
     });
   });
 
-  it('renders page container with fixed layout ensuring header and sidebar stay fixed', async () => {
+  it('renders page container with fluid layout below lg and fixed layout on desktop (lg:*) (#143)', async () => {
     const { container } = renderEventPageWithShopSwitcher();
 
     await screen.findAllByText('Casamento Imperial');
 
     const pageContainer = container.querySelector(
-      '.flex.min-h-0.flex-1.flex-col'
+      '.relative.flex.flex-1.flex-col'
     );
     expect(pageContainer).toBeInTheDocument();
     expect(pageContainer).not.toHaveClass('absolute');
+
+    const calendarWrapper = pageContainer.firstElementChild;
+    expect(calendarWrapper).toBeInTheDocument();
+    // On mobile (< lg): grows with content (no absolute inset-0 or overflow-hidden)
+    expect(calendarWrapper).toHaveClass('bg-card', 'flex', 'flex-col', 'rounded-lg', 'border');
+    expect(calendarWrapper).not.toHaveClass('absolute');
+    expect(calendarWrapper).not.toHaveClass('inset-0');
+    expect(calendarWrapper).not.toHaveClass('overflow-hidden');
+    // On desktop (>= lg): lg:absolute lg:inset-0 lg:flex-row lg:overflow-hidden
+    expect(calendarWrapper).toHaveClass(
+      'lg:absolute',
+      'lg:inset-0',
+      'lg:flex-row',
+      'lg:overflow-hidden'
+    );
   });
 });

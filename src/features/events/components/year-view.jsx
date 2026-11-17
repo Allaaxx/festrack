@@ -155,8 +155,8 @@ export function YearView({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      <ScrollArea className="h-full">
+    <div className="flex flex-col lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+      <ScrollArea className="lg:h-full">
         <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {months.map((monthDate, idx) => (
             <MiniMonth
