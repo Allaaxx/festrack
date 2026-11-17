@@ -246,9 +246,18 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
       });
 
       setFilterState((prev) => {
+        const nextSelected = prev.selectedTags.filter((v) => v !== value);
+        const remainingOptions = allTagOptions.filter(
+          (opt) => opt.value !== value && (!id || opt.id !== id)
+        );
+        const shouldResetShowAll =
+          nextSelected.length === 0 ||
+          (remainingOptions.length > 0 &&
+            nextSelected.length === remainingOptions.length);
+
         const next = {
-          showAllTags: prev.showAllTags,
-          selectedTags: prev.selectedTags.filter((v) => v !== value),
+          showAllTags: shouldResetShowAll ? true : prev.showAllTags,
+          selectedTags: shouldResetShowAll ? [] : nextSelected,
         };
         persistFilters(next);
         return next;
@@ -285,18 +294,21 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
       showAllTags,
       selectedTags,
       tagOptions: allTagOptions,
+      // Concise action names (Spec #135)
+      setShowAll: handleSetShowAllTags,
+      toggleTag: handleToggleTagFilter,
+      addTag: handleAddTagOption,
+      removeTag: handleRemoveTagOption,
+      // Verbose action names
+      setShowAllTags: handleSetShowAllTags,
+      toggleTagFilter: handleToggleTagFilter,
+      addTagOption: handleAddTagOption,
+      removeTagOption: handleRemoveTagOption,
+      // on* action names
       onSetShowAllTags: handleSetShowAllTags,
       onToggleTagFilter: handleToggleTagFilter,
       onAddTagOption: handleAddTagOption,
       onRemoveTagOption: handleRemoveTagOption,
-      // Backward compatibility aliases
-      showAllTypes: showAllTags,
-      selectedTypes: selectedTags,
-      eventTypeOptions: allTagOptions,
-      onSetShowAllTypes: handleSetShowAllTags,
-      onToggleTypeFilter: handleToggleTagFilter,
-      onAddEventTypeOption: handleAddTagOption,
-      onRemoveEventTypeOption: handleRemoveTagOption,
     }),
     [
       showAllTags,
@@ -314,10 +326,17 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
     showAllTags,
     selectedTags,
     tagOptions: allTagOptions,
+    // Concise action names (Spec #135)
+    setShowAll: handleSetShowAllTags,
+    toggleTag: handleToggleTagFilter,
+    addTag: handleAddTagOption,
+    removeTag: handleRemoveTagOption,
+    // Verbose action names
     setShowAllTags: handleSetShowAllTags,
     toggleTagFilter: handleToggleTagFilter,
     addTagOption: handleAddTagOption,
     removeTagOption: handleRemoveTagOption,
+    // on* action names
     onSetShowAllTags: handleSetShowAllTags,
     onToggleTagFilter: handleToggleTagFilter,
     onAddTagOption: handleAddTagOption,

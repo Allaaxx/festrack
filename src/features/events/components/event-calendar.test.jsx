@@ -76,6 +76,10 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
       { value: 'family', label: 'Família' },
       { value: 'business', label: 'Negócios' },
     ],
+    setShowAll: vi.fn(),
+    toggleTag: vi.fn(),
+    addTag: vi.fn(),
+    removeTag: vi.fn(),
     setShowAllTags: vi.fn(),
     toggleTagFilter: vi.fn(),
     addTagOption: vi.fn(),
@@ -91,20 +95,18 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
         { value: 'family', label: 'Família' },
         { value: 'business', label: 'Negócios' },
       ],
+      setShowAll: vi.fn(),
+      toggleTag: vi.fn(),
+      addTag: vi.fn(),
+      removeTag: vi.fn(),
+      setShowAllTags: vi.fn(),
+      toggleTagFilter: vi.fn(),
+      addTagOption: vi.fn(),
+      removeTagOption: vi.fn(),
       onSetShowAllTags: vi.fn(),
       onToggleTagFilter: vi.fn(),
       onAddTagOption: vi.fn(),
       onRemoveTagOption: vi.fn(),
-      showAllTypes: false,
-      selectedTypes: ['family'],
-      eventTypeOptions: [
-        { value: 'family', label: 'Família' },
-        { value: 'business', label: 'Negócios' },
-      ],
-      onSetShowAllTypes: vi.fn(),
-      onToggleTypeFilter: vi.fn(),
-      onAddEventTypeOption: vi.fn(),
-      onRemoveEventTypeOption: vi.fn(),
     },
   };
 
@@ -164,6 +166,8 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
     );
 
     const headerProps = CalendarHeader.mock.calls[0][0];
+    expect(headerProps.tagFilter).toBe(mockTagFilterResult.tagFilter);
+    expect(headerProps.tagFilter.tagFilter).toBeUndefined();
     expect(headerProps.showAllTags).toBeUndefined();
     expect(headerProps.selectedTags).toBeUndefined();
     expect(headerProps.tagOptions).toBeUndefined();
@@ -188,6 +192,8 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
     );
 
     const sidebarProps = EventsSidebar.mock.calls[0][0];
+    expect(sidebarProps.tagFilter).toBe(mockTagFilterResult.tagFilter);
+    expect(sidebarProps.tagFilter.tagFilter).toBeUndefined();
     expect(sidebarProps.showAllTags).toBeUndefined();
     expect(sidebarProps.selectedTags).toBeUndefined();
     expect(sidebarProps.tagOptions).toBeUndefined();

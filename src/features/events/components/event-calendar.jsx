@@ -71,7 +71,7 @@ const EventCalendar = ({
     onDateChange,
   });
 
-  const tagFilter = useEventTagFilter(events);
+  const { filteredEvents, tagFilter } = useEventTagFilter(events);
 
   const {
     calendarEvents,
@@ -87,7 +87,7 @@ const EventCalendar = ({
     handleEventResize,
     handleEventCommit,
   } = useCalendarDnd({
-    events: tagFilter.filteredEvents,
+    events: filteredEvents,
     onEventUpdate,
   });
 
@@ -115,7 +115,7 @@ const EventCalendar = ({
           onDateChange={onDateChange}
           sidebarDate={sidebarDate}
           onSidebarDateChange={onSidebarDateChange}
-          tagFilter={tagFilter.tagFilter}
+          tagFilter={tagFilter}
         />
         <div className="flex min-h-0 flex-1 flex-row overflow-hidden">
           <div
@@ -184,7 +184,7 @@ const EventCalendar = ({
             onSidebarDateChange={onSidebarDateChange}
             events={calendarEvents}
             onEventCreate={onEventCreate}
-            tagFilter={tagFilter.tagFilter}
+            tagFilter={tagFilter}
           />
         </div>
       </div>

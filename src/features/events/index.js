@@ -24,21 +24,15 @@ export { default as YearView } from './components/year-view';
 // Hooks & Queries
 export {
   createEventMutationKey,
-  createEventTagMutationKey,
   deleteEventMutationKey,
-  deleteEventTagMutationKey,
   editEventMutationKey,
   getEventQueryKey,
   getEventsQueryKey,
-  getEventTagsQueryKey,
   useCreateEvent,
-  useCreateEventTag,
   useDeleteEvent,
-  useDeleteEventTag,
   useEditEvent,
   useGetEvent,
   useGetEvents,
-  useGetEventTags,
 } from './api/hooks';
 export { default as EventService } from './api/services';
 export { useCalendarDnd } from './hooks/use-calendar-dnd';
@@ -60,8 +54,6 @@ export {
   EventHeight,
   MinutesPerQuarter,
   StartHour,
-  SYSTEM_TAG_VALUES,
-  TAG_COLOR_PALETTE,
   VIEW_LABELS,
   WeekCellsHeight,
 } from './constants';

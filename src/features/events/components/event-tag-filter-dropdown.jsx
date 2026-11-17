@@ -27,59 +27,53 @@ export function EventTagFilterDropdown({
   onToggleTagFilter,
   onAddTagOption,
   onRemoveTagOption,
-  // Backward-compatibility aliases
-  showAllTypes,
-  selectedTypes,
-  eventTypeOptions,
-  onSetShowAllTypes,
-  onToggleTypeFilter,
-  onAddEventTypeOption,
-  onRemoveEventTypeOption,
+  setShowAllTags,
+  setShowAll,
+  toggleTagFilter,
+  toggleTag,
+  addTagOption,
+  addTag,
+  removeTagOption,
+  removeTag,
 }) {
-  const isShowAll =
-    tagFilter?.showAllTags ??
-    tagFilter?.showAllTypes ??
-    showAllTags ??
-    showAllTypes ??
-    true;
+  const isShowAll = tagFilter?.showAllTags ?? showAllTags ?? true;
 
-  const currentSelectedTags =
-    tagFilter?.selectedTags ??
-    tagFilter?.selectedTypes ??
-    selectedTags ??
-    selectedTypes ??
-    [];
+  const currentSelectedTags = tagFilter?.selectedTags ?? selectedTags ?? [];
 
   const currentTagOptions =
-    tagFilter?.tagOptions ??
-    tagFilter?.eventTypeOptions ??
-    tagOptions ??
-    eventTypeOptions ??
-    DEFAULT_EVENT_TAGS;
+    tagFilter?.tagOptions ?? tagOptions ?? DEFAULT_EVENT_TAGS;
 
   const handleSetShowAll =
-    tagFilter?.onSetShowAllTags ??
-    tagFilter?.onSetShowAllTypes ??
-    onSetShowAllTags ??
-    onSetShowAllTypes;
+    tagFilter?.onSetShowAllTags ||
+    tagFilter?.setShowAllTags ||
+    tagFilter?.setShowAll ||
+    onSetShowAllTags ||
+    setShowAllTags ||
+    setShowAll;
 
   const handleToggle =
-    tagFilter?.onToggleTagFilter ??
-    tagFilter?.onToggleTypeFilter ??
-    onToggleTagFilter ??
-    onToggleTypeFilter;
+    tagFilter?.onToggleTagFilter ||
+    tagFilter?.toggleTagFilter ||
+    tagFilter?.toggleTag ||
+    onToggleTagFilter ||
+    toggleTagFilter ||
+    toggleTag;
 
   const handleAdd =
-    tagFilter?.onAddTagOption ??
-    tagFilter?.onAddEventTypeOption ??
-    onAddTagOption ??
-    onAddEventTypeOption;
+    tagFilter?.onAddTagOption ||
+    tagFilter?.addTagOption ||
+    tagFilter?.addTag ||
+    onAddTagOption ||
+    addTagOption ||
+    addTag;
 
   const handleRemove =
-    tagFilter?.onRemoveTagOption ??
-    tagFilter?.onRemoveEventTypeOption ??
-    onRemoveTagOption ??
-    onRemoveEventTypeOption;
+    tagFilter?.onRemoveTagOption ||
+    tagFilter?.removeTagOption ||
+    tagFilter?.removeTag ||
+    onRemoveTagOption ||
+    removeTagOption ||
+    removeTag;
 
   const [newFilterName, setNewFilterName] = useState('');
 

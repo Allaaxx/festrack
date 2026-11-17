@@ -353,22 +353,63 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       });
     });
 
-    it('removes deleted tag from selectedTags if it was selected', () => {
+    it('removes deleted tag from selectedTags if it was selected and resets showAllTags if nextSelected is empty', () => {
       const { result } = renderHook(() => useEventTagFilter());
 
       act(() => {
-        result.current.addTagOption('Conferência');
+        result.current.addTagOption('Conferencia');
       });
 
+      // Filter specifically to just 'conferencia'
       act(() => {
-        result.current.toggleTagFilter('conferencia', true);
+        result.current.setShowAllTags(false);
       });
+      act(() => {
+        result.current.tagOptions.forEach((opt) => {
+          if (opt.value !== 'conferencia') {
+            result.current.toggleTagFilter(opt.value, false);
+          }
+        });
+      });
+
+      expect(result.current.showAllTags).toBe(false);
+      expect(result.current.selectedTags).toEqual(['conferencia']);
 
       act(() => {
         result.current.removeTagOption('conferencia');
       });
 
-      expect(result.current.selectedTags).not.toContain('conferencia');
+      expect(result.current.selectedTags).toEqual([]);
+      expect(result.current.showAllTags).toBe(true);
+    });
+
+    it('resets showAllTags to true when remaining selected tags equal all remaining options', () => {
+      const { result } = renderHook(() => useEventTagFilter());
+
+      act(() => {
+        result.current.addTagOption('Workshop');
+      });
+
+      // Set showAll to false (all selected)
+      act(() => {
+        result.current.setShowAllTags(false);
+      });
+
+      // Deselect 'workshop' only -> selectedTags has all default tags (5 tags)
+      act(() => {
+        result.current.toggleTagFilter('workshop', false);
+      });
+      expect(result.current.showAllTags).toBe(false);
+      expect(result.current.selectedTags).toHaveLength(DEFAULT_EVENT_TAGS.length);
+
+      // Remove 'workshop' -> remainingOptions is now just DEFAULT_EVENT_TAGS (5 tags)
+      // nextSelected (5 tags) === remainingOptions (5 tags) -> resets showAllTags to true
+      act(() => {
+        result.current.removeTagOption('workshop');
+      });
+
+      expect(result.current.showAllTags).toBe(true);
+      expect(result.current.selectedTags).toEqual([]);
     });
   });
 
@@ -494,6 +535,12 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       expect(typeof tagFilter.onAddTagOption).toBe('function');
       expect(typeof tagFilter.onRemoveTagOption).toBe('function');
 
+      // Concise action names (Spec #135)
+      expect(typeof tagFilter.setShowAll).toBe('function');
+      expect(typeof tagFilter.toggleTag).toBe('function');
+      expect(typeof tagFilter.addTag).toBe('function');
+      expect(typeof tagFilter.removeTag).toBe('function');
+
       // Test handler forwarding
       act(() => {
         tagFilter.onAddTagOption('Nova Tag Via Prop');
@@ -504,6 +551,58 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
           (opt) => opt.value === 'nova-tag-via-prop'
         )
       ).toBe(true);
+    });
+
+    it('supports concise action names (toggleTag, setShowAll, addTag, removeTag) alongside verbose names (#135)', () => {
+      const { result } = renderHook(() => useEventTagFilter());
+
+      expect(typeof result.current.setShowAll).toBe('function');
+      expect(typeof result.current.toggleTag).toBe('function');
+      expect(typeof result.current.addTag).toBe('function');
+      expect(typeof result.current.removeTag).toBe('function');
+
+      act(() => {
+        result.current.addTag('Sessao');
+      });
+      expect(
+        result.current.tagOptions.some((opt) => opt.value === 'sessao')
+      ).toBe(true);
+
+      act(() => {
+        result.current.setShowAll(false);
+      });
+      expect(result.current.showAllTags).toBe(false);
+
+      act(() => {
+        result.current.toggleTag('sessao', true);
+      });
+
+      act(() => {
+        result.current.removeTag('sessao');
+      });
+      expect(
+        result.current.tagOptions.some((opt) => opt.value === 'sessao')
+      ).toBe(false);
+    });
+
+    it('does not expose proscribed Glossary terms (*Type*) (#135)', () => {
+      const { result } = renderHook(() => useEventTagFilter());
+
+      expect(result.current.showAllTypes).toBeUndefined();
+      expect(result.current.selectedTypes).toBeUndefined();
+      expect(result.current.eventTypeOptions).toBeUndefined();
+      expect(result.current.onSetShowAllTypes).toBeUndefined();
+      expect(result.current.onToggleTypeFilter).toBeUndefined();
+      expect(result.current.onAddEventTypeOption).toBeUndefined();
+      expect(result.current.onRemoveEventTypeOption).toBeUndefined();
+
+      expect(result.current.tagFilter.showAllTypes).toBeUndefined();
+      expect(result.current.tagFilter.selectedTypes).toBeUndefined();
+      expect(result.current.tagFilter.eventTypeOptions).toBeUndefined();
+      expect(result.current.tagFilter.onSetShowAllTypes).toBeUndefined();
+      expect(result.current.tagFilter.onToggleTypeFilter).toBeUndefined();
+      expect(result.current.tagFilter.onAddEventTypeOption).toBeUndefined();
+      expect(result.current.tagFilter.onRemoveEventTypeOption).toBeUndefined();
     });
   });
 });
