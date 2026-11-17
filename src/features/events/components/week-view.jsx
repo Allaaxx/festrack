@@ -36,7 +36,7 @@ export function WeekView({
       data-slot="week-view"
       className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
     >
-      <div className="bg-card border-border/70 z-10 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
+      <div className="bg-background border-border/70 z-10 grid shrink-0 grid-cols-8 rounded-t-lg border-b">
         <div className="text-muted-foreground/70 py-2 text-center text-sm">
           <span className="max-[479px]:sr-only">{format(new Date(), 'O')}</span>
         </div>
