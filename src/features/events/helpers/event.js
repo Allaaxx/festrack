@@ -37,6 +37,47 @@ const buildLocalCivilDate = (
 };
 
 /**
+ * Faz o parse estrito de uma data civil (`YYYY-MM-DD`, timestamp ISO ou `Date`),
+ * retornando o início do dia (`00:00:00.000`) no fuso local sem deslocamento de timezone.
+ *
+ * @param {Date | string | null | undefined} dateValue
+ * @returns {Date | null}
+ */
+export const parseCivilDate = (dateValue) => {
+  if (!dateValue) return null;
+  if (dateValue instanceof Date) {
+    return isValid(dateValue) ? startOfDay(dateValue) : null;
+  }
+  const str = String(dateValue).trim();
+  if (!str) return null;
+
+  const matchCivil = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matchCivil) {
+    return buildLocalCivilDate(matchCivil[1], matchCivil[2], matchCivil[3]);
+  }
+
+  const parsed = parseISO(str);
+  return isValid(parsed) ? startOfDay(parsed) : null;
+};
+
+/**
+ * Constrói o instante local de término de um dia civil (`23:59:59.000`).
+ *
+ * @param {Date} date
+ * @returns {Date}
+ */
+export const endOfCivilDay = (date) =>
+  new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    23,
+    59,
+    59,
+    0
+  );
+
+/**
  * Faz o parse seguro de uma data vinda da API ou do form,
  * sem causar deslocamento de timezone para datas civis puras.
  *
@@ -52,17 +93,17 @@ const buildLocalCivilDate = (
  */
 export const parseEventDate = (dateValue, { allDay = false } = {}) => {
   if (!dateValue) return null;
+  if (allDay) {
+    return parseCivilDate(dateValue);
+  }
   if (dateValue instanceof Date) {
     return isValid(dateValue) ? dateValue : null;
   }
   const str = String(dateValue).trim();
   if (!str) return null;
 
-  if (allDay || /^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    const matchCivil = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (matchCivil) {
-      return buildLocalCivilDate(matchCivil[1], matchCivil[2], matchCivil[3]);
-    }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return parseCivilDate(str);
   }
 
   const hasTimezoneSuffix = /(?:T|\s).*(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(str);
@@ -389,16 +430,7 @@ export const mapEventToCalendarItem = (event) => {
   const allDay = Boolean(event?.allDay);
   const start = parseEventDate(event.startDate, { allDay }) ?? new Date();
   const parsedEnd = parseEventDate(event.endDate, { allDay }) ?? start;
-  const end = allDay
-    ? new Date(
-        parsedEnd.getFullYear(),
-        parsedEnd.getMonth(),
-        parsedEnd.getDate(),
-        23,
-        59,
-        59
-      )
-    : parsedEnd;
+  const end = allDay ? endOfCivilDay(parsedEnd) : parsedEnd;
   const status = getEventStatus(event);
   const tag = event.tag ?? event.rawEvent?.tag ?? null;
 

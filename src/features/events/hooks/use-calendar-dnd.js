@@ -15,6 +15,7 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 
 import { WeekCellsHeight } from '../constants';
+import { endOfCivilDay } from '../helpers/event';
 
 /**
  * Calcula o novo intervalo (start, end, allDay) ao soltar um evento em uma célula da MonthView.
@@ -22,7 +23,8 @@ import { WeekCellsHeight } from '../constants';
  * timed events preservam horário local de início e duração em minutos.
  */
 function computeMonthDayDropDates(draggedEvent, targetDate) {
-  if (draggedEvent.allDay === true) {
+  const isAllDay = Boolean(draggedEvent.allDay);
+  if (isAllDay) {
     const spanDays = Math.max(
       0,
       differenceInCalendarDays(
@@ -32,15 +34,7 @@ function computeMonthDayDropDates(draggedEvent, targetDate) {
     );
     const start = startOfDay(targetDate);
     const endDay = addDays(start, spanDays);
-    const end = new Date(
-      endDay.getFullYear(),
-      endDay.getMonth(),
-      endDay.getDate(),
-      23,
-      59,
-      59,
-      0
-    );
+    const end = endOfCivilDay(endDay);
 
     return { start, end, allDay: true };
   }
@@ -147,17 +141,20 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
 
   const handleEventCommit = useCallback(
     (updatedEvent) => {
+      const normalizedEvent = {
+        ...updatedEvent,
+        allDay: Boolean(updatedEvent.allDay),
+      };
+
       setOverrides((prev) => ({
         ...prev,
-        [updatedEvent.id]: {
-          start: updatedEvent.start,
-          end: updatedEvent.end,
-          ...(updatedEvent.allDay !== undefined && {
-            allDay: updatedEvent.allDay,
-          }),
+        [normalizedEvent.id]: {
+          start: normalizedEvent.start,
+          end: normalizedEvent.end,
+          allDay: normalizedEvent.allDay,
         },
       }));
-      onEventUpdate?.(updatedEvent);
+      onEventUpdate?.(normalizedEvent);
     },
     [onEventUpdate]
   );
@@ -174,6 +171,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
       }
 
       const draggedEvent = active.data.current.event;
+      const isAllDay = Boolean(draggedEvent.allDay);
       const overData = over.data?.current;
 
       // Caso 1: Drop em coluna horária (DayView ou WeekView)
@@ -205,7 +203,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
-          allDay: Boolean(draggedEvent.allDay),
+          allDay: isAllDay,
           action: 'move',
         });
         return;
@@ -243,7 +241,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
-          allDay: Boolean(draggedEvent.allDay),
+          allDay: isAllDay,
           action: 'move',
         });
       }

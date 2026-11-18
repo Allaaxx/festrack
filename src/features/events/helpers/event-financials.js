@@ -3,11 +3,29 @@ import { ptBR } from 'date-fns/locale';
 
 import { formatCurrency } from '@/helpers/currency';
 
-import { getEventStatus, getEventStatusLabel, parseEventDate } from './event';
+import {
+  getEventStatus,
+  getEventStatusLabel,
+  parseCivilDate,
+  parseEventDate,
+} from './event';
 
 const normalizeTransactionType = (rawType) => {
   const upper = String(rawType ?? '').toUpperCase();
   return upper === 'INVESTIMENT' ? 'INVESTMENT' : upper;
+};
+
+const getTransactionCivilDateBucket = (rawDate) => {
+  const parsedDate = parseCivilDate(rawDate);
+  const sortKey = parsedDate
+    ? format(parsedDate, 'yyyy-MM-dd')
+    : '0000-00-00';
+
+  return {
+    sortKey,
+    dateValue: parsedDate ? sortKey : '',
+    label: parsedDate ? format(parsedDate, 'dd/MM', { locale: ptBR }) : 'Data',
+  };
 };
 
 /**
@@ -97,14 +115,9 @@ export const buildTransactionTypeSeries = (transactions = [], targetType) => {
     }
 
     const amount = Number(transaction?.amount) || 0;
-    const parsedDate = parseEventDate(transaction?.date, { allDay: true });
-    const sortKey = parsedDate
-      ? format(parsedDate, 'yyyy-MM-dd')
-      : '0000-00-00';
-    const dateValue = parsedDate ? sortKey : '';
-    const label = parsedDate
-      ? format(parsedDate, 'dd/MM', { locale: ptBR })
-      : 'Data';
+    const { sortKey, dateValue, label } = getTransactionCivilDateBucket(
+      transaction?.date
+    );
 
     if (groupedByDate.has(sortKey)) {
       const current = groupedByDate.get(sortKey);
@@ -214,7 +227,7 @@ export const buildEventMetricCardsData = (transactions = []) => {
  * 3. Ticket Médio de Despesa (stat-average-expense)
  * 4. Maior Despesa (stat-max-expense)
  *
- * @param {{ startDate?: Date | string, endDate?: Date | string } | null | undefined} event
+ * @param {{ startDate?: Date | string, endDate?: Date | string, allDay?: boolean } | null | undefined} event
  * @param {Array<{ name?: string, type?: string, amount?: number | string }>} [transactions=[]]
  */
 export const buildEventOperationalStats = (event, transactions = []) => {
@@ -345,14 +358,9 @@ export const buildEventBalanceOverviewData = (transactions = []) => {
       }
 
       const amount = Number(transaction?.amount) || 0;
-      const parsedDate = parseEventDate(transaction?.date, { allDay: true });
-      const sortKey = parsedDate
-        ? format(parsedDate, 'yyyy-MM-dd')
-        : '0000-00-00';
-      const dateValue = parsedDate ? sortKey : '';
-      const label = parsedDate
-        ? format(parsedDate, 'dd/MM', { locale: ptBR })
-        : 'Data';
+      const { sortKey, dateValue, label } = getTransactionCivilDateBucket(
+        transaction?.date
+      );
 
       if (!groupedByDate.has(sortKey)) {
         groupedByDate.set(sortKey, {

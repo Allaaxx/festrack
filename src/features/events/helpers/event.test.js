@@ -2,12 +2,14 @@ import { format } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 
 import {
+  endOfCivilDay,
   formatEventDate,
   formatEventDateRange,
   formatEventDateToApi,
   getEventStatus,
   mapEventToCalendarItem,
   normalizeEventAuthor,
+  parseCivilDate,
   parseEventDate,
   parseEventTime,
 } from './event';
@@ -394,11 +396,46 @@ describe('parseEventDate', () => {
     expect(parsedWithSeconds).toEqual(new Date(2026, 10, 18, 22, 30, 45));
   });
 
+  it('normalizes valid Date instances to local startOfDay when allDay is true and preserves time when allDay is false', () => {
+    const dateWithTime = new Date(2026, 10, 18, 15, 30, 45, 500);
+
+    const allDayParsed = parseEventDate(dateWithTime, { allDay: true });
+    expect(allDayParsed).toEqual(new Date(2026, 10, 18, 0, 0, 0, 0));
+
+    const timedParsed = parseEventDate(dateWithTime, { allDay: false });
+    expect(timedParsed).toEqual(dateWithTime);
+
+    expect(parseEventDate(new Date('invalid'), { allDay: true })).toBeNull();
+  });
+
   it('returns null for invalid or empty values', () => {
     expect(parseEventDate(null)).toBeNull();
     expect(parseEventDate('')).toBeNull();
     expect(parseEventDate('invalid-date')).toBeNull();
     expect(parseEventDate('2026-02-31', { allDay: true })).toBeNull();
+  });
+});
+
+describe('parseCivilDate and endOfCivilDay', () => {
+  it('parses civil strings, UTC timestamps, and Date instances to local 00:00:00', () => {
+    expect(parseCivilDate('2026-11-18')).toEqual(
+      new Date(2026, 10, 18, 0, 0, 0, 0)
+    );
+    expect(parseCivilDate('2026-11-18T23:59:59.000Z')).toEqual(
+      new Date(2026, 10, 18, 0, 0, 0, 0)
+    );
+    expect(parseCivilDate(new Date(2026, 10, 18, 22, 15, 30))).toEqual(
+      new Date(2026, 10, 18, 0, 0, 0, 0)
+    );
+    expect(parseCivilDate(null)).toBeNull();
+    expect(parseCivilDate('2026-02-31')).toBeNull();
+    expect(parseCivilDate(new Date('invalid'))).toBeNull();
+  });
+
+  it('builds local 23:59:59.000 for the civil day of a Date', () => {
+    expect(endOfCivilDay(new Date(2026, 10, 18, 8, 30, 0))).toEqual(
+      new Date(2026, 10, 18, 23, 59, 59, 0)
+    );
   });
 });
 

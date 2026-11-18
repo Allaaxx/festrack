@@ -47,6 +47,7 @@ const MONTH_NAMES = [
  * Extrai dia e mês abreviado em maiúsculas a partir da data de início do evento.
  *
  * @param {string | Date | null | undefined} dateValue
+ * @param {{ allDay?: boolean }} [options]
  * @returns {{ day: string, month: string }}
  */
 const getDayAndMonth = (dateValue, options = {}) => {
