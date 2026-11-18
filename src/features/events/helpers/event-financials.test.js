@@ -373,6 +373,30 @@ describe('buildEventOperationalStats', () => {
     expect(maxExpenseCard.value).toMatch(/R\$\s*2\.500,00/);
     expect(maxExpenseCard.badge).toBe('Aluguel do Espaço');
   });
+
+  it('computes civil day duration for allDay: true events without timezone drift', () => {
+    const singleDayAllDay = {
+      id: 'ev-all-day-1',
+      name: 'Dia Único Civil',
+      startDate: '2026-12-01T00:00:00.000Z',
+      endDate: '2026-12-01T23:59:59.000Z',
+      allDay: true,
+    };
+    const multiDayAllDay = {
+      id: 'ev-all-day-3',
+      name: 'Três Dias Civis',
+      startDate: '2026-12-01T00:00:00.000Z',
+      endDate: '2026-12-03T23:59:59.000Z',
+      allDay: true,
+    };
+
+    expect(buildEventOperationalStats(singleDayAllDay, [])[0].trend).toBe(
+      '1 dia'
+    );
+    expect(buildEventOperationalStats(multiDayAllDay, [])[0].trend).toBe(
+      '3 dias'
+    );
+  });
 });
 
 describe('buildEventBalanceOverviewData', () => {
@@ -442,5 +466,29 @@ describe('buildEventBalanceOverviewData', () => {
     expect(overview.saidas).toBe(900);
     expect(overview.netBalance).toBe(-900);
     expect(overview.executionPercentage).toBe(100);
+  });
+
+  it('treats transaction dates (YYYY-MM-DD and T00:00:00.000Z) strictly as civil dates', () => {
+    const transactions = [
+      { id: 'tx-pure', type: 'EARNING', amount: 100, date: '2026-12-01' },
+      {
+        id: 'tx-utc',
+        type: 'EXPENSE',
+        amount: 50,
+        date: '2026-12-02T00:00:00.000Z',
+      },
+    ];
+
+    const overview = buildEventBalanceOverviewData(transactions);
+    expect(overview.barData).toEqual([
+      { date: '2026-12-01', label: '01/12', entradas: 100, saidas: 0 },
+      { date: '2026-12-02', label: '02/12', entradas: 0, saidas: 50 },
+    ]);
+
+    const series = buildTransactionTypeSeries(transactions, 'EXPENSE');
+    expect(series).toEqual([
+      { date: '', label: 'Início', amount: 0 },
+      { date: '2026-12-02', label: '02/12', amount: 50 },
+    ]);
   });
 });
