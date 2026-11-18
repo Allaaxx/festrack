@@ -256,4 +256,68 @@ describe('useCalendarDnd (#158)', () => {
     expect(updated.start).toEqual(new Date(2026, 10, 12, 14, 0, 0, 0));
     expect(updated.end).toEqual(new Date(2026, 10, 12, 15, 30, 0, 0));
   });
+
+  it('normalizes allDay consistently with Boolean(...) across handleEventCommit, month-day, day-column, and timestamp drops', () => {
+    const undefinedAllDayEvent = {
+      id: 'ev-undefined-allday',
+      title: 'Evento sem flag explícita',
+      start: new Date(2026, 10, 10, 9, 0, 0),
+      end: new Date(2026, 10, 10, 10, 0, 0),
+    };
+    const truthyAllDayEvent = {
+      id: 'ev-truthy-allday',
+      title: 'Evento truthy allDay',
+      start: new Date(2026, 10, 10, 0, 0, 0),
+      end: new Date(2026, 10, 10, 23, 59, 59),
+      allDay: 1,
+    };
+    const events = [undefinedAllDayEvent, truthyAllDayEvent];
+    const onEventUpdate = vi.fn();
+
+    const { result } = renderHook(() =>
+      useCalendarDnd({
+        events,
+        onEventUpdate,
+      })
+    );
+
+    act(() => {
+      result.current.handleEventCommit({
+        ...undefinedAllDayEvent,
+        start: new Date(2026, 10, 10, 9, 30, 0),
+        end: new Date(2026, 10, 10, 11, 0, 0),
+        action: 'resize',
+      });
+    });
+
+    expect(onEventUpdate.mock.calls[0][0].allDay).toBe(false);
+    expect(result.current.calendarEvents[0].allDay).toBe(false);
+
+    const targetDay = new Date(2026, 10, 15, 0, 0, 0);
+    act(() => {
+      result.current.handleDragEnd({
+        active: {
+          data: { current: { event: truthyAllDayEvent } },
+          rect: { current: {} },
+        },
+        over: {
+          data: {
+            current: {
+              type: 'month-day',
+              dayTimestamp: targetDay.getTime(),
+            },
+          },
+          rect: { top: 0 },
+        },
+      });
+    });
+
+    expect(onEventUpdate.mock.calls[1][0].allDay).toBe(true);
+    expect(onEventUpdate.mock.calls[1][0].start).toEqual(
+      new Date(2026, 10, 15, 0, 0, 0, 0)
+    );
+    expect(onEventUpdate.mock.calls[1][0].end).toEqual(
+      new Date(2026, 10, 15, 23, 59, 59, 0)
+    );
+  });
 });

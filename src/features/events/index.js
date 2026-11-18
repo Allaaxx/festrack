@@ -81,6 +81,7 @@ export {
   getTagDotColor,
 } from './helpers/calendar-styles';
 export {
+  endOfCivilDay,
   findTagOption,
   formatEventDate,
   formatEventDateRange,
@@ -90,6 +91,7 @@ export {
   mapEventToCalendarItem,
   normalizeEventAuthor,
   normalizeTagOption,
+  parseCivilDate,
   parseEventDate,
   toTagSlug,
 } from './helpers/event';
