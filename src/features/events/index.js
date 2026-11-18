@@ -18,6 +18,7 @@ export { default as EventsSidebar } from './components/events-sidebar';
 export { EventsSidebarSheet } from './components/events-sidebar-sheet';
 export { default as MetricAreaCard } from './components/metric-area-card';
 export { default as StatCards } from './components/stat-cards';
+export { default as TagPicker } from './components/tag-picker';
 export { default as TotalRevenueCard } from './components/total-revenue-card';
 export { default as YearView } from './components/year-view';
 
@@ -40,6 +41,7 @@ export { useCalendarNavigation } from './hooks/use-calendar-navigation';
 export { useEventCalendarPage } from './hooks/use-event-calendar-page';
 export { useEventResizable } from './hooks/use-event-resizable';
 export { useEventTagFilter } from './hooks/use-event-tag-filter';
+export { useEventTags } from './hooks/use-event-tags';
 export { useGoogleCalendarSync } from './hooks/use-google-calendar-sync';
 
 // Forms
@@ -47,13 +49,13 @@ export { useCreateEventForm, useEditEventForm } from './forms/hooks';
 
 // Constants
 export {
-  DEFAULT_EVENT_TAGS,
   DefaultStartHour,
   EndHour,
   EventGap,
   EventHeight,
   MinutesPerQuarter,
   StartHour,
+  TAG_COLOR_PALETTE,
   VIEW_LABELS,
   WeekCellsHeight,
 } from './constants';
@@ -68,12 +70,18 @@ export {
   sortEvents,
 } from './helpers/calendar-layout';
 export {
+  DEFAULT_UNTAGGED_CALENDAR_CLASS,
+  DEFAULT_UNTAGGED_DOT_CLASS,
   getBorderRadiusClasses,
   getEventColorClasses,
+  getEventDotColor,
   getMonthViewBleedClasses,
   getMonthViewEventPaddingClasses,
+  getTagColorClasses,
+  getTagDotColor,
 } from './helpers/calendar-styles';
 export {
+  findTagOption,
   formatEventDate,
   formatEventDateRange,
   formatEventDateToApi,
@@ -81,7 +89,9 @@ export {
   getEventStatusLabel,
   mapEventToCalendarItem,
   normalizeEventAuthor,
+  normalizeTagOption,
   parseEventDate,
+  toTagSlug,
 } from './helpers/event';
 export {
   buildEventBalanceOverviewData,

@@ -13,6 +13,7 @@ import { EventItem } from './event-item';
 export function DayView({
   currentDate,
   events,
+  tagOptions,
   dragOverSlot = null,
   onEventSelect,
   onEventCreate,
@@ -31,7 +32,7 @@ export function DayView({
   return (
     <div
       data-slot="day-view"
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex flex-col lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden"
     >
       {showAllDaySection && (
         <div className="border-border/70 bg-muted/50 shrink-0 rounded-t-lg border-b">
@@ -47,6 +48,7 @@ export function DayView({
                   <EventItem
                     event={event}
                     view="month"
+                    tagOptions={tagOptions}
                     isFirstDay={isSameDay(currentDate, event.start)}
                     isLastDay={isSameDay(currentDate, event.end)}
                   >
@@ -59,7 +61,7 @@ export function DayView({
         </div>
       )}
 
-      <ScrollArea className="h-full min-h-0 flex-1">
+      <ScrollArea className="lg:h-full lg:min-h-0 lg:flex-1">
         <div
           className={cn(
             'border-border/70 grid flex-1 grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]',
@@ -96,6 +98,7 @@ export function DayView({
                 key={positionedEvent.event.id}
                 positionedEvent={positionedEvent}
                 view="day"
+                tagOptions={tagOptions}
                 onEventSelect={onEventSelect}
                 onEventResize={onEventResize}
                 onEventResizeEnd={onEventResizeEnd}

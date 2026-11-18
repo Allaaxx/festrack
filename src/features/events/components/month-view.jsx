@@ -54,6 +54,7 @@ function DraggableMonthEvent({
   isLastDay,
   spansLeft,
   spansRight,
+  tagOptions,
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `month-event-${event.id}`,
@@ -80,6 +81,7 @@ function DraggableMonthEvent({
           isLastDay={isLastDay}
           spansLeft={spansLeft}
           spansRight={spansRight}
+          tagOptions={tagOptions}
         />
       </EventDropdownMenu>
     </div>
@@ -89,6 +91,7 @@ function DraggableMonthEvent({
 export function MonthView({
   currentDate,
   events,
+  tagOptions,
   onEventSelect,
   onEventCreate,
 }) {
@@ -106,7 +109,7 @@ export function MonthView({
   return (
     <div
       data-slot="month-view"
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex flex-col lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden"
     >
       <div className="bg-background border-border/70 grid shrink-0 grid-cols-7 border-b">
         {weekdays.map((day) => (
@@ -119,7 +122,7 @@ export function MonthView({
           </div>
         ))}
       </div>
-      <div className="grid min-h-0 flex-1 auto-rows-fr overflow-y-auto">
+      <div className="grid auto-rows-fr lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
         {weeks.map((week, weekIndex) => (
           <div
             key={`week-${weekIndex}`}
@@ -185,6 +188,7 @@ export function MonthView({
                             isLastDay={isLastDay}
                             spansLeft={spansLeft}
                             spansRight={spansRight}
+                            tagOptions={tagOptions}
                           />
                         </div>
                       );
@@ -225,6 +229,7 @@ export function MonthView({
                                     view="month"
                                     isFirstDay={isSameDay(day, event.start)}
                                     isLastDay={isSameDay(day, event.end)}
+                                    tagOptions={tagOptions}
                                   />
                                 </EventDropdownMenu>
                               ))}

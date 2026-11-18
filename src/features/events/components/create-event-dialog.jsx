@@ -86,6 +86,7 @@ const CreateEventDialog = ({ trigger, open, onOpenChange, initialDate }) => {
         allDay: false,
         startTime,
         endTime,
+        tag: null,
       });
     }
   }, [initialDate, dialogOpen, form]);

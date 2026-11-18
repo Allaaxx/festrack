@@ -105,7 +105,7 @@ const EventService = {
         input.endTime
       ),
     };
-    if (input.tag) payload.tag = input.tag;
+    if (input.tag !== undefined) payload.tag = input.tag;
 
     const response = await protectedApi.post(
       `/shops/${shopId}/events`,

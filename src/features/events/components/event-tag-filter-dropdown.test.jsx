@@ -2,19 +2,25 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  DEFAULT_EVENT_TAGS,
-  EventTagFilterDropdown,
-} from '@/features/events/components/event-tag-filter-dropdown';
+import { EventTagFilterDropdown } from '@/features/events/components/event-tag-filter-dropdown';
 
-describe('EventTagFilterDropdown (#132)', () => {
+const SAMPLE_TAGS = [
+  { id: 't-1', value: 'family', label: 'Família', dotClass: 'bg-indigo-400' },
+  { id: 't-2', value: 'business', label: 'Negócios', dotClass: 'bg-teal-400' },
+  { id: 't-3', value: 'etc', label: 'Outros', dotClass: 'bg-orange-400' },
+  {
+    id: 't-4',
+    value: 'custom-tag',
+    label: 'Custom Tag',
+    dotClass: 'bg-cyan-400',
+  },
+];
+
+describe('EventTagFilterDropdown', () => {
   const defaultProps = {
     showAllTags: true,
     selectedTags: [],
-    tagOptions: [
-      ...DEFAULT_EVENT_TAGS,
-      { value: 'custom-tag', label: 'Custom Tag', dotClass: 'bg-indigo-400' },
-    ],
+    tagOptions: SAMPLE_TAGS,
     onSetShowAllTags: vi.fn(),
     onToggleTagFilter: vi.fn(),
     onAddTagOption: vi.fn(),
@@ -40,10 +46,21 @@ describe('EventTagFilterDropdown (#132)', () => {
     expect(screen.getByText('Todas')).toBeInTheDocument();
     expect(screen.getByText('Família')).toBeInTheDocument();
     expect(screen.getByText('Negócios')).toBeInTheDocument();
-    expect(screen.getByText('Pessoal')).toBeInTheDocument();
-    expect(screen.getByText('Feriado')).toBeInTheDocument();
     expect(screen.getByText('Outros')).toBeInTheDocument();
     expect(screen.getByText('Custom Tag')).toBeInTheDocument();
+  });
+
+  it('defaults to empty tag list when no tagOptions are passed', async () => {
+    const user = userEvent.setup();
+    render(<EventTagFilterDropdown />);
+
+    await user.click(
+      screen.getByRole('button', { name: /filtro de etiquetas/i })
+    );
+
+    expect(await screen.findByText('Todas')).toBeInTheDocument();
+    expect(screen.getAllByRole('menuitemcheckbox')).toHaveLength(1);
+    expect(screen.queryByText('Família')).not.toBeInTheDocument();
   });
 
   it('invokes onSetShowAllTags when clicking Todas', async () => {
@@ -98,7 +115,7 @@ describe('EventTagFilterDropdown (#132)', () => {
     expect(defaultProps.onAddTagOption).toHaveBeenCalledWith('Viagens');
   });
 
-  it('renders trash button only for non-default tags and invokes onRemoveTagOption', async () => {
+  it('renders trash button for all shop tags including family, business, and etc', async () => {
     const user = userEvent.setup();
     render(<EventTagFilterDropdown {...defaultProps} />);
 
@@ -106,40 +123,42 @@ describe('EventTagFilterDropdown (#132)', () => {
       screen.getByRole('button', { name: /filtro de etiquetas/i })
     );
 
-    const removeBtn = await screen.findByRole('button', {
-      name: /remover etiqueta custom tag/i,
+    const removeFamilyBtn = await screen.findByRole('button', {
+      name: /remover etiqueta família/i,
     });
-    expect(removeBtn).toBeInTheDocument();
-
-    // Default tag should not have a remove button
+    expect(removeFamilyBtn).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /remover etiqueta família/i })
-    ).not.toBeInTheDocument();
+      screen.getByRole('button', { name: /remover etiqueta negócios/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /remover etiqueta outros/i })
+    ).toBeInTheDocument();
 
-    await user.click(removeBtn);
+    await user.click(removeFamilyBtn);
     expect(defaultProps.onRemoveTagOption).toHaveBeenCalledWith(
-      'custom-tag',
-      undefined
+      'family',
+      't-1'
     );
   });
 
-  it('renders trash button as a separate sibling to prevent overlapping checkbox selection', async () => {
+  it('renders trash button inside the tag row to the left of the checkmark indicator', async () => {
     const user = userEvent.setup();
     const onRemoveTagOption = vi.fn();
+    const onToggleTagFilter = vi.fn();
 
     render(
       <EventTagFilterDropdown
         tagOptions={[
-          ...DEFAULT_EVENT_TAGS,
+          ...SAMPLE_TAGS.slice(0, 2),
           {
             id: 'tag-123',
             value: 'custom-tag',
             label: 'Custom Tag',
             dotClass: 'bg-indigo-400',
-            isSystem: false,
           },
         ]}
         onRemoveTagOption={onRemoveTagOption}
+        onToggleTagFilter={onToggleTagFilter}
       />
     );
 
@@ -154,11 +173,22 @@ describe('EventTagFilterDropdown (#132)', () => {
       name: /custom tag/i,
     });
 
-    // Trash button is not a descendant of the checkbox item (prevents overlap & misclick)
-    expect(checkboxItem).not.toContainElement(removeBtn);
+    // Trash button is inside the tag row
+    expect(checkboxItem).toContainElement(removeBtn);
 
+    // Trash button is positioned to the left of the checkmark indicator
+    const indicator = checkboxItem.querySelector(
+      '[data-slot="tag-picker-indicator"]'
+    );
+    expect(indicator).toBeInTheDocument();
+    expect(removeBtn.compareDocumentPosition(indicator)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+
+    // Clicking trash invokes onRemoveTagOption without toggling checkbox
     await user.click(removeBtn);
     expect(onRemoveTagOption).toHaveBeenCalledWith('custom-tag', 'tag-123');
+    expect(onToggleTagFilter).not.toHaveBeenCalled();
   });
 
   it('supports canonical domain naming props (tagOptions, onToggleTagFilter, etc.)', async () => {
@@ -172,14 +202,7 @@ describe('EventTagFilterDropdown (#132)', () => {
       <EventTagFilterDropdown
         showAllTags={false}
         selectedTags={['family']}
-        tagOptions={[
-          ...DEFAULT_EVENT_TAGS,
-          {
-            value: 'custom-tag',
-            label: 'Custom Tag',
-            dotClass: 'bg-indigo-400',
-          },
-        ]}
+        tagOptions={SAMPLE_TAGS}
         onSetShowAllTags={onSetShowAllTags}
         onToggleTagFilter={onToggleTagFilter}
         onAddTagOption={onAddTagOption}
@@ -200,7 +223,7 @@ describe('EventTagFilterDropdown (#132)', () => {
     expect(onSetShowAllTags).toHaveBeenCalledWith(true);
   });
 
-  describe('Cohesive tagFilter prop (#138)', () => {
+  describe('Cohesive tagFilter prop', () => {
     it('accepts cohesive tagFilter prop and triggers handlers', async () => {
       const user = userEvent.setup();
       const onSetShowAllTags = vi.fn();
@@ -212,12 +235,11 @@ describe('EventTagFilterDropdown (#132)', () => {
         showAllTags: false,
         selectedTags: ['family'],
         tagOptions: [
-          ...DEFAULT_EVENT_TAGS,
+          ...SAMPLE_TAGS.slice(0, 2),
           {
             value: 'custom-pack',
             label: 'Custom Pack',
             dotClass: 'bg-indigo-400',
-            isSystem: false,
           },
         ],
         onSetShowAllTags,
@@ -259,7 +281,7 @@ describe('EventTagFilterDropdown (#132)', () => {
       expect(onRemoveTagOption).toHaveBeenCalledWith('custom-pack', undefined);
     });
 
-    it('accepts concise action names (setShowAll, toggleTag, addTag, removeTag) in tagFilter prop (#135)', async () => {
+    it('accepts concise action names (setShowAll, toggleTag, addTag, removeTag) in tagFilter prop', async () => {
       const user = userEvent.setup();
       const setShowAll = vi.fn();
       const toggleTag = vi.fn();
@@ -270,12 +292,11 @@ describe('EventTagFilterDropdown (#132)', () => {
         showAllTags: false,
         selectedTags: ['family'],
         tagOptions: [
-          ...DEFAULT_EVENT_TAGS,
+          ...SAMPLE_TAGS.slice(0, 2),
           {
             value: 'custom-concise',
             label: 'Custom Concise',
             dotClass: 'bg-indigo-400',
-            isSystem: false,
           },
         ],
         setShowAll,
@@ -327,12 +348,11 @@ describe('EventTagFilterDropdown (#132)', () => {
           showAllTags={false}
           selectedTags={['family']}
           tagOptions={[
-            ...DEFAULT_EVENT_TAGS,
+            ...SAMPLE_TAGS.slice(0, 2),
             {
               value: 'custom-direct',
               label: 'Custom Direct',
               dotClass: 'bg-indigo-400',
-              isSystem: false,
             },
           ]}
           setShowAll={setShowAll}

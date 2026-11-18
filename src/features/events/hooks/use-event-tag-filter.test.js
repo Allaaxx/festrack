@@ -1,18 +1,21 @@
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { toast } from '@/components/ui/toast';
 import { useShopContext } from '@/contexts/shop';
 import {
   useCreateEventTag,
   useDeleteEventTag,
   useGetEventTags,
 } from '@/features/events/api/hooks';
-import {
-  DEFAULT_EVENT_TAGS,
-  SYSTEM_TAG_VALUES,
-  TAG_COLOR_PALETTE,
-} from '@/features/events/constants';
+import { TAG_COLOR_PALETTE } from '@/features/events/constants';
 import { useEventTagFilter } from '@/features/events/hooks/use-event-tag-filter';
+
+vi.mock('@/components/ui/toast', () => ({
+  toast: {
+    add: vi.fn(),
+  },
+}));
 
 vi.mock('@/contexts/shop', () => ({
   useShopContext: vi.fn(),
@@ -24,13 +27,20 @@ vi.mock('@/features/events/api/hooks', () => ({
   useDeleteEventTag: vi.fn(),
 }));
 
-describe('useEventTagFilter - Deep Module (#136)', () => {
-  const mockCreateMutate = vi.fn();
-  const mockDeleteMutate = vi.fn();
+describe('useEventTagFilter - Server-Only Tags & Shop Filter State', () => {
+  let mockCreateMutateAsync;
+  let mockCreateMutate;
+  let mockDeleteMutate;
 
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+
+    mockCreateMutateAsync = vi
+      .fn()
+      .mockResolvedValue({ id: 'tag-new', slug: 'nova-tag', name: 'Nova Tag' });
+    mockCreateMutate = vi.fn();
+    mockDeleteMutate = vi.fn();
 
     useShopContext.mockReturnValue({
       activeShop: { id: 'shop-test-1' },
@@ -43,6 +53,7 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
 
     useCreateEventTag.mockReturnValue({
       mutate: mockCreateMutate,
+      mutateAsync: mockCreateMutateAsync,
     });
 
     useDeleteEventTag.mockReturnValue({
@@ -51,77 +62,123 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
   });
 
   describe('Initialization and Storage Fallback', () => {
-    it('initializes with DEFAULT_EVENT_TAGS and empty custom tags when localStorage is empty', () => {
+    it('initializes with empty tagOptions when server tags are empty and localStorage has no filters', () => {
       const { result } = renderHook(() => useEventTagFilter());
 
       expect(result.current.showAllTags).toBe(true);
       expect(result.current.selectedTags).toEqual([]);
-      expect(result.current.tagOptions).toEqual(DEFAULT_EVENT_TAGS);
+      expect(result.current.tagOptions).toEqual([]);
       expect(result.current.tagFilter).toBeDefined();
       expect(result.current.tagFilter.showAllTags).toBe(true);
       expect(result.current.tagFilter.selectedTags).toEqual([]);
-      expect(result.current.tagFilter.tagOptions).toEqual(DEFAULT_EVENT_TAGS);
+      expect(result.current.tagFilter.tagOptions).toEqual([]);
     });
 
-    it('loads custom tags and filters from scoped localStorage key for activeShop', () => {
-      const storedTags = [
-        { value: 'workshop', label: 'Workshop', dotClass: 'bg-indigo-400' },
+    it('derives tagOptions exclusively from serverTags returned by useGetEventTags', () => {
+      const serverTags = [
+        {
+          id: '1',
+          slug: 'conferencia',
+          name: 'Conferência',
+          color: 'bg-indigo-400',
+        },
+        { id: '2', slug: 'reuniao', name: 'Reunião', color: 'bg-teal-400' },
       ];
+      useGetEventTags.mockReturnValue({
+        data: serverTags,
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useEventTagFilter());
+
+      expect(result.current.tagOptions).toEqual([
+        {
+          id: '1',
+          value: 'conferencia',
+          label: 'Conferência',
+          dotClass: 'bg-indigo-400',
+        },
+        {
+          id: '2',
+          value: 'reuniao',
+          label: 'Reunião',
+          dotClass: 'bg-teal-400',
+        },
+      ]);
+    });
+
+    it('loads filters from scoped localStorage key for activeShop and ignores legacy event_tags key', () => {
       const storedFilters = {
         showAllTags: false,
         selectedTags: ['workshop'],
       };
 
+      // Legacy key should be completely ignored
       localStorage.setItem(
         'festrack:shop-test-1:event_tags',
-        JSON.stringify(storedTags)
+        JSON.stringify([{ value: 'legacy-tag', label: 'Legacy' }])
       );
       localStorage.setItem(
         'festrack:shop-test-1:event_tag_filters',
         JSON.stringify(storedFilters)
       );
 
+      useGetEventTags.mockReturnValue({
+        data: [
+          {
+            id: 'w1',
+            slug: 'workshop',
+            name: 'Workshop',
+            color: 'bg-teal-400',
+          },
+        ],
+        isLoading: false,
+      });
+
       const { result } = renderHook(() => useEventTagFilter());
 
       expect(result.current.showAllTags).toBe(false);
       expect(result.current.selectedTags).toEqual(['workshop']);
+      // tagOptions comes solely from serverTags, never from legacy localStorage
       expect(result.current.tagOptions).toEqual([
-        ...DEFAULT_EVENT_TAGS,
-        ...storedTags,
+        {
+          id: 'w1',
+          value: 'workshop',
+          label: 'Workshop',
+          dotClass: 'bg-teal-400',
+        },
       ]);
     });
 
-    it('falls back to unscoped localStorage keys when shopId is undefined', () => {
+    it('falls back to unscoped localStorage filter key when shopId is undefined', () => {
       useShopContext.mockReturnValue({
         activeShop: null,
       });
 
-      const unscopedTags = [
-        { value: 'meetup', label: 'Meetup', dotClass: 'bg-teal-400' },
-      ];
       const unscopedFilters = {
         showAllTags: false,
         selectedTags: ['meetup'],
       };
 
-      localStorage.setItem('festrack:event_tags', JSON.stringify(unscopedTags));
       localStorage.setItem(
         'festrack:event_tag_filters',
         JSON.stringify(unscopedFilters)
       );
 
+      useGetEventTags.mockReturnValue({
+        data: [
+          { id: 'm1', slug: 'meetup', name: 'Meetup', color: 'bg-teal-400' },
+        ],
+        isLoading: false,
+      });
+
       const { result } = renderHook(() => useEventTagFilter());
 
       expect(result.current.showAllTags).toBe(false);
       expect(result.current.selectedTags).toEqual(['meetup']);
-      expect(result.current.tagOptions).toEqual([
-        ...DEFAULT_EVENT_TAGS,
-        ...unscopedTags,
-      ]);
     });
 
     it('handles corrupted localStorage JSON gracefully without throwing', () => {
-      localStorage.setItem('festrack:shop-test-1:event_tags', '{invalid-json');
       localStorage.setItem(
         'festrack:shop-test-1:event_tag_filters',
         'not-a-json'
@@ -131,11 +188,11 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
 
       expect(result.current.showAllTags).toBe(true);
       expect(result.current.selectedTags).toEqual([]);
-      expect(result.current.tagOptions).toEqual(DEFAULT_EVENT_TAGS);
+      expect(result.current.tagOptions).toEqual([]);
     });
 
     it('supports flexible argument signatures: events array, options object, or both', () => {
-      const sampleEvents = [{ id: '1', title: 'Test', tag: 'family' }];
+      const sampleEvents = [{ id: '1', title: 'Test', tag: 'evento' }];
 
       // Signature 1: useEventTagFilter(events)
       const { result: r1 } = renderHook(() => useEventTagFilter(sampleEvents));
@@ -156,18 +213,14 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
   });
 
   describe('Shop Scoping & Reactive Switching', () => {
-    it('switches stored tags and filter state when shopId changes', () => {
+    it('switches stored filter state when shopId changes', () => {
       localStorage.setItem(
-        'festrack:shop-A:event_tags',
-        JSON.stringify([
-          { value: 'tag-a', label: 'Tag A', dotClass: 'bg-indigo-400' },
-        ])
+        'festrack:shop-A:event_tag_filters',
+        JSON.stringify({ showAllTags: false, selectedTags: ['tag-a'] })
       );
       localStorage.setItem(
-        'festrack:shop-B:event_tags',
-        JSON.stringify([
-          { value: 'tag-b', label: 'Tag B', dotClass: 'bg-teal-400' },
-        ])
+        'festrack:shop-B:event_tag_filters',
+        JSON.stringify({ showAllTags: false, selectedTags: ['tag-b'] })
       );
 
       const { result, rerender } = renderHook(
@@ -175,165 +228,240 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
         { initialProps: { shopId: 'shop-A' } }
       );
 
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'tag-a')
-      ).toBe(true);
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'tag-b')
-      ).toBe(false);
+      expect(result.current.selectedTags).toEqual(['tag-a']);
 
       // Re-render with shop-B
       rerender({ shopId: 'shop-B' });
 
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'tag-a')
-      ).toBe(false);
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'tag-b')
-      ).toBe(true);
+      expect(result.current.selectedTags).toEqual(['tag-b']);
     });
   });
 
-  describe('Custom Tag Creation & Color Cycling', () => {
-    it('creates a custom tag, cycles colors from TAG_COLOR_PALETTE, and invokes API mutation', () => {
+  describe('Custom Tag Creation & Color Assignment', () => {
+    it('creates tag non-optimistically: waits for server confirmation and does not add locally', async () => {
       const { result } = renderHook(() =>
         useEventTagFilter([], { shopId: 'shop-test-1' })
       );
 
-      act(() => {
-        result.current.addTagOption('Congresso');
+      await act(async () => {
+        await result.current.addTagOption('Congresso');
       });
 
-      // First custom tag should get first color in palette
+      // Called mutateAsync with proper payload
       const expectedFirstColor = TAG_COLOR_PALETTE[0];
-      expect(mockCreateMutate).toHaveBeenCalledWith({
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith({
         name: 'Congresso',
         color: expectedFirstColor,
         slug: 'congresso',
         shopId: 'shop-test-1',
       });
 
-      expect(
-        result.current.tagOptions.some(
-          (opt) =>
-            opt.value === 'congresso' &&
-            opt.label === 'Congresso' &&
-            opt.dotClass === expectedFirstColor
-        )
-      ).toBe(true);
+      // Non-optimistic: tagOptions is still empty until serverTags hook updates
+      expect(result.current.tagOptions).toEqual([]);
 
-      // Verify persisted in localStorage
-      const stored = JSON.parse(
+      // Never written to localStorage for tags
+      expect(
         localStorage.getItem('festrack:shop-test-1:event_tags')
-      );
-      expect(stored).toHaveLength(1);
-      expect(stored[0].value).toBe('congresso');
-
-      // Add second custom tag - should get second color in palette
-      act(() => {
-        result.current.addTagOption('Treinamento');
-      });
-
-      const expectedSecondColor = TAG_COLOR_PALETTE[1];
-      expect(mockCreateMutate).toHaveBeenCalledWith({
-        name: 'Treinamento',
-        color: expectedSecondColor,
-        slug: 'treinamento',
-        shopId: 'shop-test-1',
-      });
-
-      expect(
-        result.current.tagOptions.some(
-          (opt) =>
-            opt.value === 'treinamento' && opt.dotClass === expectedSecondColor
-        )
-      ).toBe(true);
+      ).toBeNull();
     });
 
-    it('wraps around TAG_COLOR_PALETTE when adding more custom tags than palette length', () => {
-      const { result } = renderHook(() => useEventTagFilter());
-
-      for (let i = 0; i < TAG_COLOR_PALETTE.length; i++) {
-        act(() => {
-          result.current.addTagOption(`Tag ${i}`);
-        });
-      }
-
-      // Add one more tag to test wrap-around
-      act(() => {
-        result.current.addTagOption('Wrapped Tag');
+    it('assigns the first available color in TAG_COLOR_PALETTE not currently used', async () => {
+      // Tags 0 and 1 are in use
+      useGetEventTags.mockReturnValue({
+        data: [
+          {
+            id: '1',
+            slug: 'tag-0',
+            name: 'Tag 0',
+            color: TAG_COLOR_PALETTE[0],
+          },
+          {
+            id: '2',
+            slug: 'tag-1',
+            name: 'Tag 1',
+            color: TAG_COLOR_PALETTE[1],
+          },
+        ],
+        isLoading: false,
       });
 
-      const wrappedTag = result.current.tagOptions.find(
-        (opt) => opt.value === 'wrapped-tag'
-      );
-      expect(wrappedTag?.dotClass).toBe(TAG_COLOR_PALETTE[0]);
-    });
-
-    it('ignores empty, whitespace-only, or duplicate tag names', () => {
-      const { result } = renderHook(() => useEventTagFilter());
-
-      act(() => {
-        result.current.addTagOption('');
-        result.current.addTagOption('   ');
-        result.current.addTagOption('Família'); // Already exists in DEFAULT_EVENT_TAGS
-      });
-
-      expect(mockCreateMutate).not.toHaveBeenCalled();
-      expect(result.current.tagOptions).toEqual(DEFAULT_EVENT_TAGS);
-    });
-  });
-
-  describe('Tag Deletion & System Tags Immunity', () => {
-    it('prevents deletion of default system tags (SYSTEM_TAG_VALUES)', () => {
-      const { result } = renderHook(() => useEventTagFilter());
-
-      SYSTEM_TAG_VALUES.forEach((systemVal) => {
-        act(() => {
-          result.current.removeTagOption(systemVal);
-        });
-      });
-
-      expect(mockDeleteMutate).not.toHaveBeenCalled();
-      expect(result.current.tagOptions).toEqual(DEFAULT_EVENT_TAGS);
-    });
-
-    it('deletes custom tag, removes it from state and localStorage, and calls API mutation', () => {
       const { result } = renderHook(() =>
         useEventTagFilter([], { shopId: 'shop-test-1' })
       );
 
-      act(() => {
-        result.current.addTagOption('Curso');
+      await act(async () => {
+        await result.current.addTagOption('Nova Tag');
       });
 
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'curso')
-      ).toBe(true);
-
-      act(() => {
-        result.current.removeTagOption('curso');
-      });
-
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'curso')
-      ).toBe(false);
-
-      const stored = JSON.parse(
-        localStorage.getItem('festrack:shop-test-1:event_tags')
+      // Should pick TAG_COLOR_PALETTE[2]
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          color: TAG_COLOR_PALETTE[2],
+        })
       );
-      expect(stored).toEqual([]);
     });
 
-    it('calls delete mutation with tagId when tag has an id property', () => {
+    it('picks a freed color if an earlier color is not in use', async () => {
+      // Tags use color 0 and color 2, but color 1 is free
       useGetEventTags.mockReturnValue({
         data: [
           {
-            id: 'server-tag-1',
-            slug: 'custom-server',
-            name: 'Custom Server',
+            id: '1',
+            slug: 'tag-0',
+            name: 'Tag 0',
+            color: TAG_COLOR_PALETTE[0],
+          },
+          {
+            id: '3',
+            slug: 'tag-2',
+            name: 'Tag 2',
+            color: TAG_COLOR_PALETTE[2],
+          },
+        ],
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() =>
+        useEventTagFilter([], { shopId: 'shop-test-1' })
+      );
+
+      await act(async () => {
+        await result.current.addTagOption('Tag Cor 1');
+      });
+
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          color: TAG_COLOR_PALETTE[1],
+        })
+      );
+    });
+
+    it('repeats from the beginning of TAG_COLOR_PALETTE when all colors are in use', async () => {
+      const allColorsTags = TAG_COLOR_PALETTE.map((color, index) => ({
+        id: `id-${index}`,
+        slug: `tag-${index}`,
+        name: `Tag ${index}`,
+        color,
+      }));
+
+      useGetEventTags.mockReturnValue({
+        data: allColorsTags,
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useEventTagFilter());
+
+      await act(async () => {
+        await result.current.addTagOption('Tag Excedente');
+      });
+
+      // All 6 colors are used; wraps to index 0
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          color: TAG_COLOR_PALETTE[0],
+        })
+      );
+    });
+
+    it('shows Portuguese error toast, returns false, and does not add tag when createTagMutation rejects', async () => {
+      mockCreateMutateAsync.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderHook(() =>
+        useEventTagFilter([], { shopId: 'shop-test-1' })
+      );
+
+      let addResult;
+      await act(async () => {
+        addResult = await result.current.addTagOption('Tag Que Falha');
+      });
+
+      expect(addResult).toBe(false);
+      expect(toast.add).toHaveBeenCalledWith({
+        type: 'error',
+        title: 'Erro ao criar etiqueta',
+        description: 'Não foi possível criar a etiqueta. Tente novamente.',
+      });
+
+      expect(result.current.tagOptions).toEqual([]);
+      expect(
+        localStorage.getItem('festrack:shop-test-1:event_tags')
+      ).toBeNull();
+    });
+
+    it('supports mutate-only mocks when mutateAsync is not provided', async () => {
+      const createdTag = {
+        id: 't-mutate',
+        slug: 'casamento',
+        name: 'Casamento',
+        color: 'bg-teal-400',
+      };
+      useCreateEventTag.mockReturnValue({
+        mutate: (payload, { onSuccess }) => onSuccess(createdTag),
+      });
+
+      const { result } = renderHook(() =>
+        useEventTagFilter([], { shopId: 'shop-test-1' })
+      );
+
+      let addResult;
+      await act(async () => {
+        addResult = await result.current.addTagOption('Casamento');
+      });
+
+      expect(addResult).toEqual({
+        id: 't-mutate',
+        value: 'casamento',
+        label: 'Casamento',
+        dotClass: 'bg-teal-400',
+      });
+    });
+
+    it('returns existing option when tag already exists and ignores empty/whitespace names', async () => {
+      useGetEventTags.mockReturnValue({
+        data: [
+          {
+            id: '1',
+            slug: 'workshop',
+            name: 'Workshop',
+            color: TAG_COLOR_PALETTE[0],
+          },
+        ],
+        isLoading: false,
+      });
+
+      const { result } = renderHook(() => useEventTagFilter());
+
+      let existingByName;
+      let existingBySlug;
+      await act(async () => {
+        await result.current.addTagOption('');
+        await result.current.addTagOption('   ');
+        existingByName = await result.current.addTagOption('Workshop');
+        existingBySlug = await result.current.addTagOption('workshop');
+      });
+
+      expect(existingByName).toEqual({
+        id: '1',
+        value: 'workshop',
+        label: 'Workshop',
+        dotClass: TAG_COLOR_PALETTE[0],
+      });
+      expect(existingBySlug).toEqual(existingByName);
+      expect(mockCreateMutateAsync).not.toHaveBeenCalled();
+      expect(toast.add).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Tag Deletion & Removal from Selected Filters', () => {
+    it('allows deleting any tag without system tags immunity', () => {
+      useGetEventTags.mockReturnValue({
+        data: [
+          {
+            id: '1',
+            slug: 'qualquer-tag',
+            name: 'Qualquer Tag',
             color: 'bg-indigo-400',
-            is_system: false,
+            is_system: true,
           },
         ],
         isLoading: false,
@@ -344,68 +472,87 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       );
 
       act(() => {
-        result.current.removeTagOption('custom-server', 'server-tag-1');
+        result.current.removeTagOption('qualquer-tag', '1');
       });
 
       expect(mockDeleteMutate).toHaveBeenCalledWith({
-        tagId: 'server-tag-1',
+        tagId: '1',
         shopId: 'shop-test-1',
       });
+      // No tags stored in localStorage
+      expect(
+        localStorage.getItem('festrack:shop-test-1:event_tags')
+      ).toBeNull();
     });
 
-    it('removes deleted tag from selectedTags if it was selected and resets showAllTags if nextSelected is empty', () => {
-      const { result } = renderHook(() => useEventTagFilter());
-
-      act(() => {
-        result.current.addTagOption('Conferencia');
+    it('removes deleted tag from selectedTags and resets showAllTags if nextSelected is empty', () => {
+      useGetEventTags.mockReturnValue({
+        data: [
+          {
+            id: '1',
+            slug: 'conferencia',
+            name: 'Conferência',
+            color: 'bg-indigo-400',
+          },
+          { id: '2', slug: 'palestra', name: 'Palestra', color: 'bg-teal-400' },
+        ],
+        isLoading: false,
       });
 
-      // Filter specifically to just 'conferencia'
+      const { result } = renderHook(() => useEventTagFilter());
+
+      // Filter to only 'conferencia'
       act(() => {
         result.current.setShowAllTags(false);
       });
       act(() => {
-        result.current.tagOptions.forEach((opt) => {
-          if (opt.value !== 'conferencia') {
-            result.current.toggleTagFilter(opt.value, false);
-          }
-        });
+        result.current.toggleTagFilter('palestra', false);
       });
 
       expect(result.current.showAllTags).toBe(false);
       expect(result.current.selectedTags).toEqual(['conferencia']);
 
+      // Remove 'conferencia'
       act(() => {
-        result.current.removeTagOption('conferencia');
+        result.current.removeTagOption('conferencia', '1');
       });
 
       expect(result.current.selectedTags).toEqual([]);
       expect(result.current.showAllTags).toBe(true);
+
+      // Persisted to localStorage
+      const stored = JSON.parse(
+        localStorage.getItem('festrack:shop-test-1:event_tag_filters')
+      );
+      expect(stored.showAllTags).toBe(true);
+      expect(stored.selectedTags).toEqual([]);
     });
 
     it('resets showAllTags to true when remaining selected tags equal all remaining options', () => {
+      useGetEventTags.mockReturnValue({
+        data: [
+          { id: '1', slug: 'tag-1', name: 'Tag 1', color: 'bg-indigo-400' },
+          { id: '2', slug: 'tag-2', name: 'Tag 2', color: 'bg-teal-400' },
+          { id: '3', slug: 'tag-3', name: 'Tag 3', color: 'bg-orange-400' },
+        ],
+        isLoading: false,
+      });
+
       const { result } = renderHook(() => useEventTagFilter());
 
       act(() => {
-        result.current.addTagOption('Workshop');
-      });
-
-      // Set showAll to false (all selected)
-      act(() => {
         result.current.setShowAllTags(false);
       });
-
-      // Deselect 'workshop' only -> selectedTags has all default tags (5 tags)
+      // Deselect 'tag-3' -> selectedTags: ['tag-1', 'tag-2']
       act(() => {
-        result.current.toggleTagFilter('workshop', false);
+        result.current.toggleTagFilter('tag-3', false);
       });
       expect(result.current.showAllTags).toBe(false);
-      expect(result.current.selectedTags).toHaveLength(DEFAULT_EVENT_TAGS.length);
+      expect(result.current.selectedTags).toEqual(['tag-1', 'tag-2']);
 
-      // Remove 'workshop' -> remainingOptions is now just DEFAULT_EVENT_TAGS (5 tags)
-      // nextSelected (5 tags) === remainingOptions (5 tags) -> resets showAllTags to true
+      // Remove 'tag-3' -> remainingOptions is ['tag-1', 'tag-2'] -> equals nextSelected -> resets showAllTags: true
       act(() => {
-        result.current.removeTagOption('workshop');
+        result.current.removeTagOption('tag-3', '3');
       });
 
       expect(result.current.showAllTags).toBe(true);
@@ -414,6 +561,19 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
   });
 
   describe('Filter Toggling & Logic', () => {
+    const mockTags = [
+      { id: '1', slug: 'tag-1', name: 'Tag 1', color: 'bg-indigo-400' },
+      { id: '2', slug: 'tag-2', name: 'Tag 2', color: 'bg-teal-400' },
+      { id: '3', slug: 'tag-3', name: 'Tag 3', color: 'bg-orange-400' },
+    ];
+
+    beforeEach(() => {
+      useGetEventTags.mockReturnValue({
+        data: mockTags,
+        isLoading: false,
+      });
+    });
+
     it('sets showAllTags explicitly via setShowAllTags', () => {
       const { result } = renderHook(() =>
         useEventTagFilter([], { shopId: 'shop-test-1' })
@@ -424,9 +584,7 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       });
 
       expect(result.current.showAllTags).toBe(false);
-      expect(result.current.selectedTags).toEqual(
-        DEFAULT_EVENT_TAGS.map((t) => t.value)
-      );
+      expect(result.current.selectedTags).toEqual(['tag-1', 'tag-2', 'tag-3']);
 
       act(() => {
         result.current.setShowAllTags(true);
@@ -440,36 +598,31 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       const { result } = renderHook(() => useEventTagFilter());
 
       act(() => {
-        result.current.toggleTagFilter('family', false);
+        result.current.toggleTagFilter('tag-1', false);
       });
 
       expect(result.current.showAllTags).toBe(false);
-      expect(result.current.selectedTags).not.toContain('family');
-      expect(result.current.selectedTags).toContain('business');
-      expect(result.current.selectedTags).toContain('personal');
+      expect(result.current.selectedTags).not.toContain('tag-1');
+      expect(result.current.selectedTags).toEqual(['tag-2', 'tag-3']);
     });
 
     it('toggles individual tags on and off, resetting to showAll when all or none are selected', () => {
       const { result } = renderHook(() => useEventTagFilter());
 
-      // Start with only 'business' selected
       act(() => {
         result.current.setShowAllTags(false);
       });
       act(() => {
-        DEFAULT_EVENT_TAGS.forEach((tag) => {
-          if (tag.value !== 'business') {
-            result.current.toggleTagFilter(tag.value, false);
-          }
-        });
+        result.current.toggleTagFilter('tag-1', false);
+        result.current.toggleTagFilter('tag-2', false);
       });
 
       expect(result.current.showAllTags).toBe(false);
-      expect(result.current.selectedTags).toEqual(['business']);
+      expect(result.current.selectedTags).toEqual(['tag-3']);
 
-      // Uncheck 'business' -> 0 selected -> resets to showAllTags: true
+      // Deselecting the last tag resets to showAllTags: true
       act(() => {
-        result.current.toggleTagFilter('business', false);
+        result.current.toggleTagFilter('tag-3', false);
       });
 
       expect(result.current.showAllTags).toBe(true);
@@ -478,51 +631,57 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
   });
 
   describe('filteredEvents Calculation', () => {
-    const mockEvents = [
-      { id: '1', title: 'Almoço em Família', tag: 'family' },
-      { id: '2', title: 'Reunião de Negócios', rawEvent: { tag: 'business' } },
-      { id: '3', title: 'Consulta Médica', rawEvent: { category: 'personal' } },
-      { id: '4', title: 'Sem etiqueta explícita' }, // fallback to 'etc'
+    const mockTags = [
+      { id: '1', slug: 'empresa', name: 'Empresa', color: 'bg-indigo-400' },
+      { id: '2', slug: 'pessoal', name: 'Pessoal', color: 'bg-teal-400' },
     ];
 
-    it('returns all events when showAllTags is true', () => {
+    const mockEvents = [
+      { id: '1', title: 'Reunião de Empresa', tag: 'empresa' },
+      { id: '2', title: 'Médico', rawEvent: { tag: 'pessoal' } },
+      { id: '3', title: 'Sem etiqueta explícita', tag: null },
+      { id: '4', title: 'Orphan tag', tag: 'tag-deletada' },
+    ];
+
+    beforeEach(() => {
+      useGetEventTags.mockReturnValue({
+        data: mockTags,
+        isLoading: false,
+      });
+    });
+
+    it('returns all events when showAllTags is true, including untagged and orphan events', () => {
       const { result } = renderHook(() => useEventTagFilter(mockEvents));
 
       expect(result.current.filteredEvents).toHaveLength(4);
       expect(result.current.filteredEvents).toEqual(mockEvents);
     });
 
-    it('filters events matching the selectedTags', () => {
+    it('filters events matching the selectedTags and does not match untagged or orphan events (no fallback to etc)', () => {
       const { result } = renderHook(() => useEventTagFilter(mockEvents));
-
-      act(() => {
-        result.current.toggleTagFilter('family', false);
-      });
-      // Now all except 'family' are selected: business, personal, holiday, etc
-      expect(result.current.filteredEvents.map((e) => e.id)).toEqual([
-        '2',
-        '3',
-        '4',
-      ]);
 
       act(() => {
         result.current.setShowAllTags(false);
       });
-      // Now all are selected. Let's filter to just 'family'
       act(() => {
-        DEFAULT_EVENT_TAGS.forEach((t) => {
-          if (t.value !== 'family') {
-            result.current.toggleTagFilter(t.value, false);
-          }
-        });
+        result.current.toggleTagFilter('pessoal', false);
       });
 
+      // Only 'empresa' is selected
       expect(result.current.filteredEvents.map((e) => e.id)).toEqual(['1']);
+
+      // Untagged and orphan events never match selected tags
+      expect(result.current.filteredEvents.some((e) => e.id === '3')).toBe(
+        false
+      );
+      expect(result.current.filteredEvents.some((e) => e.id === '4')).toBe(
+        false
+      );
     });
   });
 
   describe('Cohesive tagFilter Prop Object', () => {
-    it('packages all required properties and handlers in tagFilter object', () => {
+    it('packages all required properties and handlers in tagFilter object', async () => {
       const { result } = renderHook(() => useEventTagFilter());
 
       const { tagFilter } = result.current;
@@ -542,18 +701,26 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       expect(typeof tagFilter.removeTag).toBe('function');
 
       // Test handler forwarding
-      act(() => {
-        tagFilter.onAddTagOption('Nova Tag Via Prop');
+      await act(async () => {
+        await tagFilter.onAddTagOption('Nova Tag Via Prop');
       });
 
-      expect(
-        result.current.tagOptions.some(
-          (opt) => opt.value === 'nova-tag-via-prop'
-        )
-      ).toBe(true);
+      expect(mockCreateMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Nova Tag Via Prop',
+          slug: 'nova-tag-via-prop',
+        })
+      );
     });
 
-    it('supports concise action names (toggleTag, setShowAll, addTag, removeTag) alongside verbose names (#135)', () => {
+    it('supports concise action names (toggleTag, setShowAll, addTag, removeTag) alongside verbose names (#135)', async () => {
+      useGetEventTags.mockReturnValue({
+        data: [
+          { id: 's1', slug: 'sessao', name: 'Sessao', color: 'bg-indigo-400' },
+        ],
+        isLoading: false,
+      });
+
       const { result } = renderHook(() => useEventTagFilter());
 
       expect(typeof result.current.setShowAll).toBe('function');
@@ -561,12 +728,10 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       expect(typeof result.current.addTag).toBe('function');
       expect(typeof result.current.removeTag).toBe('function');
 
-      act(() => {
-        result.current.addTag('Sessao');
+      await act(async () => {
+        await result.current.addTag('Nova Sessao');
       });
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'sessao')
-      ).toBe(true);
+      expect(mockCreateMutateAsync).toHaveBeenCalled();
 
       act(() => {
         result.current.setShowAll(false);
@@ -578,11 +743,11 @@ describe('useEventTagFilter - Deep Module (#136)', () => {
       });
 
       act(() => {
-        result.current.removeTag('sessao');
+        result.current.removeTag('sessao', 's1');
       });
-      expect(
-        result.current.tagOptions.some((opt) => opt.value === 'sessao')
-      ).toBe(false);
+      expect(mockDeleteMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ tagId: 's1' })
+      );
     });
 
     it('does not expose proscribed Glossary terms (*Type*) (#135)', () => {

@@ -14,7 +14,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { EventItem } from '@/features/events/components/event-item';
 import { cn } from '@/lib/utils';
 
-export function AgendaView({ currentDate, events = [], onEventSelect }) {
+export function AgendaView({
+  currentDate,
+  events = [],
+  tagOptions,
+  onEventSelect,
+}) {
   const AGENDA_DAYS = 30;
 
   const daysList = useMemo(() => {
@@ -56,9 +61,9 @@ export function AgendaView({ currentDate, events = [], onEventSelect }) {
   return (
     <div
       data-slot="agenda-view"
-      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden"
+      className="flex flex-col lg:h-full lg:min-h-0 lg:flex-1 lg:overflow-hidden"
     >
-      <ScrollArea className="h-full min-h-0 flex-1">
+      <ScrollArea className="lg:h-full lg:min-h-0 lg:flex-1">
         <div className="mx-auto w-full p-4 sm:p-6">
           {groupedEvents.length === 0 ? (
             <div className="flex min-h-[50vh] flex-col items-center justify-center py-16 text-center">
@@ -101,6 +106,7 @@ export function AgendaView({ currentDate, events = [], onEventSelect }) {
                           key={ev.id}
                           event={ev}
                           view="agenda"
+                          tagOptions={tagOptions}
                           onClick={() => onEventSelect?.(ev)}
                         />
                       ))}

@@ -330,6 +330,7 @@ export const mapEventToCalendarItem = (event) => {
   const start = parseEventDate(event.startDate) ?? new Date();
   const end = parseEventDate(event.endDate) ?? start;
   const status = getEventStatus(event);
+  const tag = event.tag ?? event.rawEvent?.tag ?? null;
 
   return {
     id: event.id,
@@ -344,11 +345,12 @@ export const mapEventToCalendarItem = (event) => {
       event.rawEvent?.createdByUserId ??
       event.rawEvent?.created_by_user_id ??
       null,
-    tag: event.tag ?? null,
+    tag,
     start,
     end,
     allDay: event.allDay ?? false,
-    color: status,
+    status,
+    color: tag ?? event.color ?? null,
     rawEvent: event,
   };
 };
@@ -362,3 +364,40 @@ export const mapEventToCalendarItem = (event) => {
  */
 export const isShopOwner = (role, activeShop) =>
   (role ?? activeShop?.role) === 'OWNER';
+
+/**
+ * Converte o nome de uma etiqueta para slug normalizado.
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+export const toTagSlug = (name) =>
+  String(name ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-');
+
+/**
+ * Normaliza um objeto de etiqueta vindo da API para o formato canônico da UI.
+ *
+ * @param {Object} tag
+ * @returns {{ id: string | undefined, value: string | undefined, label: string, dotClass: string }}
+ */
+export const normalizeTagOption = (tag) => ({
+  id: tag?.id,
+  value: tag?.value || tag?.slug || tag?.id,
+  label: tag?.label || tag?.name || '',
+  dotClass: tag?.dotClass || tag?.color || '',
+});
+
+/**
+ * Busca uma opção de etiqueta correspondente ao slug informado.
+ *
+ * @param {Array<Object> | undefined} tagOptions
+ * @param {string | null | undefined} slug
+ * @returns {Object | undefined}
+ */
+export const findTagOption = (tagOptions, slug) => {
+  if (!Array.isArray(tagOptions) || !slug) return undefined;
+  return tagOptions.find((opt) => (opt.value || opt.slug || opt.id) === slug);
+};

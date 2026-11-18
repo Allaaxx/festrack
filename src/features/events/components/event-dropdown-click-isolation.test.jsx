@@ -18,6 +18,9 @@ vi.mock('@/features/events/hooks/use-google-calendar-sync', () => ({
 }));
 
 vi.mock('@/features/events/api/hooks', () => ({
+  useGetEventTags: () => ({ data: [] }),
+  useCreateEventTag: () => ({ mutateAsync: vi.fn() }),
+  useDeleteEventTag: () => ({ mutate: vi.fn() }),
   useCreateEvent: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useEditEvent: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteEvent: () => ({ mutateAsync: vi.fn(), isPending: false }),

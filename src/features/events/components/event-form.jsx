@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import TimePicker from '@/components/ui/time-picker';
 
+import EventTagField from './event-tag-field';
+
 /**
  * Formulário de campos de evento, reutilizável entre criação e edição.
  *
@@ -187,6 +189,21 @@ const EventForm = ({ form, onSubmit, formId }) => {
             />
           )}
         </div>
+
+        <Controller
+          name="tag"
+          control={form.control}
+          render={({ field }) => (
+            <Field>
+              <FieldLabel>Etiqueta (opcional)</FieldLabel>
+              <EventTagField
+                value={field.value ?? null}
+                onChange={field.onChange}
+                disabled={form.formState.isSubmitting}
+              />
+            </Field>
+          )}
+        />
       </FieldGroup>
     </form>
   );

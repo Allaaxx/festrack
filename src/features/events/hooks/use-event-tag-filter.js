@@ -1,27 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { useShopContext } from '@/contexts/shop';
-import {
-  useCreateEventTag,
-  useDeleteEventTag,
-  useGetEventTags,
-} from '@/features/events/api/hooks';
-import {
-  DEFAULT_EVENT_TAGS,
-  SYSTEM_TAG_VALUES,
-  TAG_COLOR_PALETTE,
-} from '@/features/events/constants';
+import { findTagOption } from '@/features/events/helpers/event';
+
+import { getNextTagColor, useEventTags } from './use-event-tags';
+
+export { getNextTagColor };
 
 const EMPTY_EVENTS = [];
-
-function readStoredTags(storageKey) {
-  try {
-    const stored = localStorage.getItem(storageKey);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
 
 function readStoredFilters(storageKey) {
   try {
@@ -42,7 +27,7 @@ function readStoredFilters(storageKey) {
 }
 
 /**
- * Deep hook for Event Tag lifecycle management, storage persistence, and calendar event filtering.
+ * Deep hook for Event Tag lifecycle management, server-driven tags, and calendar event filtering.
  *
  * @param {Array<Object>|Object} [eventsOrOptions=[]] List of calendar events or an options bag.
  * @param {Object} [maybeOptions={}] Additional options such as explicit shopId.
@@ -59,71 +44,43 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
       ? eventsOrOptions
       : maybeOptions || {};
 
-  const shopContext = useShopContext?.();
-  const shopId =
-    options.shopId !== undefined ? options.shopId : shopContext?.activeShop?.id;
+  const {
+    shopId,
+    tagOptions: allTagOptions,
+    addTag: handleAddTagOption,
+    removeTag: removeServerTag,
+  } = useEventTags({
+    shopId: options.shopId,
+    serverTags: options.serverTags,
+    tagOptions: options.tagOptions,
+  });
 
-  const tagsStorageKey = shopId
-    ? `festrack:${shopId}:event_tags`
-    : 'festrack:event_tags';
   const filtersStorageKey = shopId
     ? `festrack:${shopId}:event_tag_filters`
     : 'festrack:event_tag_filters';
 
-  const [prevStorageKey, setPrevStorageKey] = useState(tagsStorageKey);
-  const [customTagOptions, setCustomTagOptions] = useState(() =>
-    readStoredTags(tagsStorageKey)
-  );
-
+  const [prevFiltersStorageKey, setPrevFiltersStorageKey] =
+    useState(filtersStorageKey);
   const [filterState, setFilterState] = useState(() =>
     readStoredFilters(filtersStorageKey)
   );
 
   // Synchronize state during render when shop/storage key changes
-  if (prevStorageKey !== tagsStorageKey) {
-    setPrevStorageKey(tagsStorageKey);
-    setCustomTagOptions(readStoredTags(tagsStorageKey));
+  if (prevFiltersStorageKey !== filtersStorageKey) {
+    setPrevFiltersStorageKey(filtersStorageKey);
     setFilterState(readStoredFilters(filtersStorageKey));
   }
-
-  const persistTags = useCallback(
-    (tags) => {
-      try {
-        localStorage.setItem(tagsStorageKey, JSON.stringify(tags));
-      } catch (err) {
-        void err;
-      }
-    },
-    [tagsStorageKey]
-  );
 
   const persistFilters = useCallback(
     (filters) => {
       try {
         localStorage.setItem(filtersStorageKey, JSON.stringify(filters));
-      } catch (err) {
-        void err;
+      } catch {
+        // Ignore storage write errors (e.g. private mode / quota)
       }
     },
     [filtersStorageKey]
   );
-
-  const { data: serverTags } = useGetEventTags();
-  const createTagMutation = useCreateEventTag();
-  const deleteTagMutation = useDeleteEventTag();
-
-  const allTagOptions = useMemo(() => {
-    if (serverTags && serverTags.length > 0) {
-      return serverTags.map((t) => ({
-        id: t.id,
-        value: t.slug || t.value,
-        label: t.name || t.label,
-        dotClass: t.color || t.dotClass,
-        isSystem: t.is_system ?? t.isSystem,
-      }));
-    }
-    return [...DEFAULT_EVENT_TAGS, ...customTagOptions];
-  }, [serverTags, customTagOptions]);
 
   const showAllTags = filterState.showAllTags;
   const selectedTags = filterState.selectedTags;
@@ -183,72 +140,14 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
     [allTagOptions, persistFilters]
   );
 
-  const handleAddTagOption = useCallback(
-    (name) => {
-      if (typeof name !== 'string') return;
-      const trimmed = name.trim();
-      if (!trimmed) return;
-      const value = trimmed.toLowerCase().replace(/\s+/g, '-');
-      if (
-        allTagOptions.some(
-          (opt) =>
-            opt.value.toLowerCase() === value.toLowerCase() ||
-            (opt.label && opt.label.toLowerCase() === trimmed.toLowerCase())
-        )
-      ) {
-        return;
-      }
-
-      const color =
-        TAG_COLOR_PALETTE[customTagOptions.length % TAG_COLOR_PALETTE.length];
-      const newOption = { value, label: trimmed, dotClass: color };
-
-      setCustomTagOptions((prev) => {
-        const next = [...prev, newOption];
-        persistTags(next);
-        return next;
-      });
-
-      createTagMutation?.mutate?.({
-        name: trimmed,
-        color,
-        slug: value,
-        ...(shopId ? { shopId } : {}),
-      });
-    },
-    [
-      allTagOptions,
-      customTagOptions.length,
-      persistTags,
-      createTagMutation,
-      shopId,
-    ]
-  );
-
   const handleRemoveTagOption = useCallback(
     (value, id) => {
-      const targetTag = allTagOptions.find(
-        (opt) => opt.value === value || (id && opt.id === id)
-      );
-      const isSystem =
-        Boolean(targetTag?.isSystem) || SYSTEM_TAG_VALUES.includes(value);
-
-      if (isSystem) {
-        return;
-      }
-
-      setCustomTagOptions((prev) => {
-        const next = prev.filter(
-          (opt) => opt.value !== value && (!id || opt.id !== id)
-        );
-        persistTags(next);
-        return next;
-      });
+      const tagValue = removeServerTag(value, id);
 
       setFilterState((prev) => {
-        const nextSelected = prev.selectedTags.filter((v) => v !== value);
+        const nextSelected = prev.selectedTags.filter((v) => v !== tagValue);
         const remainingOptions = allTagOptions.filter(
-          (opt) => opt.value !== value && (!id || opt.id !== id)
+          (opt) => opt.value !== tagValue && (!id || opt.id !== id)
         );
         const shouldResetShowAll =
           nextSelected.length === 0 ||
@@ -262,16 +161,8 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
         persistFilters(next);
         return next;
       });
-
-      const targetId = id || targetTag?.id;
-      if (targetId) {
-        deleteTagMutation?.mutate?.({
-          tagId: targetId,
-          ...(shopId ? { shopId } : {}),
-        });
-      }
     },
-    [allTagOptions, persistTags, persistFilters, deleteTagMutation, shopId]
+    [allTagOptions, persistFilters, removeServerTag]
   );
 
   const filteredEvents = useMemo(() => {
@@ -283,28 +174,26 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
         event?.rawEvent?.tag ||
         event?.rawEvent?.category ||
         event?.event ||
-        event?.color ||
-        'etc';
+        null;
+      if (!eventTag) return false;
+      if (!findTagOption(allTagOptions, eventTag)) return false;
       return selectedTags.includes(eventTag);
     });
-  }, [events, showAllTags, selectedTags]);
+  }, [events, showAllTags, selectedTags, allTagOptions]);
 
   const tagFilter = useMemo(
     () => ({
       showAllTags,
       selectedTags,
       tagOptions: allTagOptions,
-      // Concise action names (Spec #135)
       setShowAll: handleSetShowAllTags,
       toggleTag: handleToggleTagFilter,
       addTag: handleAddTagOption,
       removeTag: handleRemoveTagOption,
-      // Verbose action names
       setShowAllTags: handleSetShowAllTags,
       toggleTagFilter: handleToggleTagFilter,
       addTagOption: handleAddTagOption,
       removeTagOption: handleRemoveTagOption,
-      // on* action names
       onSetShowAllTags: handleSetShowAllTags,
       onToggleTagFilter: handleToggleTagFilter,
       onAddTagOption: handleAddTagOption,
@@ -326,17 +215,14 @@ export function useEventTagFilter(eventsOrOptions = [], maybeOptions = {}) {
     showAllTags,
     selectedTags,
     tagOptions: allTagOptions,
-    // Concise action names (Spec #135)
     setShowAll: handleSetShowAllTags,
     toggleTag: handleToggleTagFilter,
     addTag: handleAddTagOption,
     removeTag: handleRemoveTagOption,
-    // Verbose action names
     setShowAllTags: handleSetShowAllTags,
     toggleTagFilter: handleToggleTagFilter,
     addTagOption: handleAddTagOption,
     removeTagOption: handleRemoveTagOption,
-    // on* action names
     onSetShowAllTags: handleSetShowAllTags,
     onToggleTagFilter: handleToggleTagFilter,
     onAddTagOption: handleAddTagOption,

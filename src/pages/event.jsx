@@ -53,8 +53,8 @@ const EventPage = () => {
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="bg-card absolute inset-0 flex flex-row overflow-hidden rounded-lg border">
+    <div className="relative flex flex-1 flex-col">
+      <div className="bg-card flex flex-col rounded-lg border lg:absolute lg:inset-0 lg:flex-row lg:overflow-hidden">
         <div className="bg-card flex min-w-0 flex-1 flex-col">
           <EventCalendar
             events={events}

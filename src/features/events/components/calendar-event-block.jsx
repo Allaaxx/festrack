@@ -35,6 +35,7 @@ function ResizeHandle({
 export function CalendarEventBlock({
   positionedEvent,
   view,
+  tagOptions,
   onEventResize,
   onEventResizeEnd,
 }) {
@@ -84,11 +85,13 @@ export function CalendarEventBlock({
         {...attributes}
         className="h-full w-full cursor-grab select-none active:cursor-grabbing"
       >
-        <EventDropdownMenu
-          event={event}
-          disabled={isResizing || isDragging}
-        >
-          <EventItem event={event} view={view} showTime />
+        <EventDropdownMenu event={event} disabled={isResizing || isDragging}>
+          <EventItem
+            event={event}
+            view={view}
+            tagOptions={tagOptions}
+            showTime
+          />
         </EventDropdownMenu>
       </div>
 
