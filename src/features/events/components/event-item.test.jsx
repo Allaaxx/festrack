@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { EventItem } from './event-item';
 
-describe('EventItem (#145: Pink Styling for Untagged & Orphan Events across all 5 views)', () => {
+describe('EventItem - Pink Styling for Untagged & Orphan Events across all 5 views', () => {
   const baseEvent = {
     id: 'ev-1',
     title: 'Planejamento de Aniversário',
@@ -52,11 +52,7 @@ describe('EventItem (#145: Pink Styling for Untagged & Orphan Events across all 
   it('renders orphan tag event in neutral pink', () => {
     const orphanEvent = { ...baseEvent, tag: 'deleted-tag-slug' };
     render(
-      <EventItem
-        event={orphanEvent}
-        view="month"
-        tagOptions={tagOptions}
-      />
+      <EventItem event={orphanEvent} view="month" tagOptions={tagOptions} />
     );
 
     const button = screen.getByRole('button');
@@ -66,11 +62,7 @@ describe('EventItem (#145: Pink Styling for Untagged & Orphan Events across all 
   it('renders valid tagged event with its tag color', () => {
     const taggedEvent = { ...baseEvent, tag: 'workshop' };
     render(
-      <EventItem
-        event={taggedEvent}
-        view="month"
-        tagOptions={tagOptions}
-      />
+      <EventItem event={taggedEvent} view="month" tagOptions={tagOptions} />
     );
 
     const button = screen.getByRole('button');

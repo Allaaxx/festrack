@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { useEventsSidebar } from './use-events-sidebar';
 
-describe('useEventsSidebar (#145: Pink Dots for Untagged & Orphan Events)', () => {
+describe('useEventsSidebar - Pink Dots for Untagged & Orphan Events', () => {
   const dateKey = format(new Date(), 'yyyy-MM-dd');
   const shopTagOptions = [
     { value: 'workshop', label: 'Workshop', dotClass: 'bg-indigo-400' },

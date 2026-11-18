@@ -27,7 +27,7 @@ vi.mock('@/features/events/api/hooks', () => ({
   useDeleteEventTag: vi.fn(),
 }));
 
-describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () => {
+describe('useEventTagFilter - Server-Only Tags & Shop Filter State', () => {
   let mockCreateMutateAsync;
   let mockCreateMutate;
   let mockDeleteMutate;
@@ -36,7 +36,9 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
     vi.clearAllMocks();
     localStorage.clear();
 
-    mockCreateMutateAsync = vi.fn().mockResolvedValue({ id: 'tag-new', slug: 'nova-tag', name: 'Nova Tag' });
+    mockCreateMutateAsync = vi
+      .fn()
+      .mockResolvedValue({ id: 'tag-new', slug: 'nova-tag', name: 'Nova Tag' });
     mockCreateMutate = vi.fn();
     mockDeleteMutate = vi.fn();
 
@@ -74,7 +76,12 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
 
     it('derives tagOptions exclusively from serverTags returned by useGetEventTags', () => {
       const serverTags = [
-        { id: '1', slug: 'conferencia', name: 'Conferência', color: 'bg-indigo-400' },
+        {
+          id: '1',
+          slug: 'conferencia',
+          name: 'Conferência',
+          color: 'bg-indigo-400',
+        },
         { id: '2', slug: 'reuniao', name: 'Reunião', color: 'bg-teal-400' },
       ];
       useGetEventTags.mockReturnValue({
@@ -85,8 +92,18 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       const { result } = renderHook(() => useEventTagFilter());
 
       expect(result.current.tagOptions).toEqual([
-        { id: '1', value: 'conferencia', label: 'Conferência', dotClass: 'bg-indigo-400' },
-        { id: '2', value: 'reuniao', label: 'Reunião', dotClass: 'bg-teal-400' },
+        {
+          id: '1',
+          value: 'conferencia',
+          label: 'Conferência',
+          dotClass: 'bg-indigo-400',
+        },
+        {
+          id: '2',
+          value: 'reuniao',
+          label: 'Reunião',
+          dotClass: 'bg-teal-400',
+        },
       ]);
     });
 
@@ -107,7 +124,14 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       );
 
       useGetEventTags.mockReturnValue({
-        data: [{ id: 'w1', slug: 'workshop', name: 'Workshop', color: 'bg-teal-400' }],
+        data: [
+          {
+            id: 'w1',
+            slug: 'workshop',
+            name: 'Workshop',
+            color: 'bg-teal-400',
+          },
+        ],
         isLoading: false,
       });
 
@@ -117,7 +141,12 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       expect(result.current.selectedTags).toEqual(['workshop']);
       // tagOptions comes solely from serverTags, never from legacy localStorage
       expect(result.current.tagOptions).toEqual([
-        { id: 'w1', value: 'workshop', label: 'Workshop', dotClass: 'bg-teal-400' },
+        {
+          id: 'w1',
+          value: 'workshop',
+          label: 'Workshop',
+          dotClass: 'bg-teal-400',
+        },
       ]);
     });
 
@@ -137,7 +166,9 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       );
 
       useGetEventTags.mockReturnValue({
-        data: [{ id: 'm1', slug: 'meetup', name: 'Meetup', color: 'bg-teal-400' }],
+        data: [
+          { id: 'm1', slug: 'meetup', name: 'Meetup', color: 'bg-teal-400' },
+        ],
         isLoading: false,
       });
 
@@ -229,15 +260,27 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       expect(result.current.tagOptions).toEqual([]);
 
       // Never written to localStorage for tags
-      expect(localStorage.getItem('festrack:shop-test-1:event_tags')).toBeNull();
+      expect(
+        localStorage.getItem('festrack:shop-test-1:event_tags')
+      ).toBeNull();
     });
 
     it('assigns the first available color in TAG_COLOR_PALETTE not currently used', async () => {
       // Tags 0 and 1 are in use
       useGetEventTags.mockReturnValue({
         data: [
-          { id: '1', slug: 'tag-0', name: 'Tag 0', color: TAG_COLOR_PALETTE[0] },
-          { id: '2', slug: 'tag-1', name: 'Tag 1', color: TAG_COLOR_PALETTE[1] },
+          {
+            id: '1',
+            slug: 'tag-0',
+            name: 'Tag 0',
+            color: TAG_COLOR_PALETTE[0],
+          },
+          {
+            id: '2',
+            slug: 'tag-1',
+            name: 'Tag 1',
+            color: TAG_COLOR_PALETTE[1],
+          },
         ],
         isLoading: false,
       });
@@ -262,8 +305,18 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       // Tags use color 0 and color 2, but color 1 is free
       useGetEventTags.mockReturnValue({
         data: [
-          { id: '1', slug: 'tag-0', name: 'Tag 0', color: TAG_COLOR_PALETTE[0] },
-          { id: '3', slug: 'tag-2', name: 'Tag 2', color: TAG_COLOR_PALETTE[2] },
+          {
+            id: '1',
+            slug: 'tag-0',
+            name: 'Tag 0',
+            color: TAG_COLOR_PALETTE[0],
+          },
+          {
+            id: '3',
+            slug: 'tag-2',
+            name: 'Tag 2',
+            color: TAG_COLOR_PALETTE[2],
+          },
         ],
         isLoading: false,
       });
@@ -310,17 +363,19 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       );
     });
 
-    it('shows Portuguese error toast and does not add tag when createTagMutation rejects', async () => {
+    it('shows Portuguese error toast, returns false, and does not add tag when createTagMutation rejects', async () => {
       mockCreateMutateAsync.mockRejectedValueOnce(new Error('Network error'));
 
       const { result } = renderHook(() =>
         useEventTagFilter([], { shopId: 'shop-test-1' })
       );
 
+      let addResult;
       await act(async () => {
-        await result.current.addTagOption('Tag Que Falha');
+        addResult = await result.current.addTagOption('Tag Que Falha');
       });
 
+      expect(addResult).toBe(false);
       expect(toast.add).toHaveBeenCalledWith({
         type: 'error',
         title: 'Erro ao criar etiqueta',
@@ -328,24 +383,70 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       });
 
       expect(result.current.tagOptions).toEqual([]);
-      expect(localStorage.getItem('festrack:shop-test-1:event_tags')).toBeNull();
+      expect(
+        localStorage.getItem('festrack:shop-test-1:event_tags')
+      ).toBeNull();
     });
 
-    it('ignores empty, whitespace-only, or duplicate tag names', async () => {
+    it('supports mutate-only mocks when mutateAsync is not provided', async () => {
+      const createdTag = {
+        id: 't-mutate',
+        slug: 'casamento',
+        name: 'Casamento',
+        color: 'bg-teal-400',
+      };
+      useCreateEventTag.mockReturnValue({
+        mutate: (payload, { onSuccess }) => onSuccess(createdTag),
+      });
+
+      const { result } = renderHook(() =>
+        useEventTagFilter([], { shopId: 'shop-test-1' })
+      );
+
+      let addResult;
+      await act(async () => {
+        addResult = await result.current.addTagOption('Casamento');
+      });
+
+      expect(addResult).toEqual({
+        id: 't-mutate',
+        value: 'casamento',
+        label: 'Casamento',
+        dotClass: 'bg-teal-400',
+      });
+    });
+
+    it('returns existing option when tag already exists and ignores empty/whitespace names', async () => {
       useGetEventTags.mockReturnValue({
-        data: [{ id: '1', slug: 'workshop', name: 'Workshop', color: TAG_COLOR_PALETTE[0] }],
+        data: [
+          {
+            id: '1',
+            slug: 'workshop',
+            name: 'Workshop',
+            color: TAG_COLOR_PALETTE[0],
+          },
+        ],
         isLoading: false,
       });
 
       const { result } = renderHook(() => useEventTagFilter());
 
+      let existingByName;
+      let existingBySlug;
       await act(async () => {
         await result.current.addTagOption('');
         await result.current.addTagOption('   ');
-        await result.current.addTagOption('Workshop');
-        await result.current.addTagOption('workshop');
+        existingByName = await result.current.addTagOption('Workshop');
+        existingBySlug = await result.current.addTagOption('workshop');
       });
 
+      expect(existingByName).toEqual({
+        id: '1',
+        value: 'workshop',
+        label: 'Workshop',
+        dotClass: TAG_COLOR_PALETTE[0],
+      });
+      expect(existingBySlug).toEqual(existingByName);
       expect(mockCreateMutateAsync).not.toHaveBeenCalled();
       expect(toast.add).not.toHaveBeenCalled();
     });
@@ -355,7 +456,13 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
     it('allows deleting any tag without system tags immunity', () => {
       useGetEventTags.mockReturnValue({
         data: [
-          { id: '1', slug: 'qualquer-tag', name: 'Qualquer Tag', color: 'bg-indigo-400', is_system: true },
+          {
+            id: '1',
+            slug: 'qualquer-tag',
+            name: 'Qualquer Tag',
+            color: 'bg-indigo-400',
+            is_system: true,
+          },
         ],
         isLoading: false,
       });
@@ -373,13 +480,20 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
         shopId: 'shop-test-1',
       });
       // No tags stored in localStorage
-      expect(localStorage.getItem('festrack:shop-test-1:event_tags')).toBeNull();
+      expect(
+        localStorage.getItem('festrack:shop-test-1:event_tags')
+      ).toBeNull();
     });
 
     it('removes deleted tag from selectedTags and resets showAllTags if nextSelected is empty', () => {
       useGetEventTags.mockReturnValue({
         data: [
-          { id: '1', slug: 'conferencia', name: 'Conferência', color: 'bg-indigo-400' },
+          {
+            id: '1',
+            slug: 'conferencia',
+            name: 'Conferência',
+            color: 'bg-indigo-400',
+          },
           { id: '2', slug: 'palestra', name: 'Palestra', color: 'bg-teal-400' },
         ],
         isLoading: false,
@@ -557,8 +671,12 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
       expect(result.current.filteredEvents.map((e) => e.id)).toEqual(['1']);
 
       // Untagged and orphan events never match selected tags
-      expect(result.current.filteredEvents.some((e) => e.id === '3')).toBe(false);
-      expect(result.current.filteredEvents.some((e) => e.id === '4')).toBe(false);
+      expect(result.current.filteredEvents.some((e) => e.id === '3')).toBe(
+        false
+      );
+      expect(result.current.filteredEvents.some((e) => e.id === '4')).toBe(
+        false
+      );
     });
   });
 
@@ -597,7 +715,9 @@ describe('useEventTagFilter - Server-Only Tags & Shop Filter State (#142)', () =
 
     it('supports concise action names (toggleTag, setShowAll, addTag, removeTag) alongside verbose names (#135)', async () => {
       useGetEventTags.mockReturnValue({
-        data: [{ id: 's1', slug: 'sessao', name: 'Sessao', color: 'bg-indigo-400' }],
+        data: [
+          { id: 's1', slug: 'sessao', name: 'Sessao', color: 'bg-indigo-400' },
+        ],
         isLoading: false,
       });
 

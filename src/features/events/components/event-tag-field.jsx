@@ -9,12 +9,11 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-import { useEventTagFilter } from '../hooks/use-event-tag-filter';
+import { findTagOption, toTagSlug } from '../helpers/event';
+import { useEventTags } from '../hooks/use-event-tags';
 import TagPicker from './tag-picker';
 
 const NO_TAG_LABEL = 'Sem etiqueta';
-
-const toSlug = (name) => name.trim().toLowerCase().replace(/\s+/g, '-');
 
 /**
  * Seletor de Etiqueta única e opcional para formulários de Evento.
@@ -27,9 +26,9 @@ const toSlug = (name) => name.trim().toLowerCase().replace(/\s+/g, '-');
  */
 const EventTagField = ({ value, onChange, disabled }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { tagOptions, addTag } = useEventTagFilter({});
-  const selectedOption = tagOptions.find((opt) => opt.value === value);
-  const selectedLabel = selectedOption?.label ?? value ?? NO_TAG_LABEL;
+  const { tagOptions, addTag } = useEventTags();
+  const selectedOption = findTagOption(tagOptions, value);
+  const selectedLabel = selectedOption?.label ?? NO_TAG_LABEL;
 
   const handleSelect = (slug) => {
     onChange(slug);
@@ -38,8 +37,9 @@ const EventTagField = ({ value, onChange, disabled }) => {
 
   const handleCreate = async (name) => {
     const created = await addTag(name);
-    if (!created) return;
-    handleSelect(created.slug ?? created.value ?? toSlug(name));
+    if (!created) return false;
+    handleSelect(created.value ?? created.slug ?? toTagSlug(name));
+    return created;
   };
 
   return (
@@ -67,7 +67,7 @@ const EventTagField = ({ value, onChange, disabled }) => {
             ) : (
               <TagIcon className="text-muted-foreground" />
             )}
-            <span className={cn(!value && 'text-muted-foreground')}>
+            <span className={cn(!selectedOption && 'text-muted-foreground')}>
               {selectedLabel}
             </span>
           </span>

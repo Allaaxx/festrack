@@ -34,6 +34,7 @@ export function CalendarDragOverlay({
   activeEvent,
   activeDragWidth,
   view,
+  tagOptions,
   cellHeight = WeekCellsHeight,
 }) {
   const isMonth = view === 'month';
@@ -64,6 +65,7 @@ export function CalendarDragOverlay({
           <EventItem
             event={activeEvent}
             view={view}
+            tagOptions={tagOptions}
             showTime={!isMonth}
             isFirstDay
             isLastDay

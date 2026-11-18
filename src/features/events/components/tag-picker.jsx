@@ -6,7 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
-import { SYSTEM_TAG_VALUES } from '../constants';
+import { toTagSlug } from '../helpers/event';
+
+const LIST_ROLE_BY_ITEM_ROLE = {
+  option: 'listbox',
+  menuitemcheckbox: 'menu',
+};
 
 /**
  * Componente base de Etiquetas (lista, criação e exclusão).
@@ -31,6 +36,7 @@ export function TagPicker({
   renderTrailing,
   renderItem,
   itemRole = 'menuitemcheckbox',
+  listRole,
   inputPlaceholder = 'Nova etiqueta...',
   addAriaLabel = 'Adicionar etiqueta',
   className,
@@ -48,6 +54,7 @@ export function TagPicker({
     onRemoveTag || onRemoveTagOption || removeTagOption || removeTag;
 
   const activeError = externalErrorMessage || externalError || localError;
+  const resolvedListRole = listRole ?? LIST_ROLE_BY_ITEM_ROLE[itemRole];
 
   const handleInputChange = (e) => {
     setNewTagName(e.target.value);
@@ -60,13 +67,13 @@ export function TagPicker({
     const trimmed = newTagName.trim();
     if (!trimmed || isSubmitting) return;
 
+    const normalizedSlug = toTagSlug(trimmed);
     const isDuplicate = tagOptions.some(
       (opt) =>
-        (opt.label && opt.label.trim().toLowerCase() === trimmed.toLowerCase()) ||
+        (opt.label &&
+          opt.label.trim().toLowerCase() === trimmed.toLowerCase()) ||
         (opt.name && opt.name.trim().toLowerCase() === trimmed.toLowerCase()) ||
-        (opt.value &&
-          opt.value.toLowerCase() ===
-            trimmed.toLowerCase().replace(/\s+/g, '-'))
+        (opt.value && opt.value.toLowerCase() === normalizedSlug)
     );
 
     if (isDuplicate) {
@@ -77,8 +84,10 @@ export function TagPicker({
     try {
       setIsSubmitting(true);
       setLocalError('');
-      await handleAdd?.(trimmed);
-      setNewTagName('');
+      const result = await handleAdd?.(trimmed);
+      if (result !== false) {
+        setNewTagName('');
+      }
     } catch (err) {
       setLocalError(err?.message || 'Erro ao criar etiqueta');
     } finally {
@@ -94,21 +103,18 @@ export function TagPicker({
     }
   };
 
-  const isTagDeletable = (opt) => {
-    if (typeof canDeleteTag === 'function') {
-      return canDeleteTag(opt);
-    }
-    const isSystem =
-      Boolean(opt.isSystem) || SYSTEM_TAG_VALUES.includes(opt.value);
-    return !isSystem;
-  };
+  const isTagDeletable = (opt) =>
+    typeof canDeleteTag === 'function' ? Boolean(canDeleteTag(opt)) : true;
 
   return (
     <div className={cn('flex flex-col', className)}>
       {header}
 
       {/* Lista de Etiquetas */}
-      <div className={cn('flex flex-col gap-0.5', listClassName)}>
+      <div
+        role={resolvedListRole}
+        className={cn('flex flex-col gap-0.5', listClassName)}
+      >
         {tagOptions.length === 0 && emptyMessage && (
           <div className="text-muted-foreground px-2 py-1.5 text-xs">
             {emptyMessage}
@@ -119,6 +125,10 @@ export function TagPicker({
           const isChecked = Boolean(isSelected?.(opt));
           const canDelete = isTagDeletable(opt);
           const label = opt.label || opt.name;
+          const ariaSelectionProps =
+            itemRole === 'option'
+              ? { 'aria-selected': isChecked }
+              : { 'aria-checked': isChecked };
 
           const handleSelect = () => {
             onToggleTag?.(opt.value, !isChecked, opt);
@@ -139,7 +149,7 @@ export function TagPicker({
             <div
               key={opt.value}
               role={itemRole}
-              aria-checked={isChecked}
+              {...ariaSelectionProps}
               aria-label={label}
               tabIndex={0}
               onClick={handleSelect}
@@ -152,7 +162,7 @@ export function TagPicker({
                   handleSelect();
                 }
               }}
-              className="group/item hover:bg-accent/40 focus:bg-accent/40 relative flex cursor-pointer select-none items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-sm outline-hidden transition-colors"
+              className="group/item hover:bg-accent/40 focus:bg-accent/40 relative flex cursor-pointer items-center gap-1.5 rounded-md py-1 pr-2 pl-1.5 text-sm outline-hidden transition-colors select-none"
             >
               {/* 1. Bolinha de cor */}
               <span
@@ -164,7 +174,7 @@ export function TagPicker({
               />
 
               {/* 2. Nome da Tag (truncate) */}
-              <span className="truncate flex-1 text-left">{label}</span>
+              <span className="flex-1 truncate text-left">{label}</span>
 
               {/* 3. Botão Lixeira (à esquerda do indicador de selecionado ✓) */}
               {canDelete && (
@@ -231,7 +241,7 @@ export function TagPicker({
           </Button>
         </div>
         {activeError && (
-          <span className="text-destructive text-xs px-0.5" role="alert">
+          <span className="text-destructive px-0.5 text-xs" role="alert">
             {activeError}
           </span>
         )}

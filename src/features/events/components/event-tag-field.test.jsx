@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { toast } from '@/components/ui/toast';
 import { useShopContext } from '@/contexts/shop';
 import {
   useCreateEvent,
@@ -128,10 +129,13 @@ describe('Etiqueta opcional nos modais de evento', () => {
       );
     });
 
-    it('seleção operável por teclado', async () => {
+    it('seleção operável por teclado e semântica ARIA listbox/option', async () => {
       renderCreate();
       openTagPicker();
+      expect(await screen.findByRole('listbox')).toBeInTheDocument();
       const option = await screen.findByRole('option', { name: 'Trabalho' });
+      expect(option).toHaveAttribute('aria-selected', 'false');
+      expect(option).not.toHaveAttribute('aria-checked');
       fireEvent.keyDown(option, { key: 'Enter' });
       submitCreate();
       await waitFor(() =>
@@ -139,6 +143,21 @@ describe('Etiqueta opcional nos modais de evento', () => {
           expect.objectContaining({ tag: 'trabalho' })
         )
       );
+    });
+
+    it('preserva o texto digitado e exibe toast quando criação de etiqueta falha', async () => {
+      createTag.mockRejectedValueOnce(new Error('Falha de rede'));
+      renderCreate();
+      openTagPicker();
+      const input = await screen.findByPlaceholderText(/nova etiqueta/i);
+      fireEvent.change(input, { target: { value: 'Casamento' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      await waitFor(() =>
+        expect(toast.add).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'error' })
+        )
+      );
+      expect(input).toHaveValue('Casamento');
     });
   });
 
@@ -156,6 +175,22 @@ describe('Etiqueta opcional nos modais de evento', () => {
           expect.objectContaining({ tag: 'trabalho' })
         )
       );
+    });
+
+    it('exibe "Sem etiqueta" visualmente quando o evento tem slug órfão', () => {
+      render(
+        <EditEventSheet
+          event={{ ...EXISTING_EVENT, tag: 'etiqueta-excluida' }}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+      const trigger = screen.getByRole('button', {
+        name: 'Etiqueta: Sem etiqueta',
+      });
+      expect(trigger).toBeInTheDocument();
+      expect(trigger).toHaveTextContent('Sem etiqueta');
+      expect(trigger).not.toHaveTextContent('etiqueta-excluida');
     });
 
     it('limpa a etiqueta e envia null', async () => {

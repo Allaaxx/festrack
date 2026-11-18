@@ -13,6 +13,7 @@ import { EventItem } from './event-item';
 export function DayView({
   currentDate,
   events,
+  tagOptions,
   dragOverSlot = null,
   onEventSelect,
   onEventCreate,
@@ -47,6 +48,7 @@ export function DayView({
                   <EventItem
                     event={event}
                     view="month"
+                    tagOptions={tagOptions}
                     isFirstDay={isSameDay(currentDate, event.start)}
                     isLastDay={isSameDay(currentDate, event.end)}
                   >
@@ -96,6 +98,7 @@ export function DayView({
                 key={positionedEvent.event.id}
                 positionedEvent={positionedEvent}
                 view="day"
+                tagOptions={tagOptions}
                 onEventSelect={onEventSelect}
                 onEventResize={onEventResize}
                 onEventResizeEnd={onEventResizeEnd}

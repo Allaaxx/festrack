@@ -11,10 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-import { DEFAULT_EVENT_TAGS, SYSTEM_TAG_VALUES } from '../constants';
 import { TagPicker } from './tag-picker';
-
-export { DEFAULT_EVENT_TAGS, SYSTEM_TAG_VALUES };
 
 /**
  * Filtro de etiquetas da barra lateral.
@@ -42,8 +39,7 @@ export function EventTagFilterDropdown({
 
   const currentSelectedTags = tagFilter?.selectedTags ?? selectedTags ?? [];
 
-  const currentTagOptions =
-    tagFilter?.tagOptions ?? tagOptions ?? DEFAULT_EVENT_TAGS;
+  const currentTagOptions = tagFilter?.tagOptions ?? tagOptions ?? [];
 
   const handleSetShowAll =
     tagFilter?.onSetShowAllTags ||

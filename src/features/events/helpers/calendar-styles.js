@@ -1,94 +1,131 @@
 import { cn } from '@/lib/utils';
 
-import { EVENT_STATUSES } from './event';
+import { EVENT_STATUSES, findTagOption } from './event';
 
-export const DEFAULT_UNTAGGED_CALENDAR_CLASS =
-  'bg-pink-200/50 text-pink-950/80 dark:bg-pink-400/25 dark:text-pink-200 shadow-pink-700/8';
-
-export const DEFAULT_UNTAGGED_DOT_CLASS = 'bg-pink-400';
-
-export const TAG_COLOR_CLASSES = {
-  // Legacy / standard tags
-  family:
-    'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8',
-  business:
-    'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8',
-  personal:
-    'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8',
-  holiday:
-    'bg-emerald-200/50 text-emerald-950/80 dark:bg-emerald-400/25 dark:text-emerald-200 shadow-emerald-700/8',
-  etc: DEFAULT_UNTAGGED_CALENDAR_CLASS,
-
-  // Palette colors (by dot class name)
-  'bg-indigo-400':
-    'bg-indigo-200/50 text-indigo-950/80 dark:bg-indigo-400/25 dark:text-indigo-200 shadow-indigo-700/8',
-  'bg-teal-400':
-    'bg-teal-200/50 text-teal-950/80 dark:bg-teal-400/25 dark:text-teal-200 shadow-teal-700/8',
-  'bg-orange-400':
-    'bg-orange-200/50 text-orange-950/80 dark:bg-orange-400/25 dark:text-orange-200 shadow-orange-700/8',
-  'bg-pink-400': DEFAULT_UNTAGGED_CALENDAR_CLASS,
-  'bg-cyan-400':
-    'bg-cyan-200/50 text-cyan-950/80 dark:bg-cyan-400/25 dark:text-cyan-200 shadow-cyan-700/8',
-  'bg-lime-400':
-    'bg-lime-200/50 text-lime-950/80 dark:bg-lime-400/25 dark:text-lime-200 shadow-lime-700/8',
-  'bg-amber-400':
-    'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8',
-  'bg-violet-400':
-    'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8',
-  'bg-rose-400':
-    'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8',
-  'bg-emerald-400':
-    'bg-emerald-200/50 text-emerald-950/80 dark:bg-emerald-400/25 dark:text-emerald-200 shadow-emerald-700/8',
-
-  // By bare color name
-  indigo:
-    'bg-indigo-200/50 text-indigo-950/80 dark:bg-indigo-400/25 dark:text-indigo-200 shadow-indigo-700/8',
-  teal: 'bg-teal-200/50 text-teal-950/80 dark:bg-teal-400/25 dark:text-teal-200 shadow-teal-700/8',
-  orange:
-    'bg-orange-200/50 text-orange-950/80 dark:bg-orange-400/25 dark:text-orange-200 shadow-orange-700/8',
-  pink: DEFAULT_UNTAGGED_CALENDAR_CLASS,
-  cyan: 'bg-cyan-200/50 text-cyan-950/80 dark:bg-cyan-400/25 dark:text-cyan-200 shadow-cyan-700/8',
-  lime: 'bg-lime-200/50 text-lime-950/80 dark:bg-lime-400/25 dark:text-lime-200 shadow-lime-700/8',
-  amber:
-    'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8',
-  violet:
-    'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8',
-  rose: 'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8',
-  emerald:
-    'bg-emerald-200/50 text-emerald-950/80 dark:bg-emerald-400/25 dark:text-emerald-200 shadow-emerald-700/8',
+const COLOR_STYLES = {
+  indigo: {
+    calendar:
+      'bg-indigo-200/50 text-indigo-950/80 dark:bg-indigo-400/25 dark:text-indigo-200 shadow-indigo-700/8',
+    dot: 'bg-indigo-400',
+  },
+  teal: {
+    calendar:
+      'bg-teal-200/50 text-teal-950/80 dark:bg-teal-400/25 dark:text-teal-200 shadow-teal-700/8',
+    dot: 'bg-teal-400',
+  },
+  orange: {
+    calendar:
+      'bg-orange-200/50 text-orange-950/80 dark:bg-orange-400/25 dark:text-orange-200 shadow-orange-700/8',
+    dot: 'bg-orange-400',
+  },
+  pink: {
+    calendar:
+      'bg-pink-200/50 text-pink-950/80 dark:bg-pink-400/25 dark:text-pink-200 shadow-pink-700/8',
+    dot: 'bg-pink-400',
+  },
+  cyan: {
+    calendar:
+      'bg-cyan-200/50 text-cyan-950/80 dark:bg-cyan-400/25 dark:text-cyan-200 shadow-cyan-700/8',
+    dot: 'bg-cyan-400',
+  },
+  lime: {
+    calendar:
+      'bg-lime-200/50 text-lime-950/80 dark:bg-lime-400/25 dark:text-lime-200 shadow-lime-700/8',
+    dot: 'bg-lime-400',
+  },
+  amber: {
+    calendar:
+      'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8',
+    dot: 'bg-amber-400',
+  },
+  violet: {
+    calendar:
+      'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8',
+    dot: 'bg-violet-400',
+  },
+  rose: {
+    calendar:
+      'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8',
+    dot: 'bg-rose-400',
+  },
+  emerald: {
+    calendar:
+      'bg-emerald-200/50 text-emerald-950/80 dark:bg-emerald-400/25 dark:text-emerald-200 shadow-emerald-700/8',
+    dot: 'bg-emerald-400',
+  },
 };
 
-export const TAG_DOT_COLORS = {
-  family: 'bg-amber-400',
-  business: 'bg-violet-400',
-  personal: 'bg-rose-400',
-  holiday: 'bg-emerald-400',
-  etc: DEFAULT_UNTAGGED_DOT_CLASS,
-  'bg-indigo-400': 'bg-indigo-400',
-  'bg-teal-400': 'bg-teal-400',
-  'bg-orange-400': 'bg-orange-400',
-  'bg-pink-400': DEFAULT_UNTAGGED_DOT_CLASS,
-  'bg-cyan-400': 'bg-cyan-400',
-  'bg-lime-400': 'bg-lime-400',
-  'bg-amber-400': 'bg-amber-400',
-  'bg-violet-400': 'bg-violet-400',
-  'bg-rose-400': 'bg-rose-400',
-  'bg-emerald-400': 'bg-emerald-400',
-  indigo: 'bg-indigo-400',
-  teal: 'bg-teal-400',
-  orange: 'bg-orange-400',
-  pink: DEFAULT_UNTAGGED_DOT_CLASS,
-  cyan: 'bg-cyan-400',
-  lime: 'bg-lime-400',
-  amber: 'bg-amber-400',
-  violet: 'bg-violet-400',
-  rose: 'bg-rose-400',
-  emerald: 'bg-emerald-400',
-};
+export const DEFAULT_UNTAGGED_CALENDAR_CLASS = COLOR_STYLES.pink.calendar;
+
+export const DEFAULT_UNTAGGED_DOT_CLASS = COLOR_STYLES.pink.dot;
+
+export const TAG_COLOR_CLASSES = Object.fromEntries(
+  Object.entries(COLOR_STYLES).flatMap(([name, { calendar, dot }]) => [
+    [name, calendar],
+    [dot, calendar],
+  ])
+);
+
+export const TAG_DOT_COLORS = Object.fromEntries(
+  Object.entries(COLOR_STYLES).flatMap(([name, { dot }]) => [
+    [name, dot],
+    [dot, dot],
+  ])
+);
+
+function resolveTagColorKey(event, tagOptions) {
+  const tag = event?.tag ?? event?.rawEvent?.tag ?? null;
+  if (!tag) return null;
+
+  if (Array.isArray(tagOptions)) {
+    const match = findTagOption(tagOptions, tag);
+    return match ? match.dotClass || match.color || match.value : null;
+  }
+
+  return tag;
+}
 
 /**
- * Retorna as classes Tailwind de cores de fundo, texto e sombra com base na categoria/cor do evento.
- * Se o evento não possuir etiqueta, ou possuir etiqueta órfã/inexistente, retorna rosa neutro.
+ * Retorna as classes Tailwind de cores de fundo, texto e sombra para um evento com base na etiqueta.
+ * Eventos sem etiqueta ou com etiqueta órfã/inexistente retornam rosa neutro.
+ *
+ * @param {object} event
+ * @param {Array<object>} [tagOptions]
+ * @returns {string}
+ */
+export function getTagColorClasses(event, tagOptions) {
+  const key = resolveTagColorKey(event, tagOptions);
+  if (!key) return DEFAULT_UNTAGGED_CALENDAR_CLASS;
+
+  return (
+    TAG_COLOR_CLASSES[key] ||
+    (!Array.isArray(tagOptions) && EVENT_STATUSES[key]?.calendarClass) ||
+    DEFAULT_UNTAGGED_CALENDAR_CLASS
+  );
+}
+
+/**
+ * Retorna a classe Tailwind da cor do ponto indicador (dot) para um evento com base na etiqueta.
+ * Eventos sem etiqueta ou com etiqueta órfã retornam rosa neutro (bg-pink-400).
+ *
+ * @param {object} event
+ * @param {Array<object>} [tagOptions]
+ * @returns {string}
+ */
+export function getTagDotColor(event, tagOptions) {
+  const key = resolveTagColorKey(event, tagOptions);
+  if (!key) return DEFAULT_UNTAGGED_DOT_CLASS;
+
+  return (
+    TAG_DOT_COLORS[key] ||
+    (typeof key === 'string' && key.startsWith('bg-') ? key : null) ||
+    (!Array.isArray(tagOptions) && EVENT_STATUSES[key]?.dotClass) ||
+    DEFAULT_UNTAGGED_DOT_CLASS
+  );
+}
+
+/**
+ * Retorna as classes Tailwind de cores de fundo, texto e sombra com base no evento ou status/cor.
  *
  * @param {string | object} colorOrEvent
  * @param {Array<object>} [tagOptions]
@@ -96,37 +133,9 @@ export const TAG_DOT_COLORS = {
  */
 export function getEventColorClasses(colorOrEvent, tagOptions) {
   if (colorOrEvent && typeof colorOrEvent === 'object') {
-    const tag = colorOrEvent.tag ?? colorOrEvent.rawEvent?.tag ?? null;
-    if (!tag) {
-      return DEFAULT_UNTAGGED_CALENDAR_CLASS;
-    }
-
-    if (Array.isArray(tagOptions)) {
-      const match = tagOptions.find(
-        (t) => (t.value || t.slug || t.id) === tag
-      );
-      if (!match) {
-        // Tag órfã (excluída ou não existente no shop)
-        return DEFAULT_UNTAGGED_CALENDAR_CLASS;
-      }
-      const dot = match.dotClass || match.color;
-      return (
-        TAG_COLOR_CLASSES[dot] ||
-        TAG_COLOR_CLASSES[match.value] ||
-        DEFAULT_UNTAGGED_CALENDAR_CLASS
-      );
-    }
-
-    return (
-      TAG_COLOR_CLASSES[tag] ||
-      EVENT_STATUSES[tag]?.calendarClass ||
-      DEFAULT_UNTAGGED_CALENDAR_CLASS
-    );
+    return getTagColorClasses(colorOrEvent, tagOptions);
   }
-
-  if (!colorOrEvent || colorOrEvent === 'etc') {
-    return DEFAULT_UNTAGGED_CALENDAR_CLASS;
-  }
+  if (!colorOrEvent) return DEFAULT_UNTAGGED_CALENDAR_CLASS;
 
   return (
     EVENT_STATUSES[colorOrEvent]?.calendarClass ||
@@ -136,8 +145,7 @@ export function getEventColorClasses(colorOrEvent, tagOptions) {
 }
 
 /**
- * Retorna a classe Tailwind da cor do ponto indicador (dot) para eventos.
- * Eventos sem etiqueta ou com etiquetas órfãs retornam rosa neutro (bg-pink-400).
+ * Retorna a classe Tailwind da cor do ponto indicador (dot) com base no evento ou status/cor.
  *
  * @param {string | object} colorOrEvent
  * @param {Array<object>} [tagOptions]
@@ -145,31 +153,9 @@ export function getEventColorClasses(colorOrEvent, tagOptions) {
  */
 export function getEventDotColor(colorOrEvent, tagOptions) {
   if (colorOrEvent && typeof colorOrEvent === 'object') {
-    const tag = colorOrEvent.tag ?? colorOrEvent.rawEvent?.tag ?? null;
-    if (!tag) {
-      return DEFAULT_UNTAGGED_DOT_CLASS;
-    }
-
-    if (Array.isArray(tagOptions)) {
-      const match = tagOptions.find(
-        (t) => (t.value || t.slug || t.id) === tag
-      );
-      if (!match) {
-        return DEFAULT_UNTAGGED_DOT_CLASS;
-      }
-      return match.dotClass || match.color || DEFAULT_UNTAGGED_DOT_CLASS;
-    }
-
-    return (
-      TAG_DOT_COLORS[tag] ||
-      EVENT_STATUSES[tag]?.dotClass ||
-      DEFAULT_UNTAGGED_DOT_CLASS
-    );
+    return getTagDotColor(colorOrEvent, tagOptions);
   }
-
-  if (!colorOrEvent || colorOrEvent === 'etc') {
-    return DEFAULT_UNTAGGED_DOT_CLASS;
-  }
+  if (!colorOrEvent) return DEFAULT_UNTAGGED_DOT_CLASS;
 
   return (
     EVENT_STATUSES[colorOrEvent]?.dotClass ||

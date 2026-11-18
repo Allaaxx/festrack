@@ -4,11 +4,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TagPicker } from '@/features/events/components/tag-picker';
 
-describe('TagPicker (#144)', () => {
+describe('TagPicker', () => {
   const sampleTags = [
-    { value: 'personal', label: 'Pessoal', dotClass: 'bg-emerald-400', isSystem: true },
+    {
+      id: 'tag-0',
+      value: 'family',
+      label: 'Família',
+      dotClass: 'bg-amber-400',
+    },
     { id: 'tag-1', value: 'work', label: 'Trabalho', dotClass: 'bg-sky-400' },
-    { id: 'tag-2', value: 'study', label: 'Estudos', dotClass: 'bg-indigo-400' },
+    {
+      id: 'tag-2',
+      value: 'study',
+      label: 'Estudos',
+      dotClass: 'bg-indigo-400',
+    },
   ];
 
   beforeEach(() => {
@@ -18,7 +28,7 @@ describe('TagPicker (#144)', () => {
   it('renders tag list with color dot and label', () => {
     render(<TagPicker tagOptions={sampleTags} />);
 
-    expect(screen.getByText('Pessoal')).toBeInTheDocument();
+    expect(screen.getByText('Família')).toBeInTheDocument();
     expect(screen.getByText('Trabalho')).toBeInTheDocument();
     expect(screen.getByText('Estudos')).toBeInTheDocument();
   });
@@ -35,7 +45,9 @@ describe('TagPicker (#144)', () => {
     const removeBtn = screen.getByRole('button', {
       name: /remover etiqueta trabalho/i,
     });
-    const indicator = workRow.querySelector('[data-slot="tag-picker-indicator"]');
+    const indicator = workRow.querySelector(
+      '[data-slot="tag-picker-indicator"]'
+    );
 
     // Trash button is inside the tag row
     expect(workRow).toContainElement(removeBtn);
@@ -47,15 +59,72 @@ describe('TagPicker (#144)', () => {
     );
   });
 
-  it('does not render trash button for system tags', () => {
-    render(<TagPicker tagOptions={sampleTags} />);
+  it('allows deleting all shop tags including legacy slugs like family, business, etc by default', () => {
+    const tags = [
+      { id: '1', value: 'family', label: 'Família', dotClass: 'bg-indigo-400' },
+      {
+        id: '2',
+        value: 'business',
+        label: 'Negócios',
+        dotClass: 'bg-teal-400',
+      },
+      {
+        id: '3',
+        value: 'etc',
+        label: 'Outros',
+        dotClass: 'bg-orange-400',
+        isSystem: true,
+      },
+    ];
+    render(<TagPicker tagOptions={tags} />);
 
     expect(
-      screen.queryByRole('button', { name: /remover etiqueta pessoal/i })
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /remover etiqueta trabalho/i })
+      screen.getByRole('button', { name: /remover etiqueta família/i })
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /remover etiqueta negócios/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /remover etiqueta outros/i })
+    ).toBeInTheDocument();
+  });
+
+  it('hides trash buttons when canDeleteTag returns false', () => {
+    render(<TagPicker tagOptions={sampleTags} canDeleteTag={() => false} />);
+
+    expect(
+      screen.queryByRole('button', { name: /remover etiqueta/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it('applies menu + aria-checked for menuitemcheckbox and listbox + aria-selected for option', () => {
+    const { rerender } = render(
+      <TagPicker
+        tagOptions={sampleTags}
+        itemRole="menuitemcheckbox"
+        isSelected={(opt) => opt.value === 'work'}
+      />
+    );
+
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    const menuItem = screen.getByRole('menuitemcheckbox', {
+      name: /trabalho/i,
+    });
+    expect(menuItem).toHaveAttribute('aria-checked', 'true');
+    expect(menuItem).not.toHaveAttribute('aria-selected');
+
+    rerender(
+      <TagPicker
+        tagOptions={sampleTags}
+        itemRole="option"
+        isSelected={(opt) => opt.value === 'work'}
+      />
+    );
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    const optionItem = screen.getByRole('option', { name: /trabalho/i });
+    expect(optionItem).toHaveAttribute('aria-selected', 'true');
+    expect(optionItem).not.toHaveAttribute('aria-checked');
   });
 
   it('invokes onToggleTag / onSelectTag when clicking a tag row', async () => {
@@ -150,17 +219,33 @@ describe('TagPicker (#144)', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('displays error feedback when onAddTag throws or rejects', async () => {
+  it('preserves input value when onAddTag returns false or rejects', async () => {
     const user = userEvent.setup();
-    const onAddTag = vi.fn().mockRejectedValue(new Error('Falha no servidor'));
+    const onAddTagFalse = vi.fn().mockResolvedValue(false);
 
-    render(<TagPicker tagOptions={sampleTags} onAddTag={onAddTag} />);
+    const { rerender } = render(
+      <TagPicker tagOptions={sampleTags} onAddTag={onAddTagFalse} />
+    );
 
     const input = screen.getByPlaceholderText('Nova etiqueta...');
+    await user.type(input, 'Falha Silenciosa{enter}');
+
+    expect(onAddTagFalse).toHaveBeenCalledWith('Falha Silenciosa');
+    expect(input).toHaveValue('Falha Silenciosa');
+
+    const onAddTagReject = vi
+      .fn()
+      .mockRejectedValue(new Error('Falha no servidor'));
+    rerender(<TagPicker tagOptions={sampleTags} onAddTag={onAddTagReject} />);
+
+    await user.clear(input);
     await user.type(input, 'Inovação{enter}');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Falha no servidor');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Falha no servidor'
+    );
     expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveValue('Inovação');
   });
 
   it('renders header slot when provided', () => {

@@ -14,6 +14,7 @@ import { EventItem } from './event-item';
 export function WeekView({
   currentDate,
   events,
+  tagOptions,
   dragOverSlot = null,
   onEventSelect,
   onEventCreate,
@@ -96,6 +97,7 @@ export function WeekView({
                         <EventItem
                           event={event}
                           view="month"
+                          tagOptions={tagOptions}
                           isFirstDay={isFirstDay}
                           isLastDay={isLastDay}
                           spansLeft={spansLeft}
@@ -157,6 +159,7 @@ export function WeekView({
                     key={positionedEvent.event.id}
                     positionedEvent={positionedEvent}
                     view="week"
+                    tagOptions={tagOptions}
                     onEventSelect={onEventSelect}
                     onEventResize={onEventResize}
                     onEventResizeEnd={onEventResizeEnd}

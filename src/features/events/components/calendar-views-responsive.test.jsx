@@ -44,7 +44,7 @@ vi.mock('@/features/events/api/hooks', () => ({
   useGetEvents: () => ({ data: [], isLoading: false }),
 }));
 
-describe('Fluid Calendar Below lg Breakpoint (#143)', () => {
+describe('Fluid Calendar Below lg Breakpoint', () => {
   const currentDate = new Date(2027, 0, 15);
 
   beforeEach(() => {
@@ -80,7 +80,8 @@ describe('Fluid Calendar Below lg Breakpoint (#143)', () => {
       expect(contentWrapper).not.toHaveClass('overflow-hidden');
 
       // Views container (wrapper around MonthView/WeekView etc.)
-      const viewsContainer = contentWrapper?.firstElementChild?.firstElementChild;
+      const viewsContainer =
+        contentWrapper?.firstElementChild?.firstElementChild;
       expect(viewsContainer).toBeInTheDocument();
       expect(viewsContainer).toHaveClass('flex', 'flex-1', 'flex-col');
       expect(viewsContainer).toHaveClass('lg:min-h-0', 'lg:overflow-hidden');
@@ -103,6 +104,7 @@ describe('Fluid Calendar Below lg Breakpoint (#143)', () => {
       expect(monthRoot).toHaveClass(
         'lg:h-full',
         'lg:min-h-0',
+        'lg:flex-1',
         'lg:overflow-hidden'
       );
       expect(monthRoot).not.toHaveClass('h-full');
@@ -146,11 +148,7 @@ describe('Fluid Calendar Below lg Breakpoint (#143)', () => {
       // ScrollArea
       const scrollArea = weekRoot?.querySelector('[data-slot="scroll-area"]');
       expect(scrollArea).toBeInTheDocument();
-      expect(scrollArea).toHaveClass(
-        'lg:h-full',
-        'lg:min-h-0',
-        'lg:flex-1'
-      );
+      expect(scrollArea).toHaveClass('lg:h-full', 'lg:min-h-0', 'lg:flex-1');
       expect(scrollArea).not.toHaveClass('h-full');
       expect(scrollArea).not.toHaveClass('min-h-0');
     });
@@ -179,11 +177,7 @@ describe('Fluid Calendar Below lg Breakpoint (#143)', () => {
       // ScrollArea
       const scrollArea = dayRoot?.querySelector('[data-slot="scroll-area"]');
       expect(scrollArea).toBeInTheDocument();
-      expect(scrollArea).toHaveClass(
-        'lg:h-full',
-        'lg:min-h-0',
-        'lg:flex-1'
-      );
+      expect(scrollArea).toHaveClass('lg:h-full', 'lg:min-h-0', 'lg:flex-1');
       expect(scrollArea).not.toHaveClass('h-full');
       expect(scrollArea).not.toHaveClass('min-h-0');
     });
@@ -240,11 +234,7 @@ describe('Fluid Calendar Below lg Breakpoint (#143)', () => {
       // ScrollArea
       const scrollArea = agendaRoot?.querySelector('[data-slot="scroll-area"]');
       expect(scrollArea).toBeInTheDocument();
-      expect(scrollArea).toHaveClass(
-        'lg:h-full',
-        'lg:min-h-0',
-        'lg:flex-1'
-      );
+      expect(scrollArea).toHaveClass('lg:h-full', 'lg:min-h-0', 'lg:flex-1');
       expect(scrollArea).not.toHaveClass('h-full');
       expect(scrollArea).not.toHaveClass('min-h-0');
     });

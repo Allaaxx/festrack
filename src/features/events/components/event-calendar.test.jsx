@@ -16,13 +16,19 @@ vi.mock('@/features/events/hooks/use-calendar-dnd', () => ({
 
 vi.mock('@/features/events/components/calendar-header', () => ({
   CalendarHeader: vi.fn((props) => (
-    <header data-testid="calendar-header" data-props={JSON.stringify(Object.keys(props))} />
+    <header
+      data-testid="calendar-header"
+      data-props={JSON.stringify(Object.keys(props))}
+    />
   )),
 }));
 
 vi.mock('..', () => ({
   EventsSidebar: vi.fn((props) => (
-    <aside data-testid="events-sidebar" data-props={JSON.stringify(Object.keys(props))} />
+    <aside
+      data-testid="events-sidebar"
+      data-props={JSON.stringify(Object.keys(props))}
+    />
   )),
 }));
 
@@ -60,6 +66,10 @@ vi.mock('./agenda-view', () => ({
   AgendaView: vi.fn(({ events }) => (
     <div data-testid="agenda-view" data-event-count={events.length} />
   )),
+}));
+
+vi.mock('./calendar-drag-overlay', () => ({
+  CalendarDragOverlay: vi.fn(() => <div data-testid="calendar-drag-overlay" />),
 }));
 
 describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
@@ -152,7 +162,8 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
   });
 
   it('forwards cohesive tagFilter package to CalendarHeader and EventsSidebar without prop-drilling 16 attributes (#138)', async () => {
-    const { CalendarHeader } = await import('@/features/events/components/calendar-header');
+    const { CalendarHeader } =
+      await import('@/features/events/components/calendar-header');
     const { EventsSidebar } = await import('..');
 
     render(<EventCalendar events={sampleEvents} />);
@@ -210,18 +221,63 @@ describe('EventCalendar - useEventTagFilter Integration (#137)', () => {
     expect(sidebarProps.onRemoveEventTypeOption).toBeUndefined();
   });
 
-  it('supports switching calendar views and feeding filtered events to WeekView, DayView, YearView, and AgendaView', () => {
-    const { rerender } = render(<EventCalendar events={sampleEvents} view="week" />);
-    expect(screen.getByTestId('week-view')).toHaveAttribute('data-event-count', '1');
+  it('supports switching calendar views and feeding filtered events and tagOptions to all 5 views and CalendarDragOverlay', async () => {
+    const { MonthView } = await import('./month-view');
+    const { WeekView } = await import('./week-view');
+    const { DayView } = await import('./day-view');
+    const { YearView } = await import('./year-view');
+    const { AgendaView } = await import('./agenda-view');
+    const { CalendarDragOverlay } = await import('./calendar-drag-overlay');
+
+    const { rerender } = render(
+      <EventCalendar events={sampleEvents} view="month" />
+    );
+    expect(screen.getByTestId('month-view')).toHaveAttribute(
+      'data-event-count',
+      '1'
+    );
+    expect(MonthView.mock.calls.at(-1)[0].tagOptions).toBe(
+      mockTagFilterResult.tagFilter.tagOptions
+    );
+    expect(CalendarDragOverlay.mock.calls.at(-1)[0].tagOptions).toBe(
+      mockTagFilterResult.tagFilter.tagOptions
+    );
+
+    rerender(<EventCalendar events={sampleEvents} view="week" />);
+    expect(screen.getByTestId('week-view')).toHaveAttribute(
+      'data-event-count',
+      '1'
+    );
+    expect(WeekView.mock.calls.at(-1)[0].tagOptions).toBe(
+      mockTagFilterResult.tagFilter.tagOptions
+    );
 
     rerender(<EventCalendar events={sampleEvents} view="day" />);
-    expect(screen.getByTestId('day-view')).toHaveAttribute('data-event-count', '1');
+    expect(screen.getByTestId('day-view')).toHaveAttribute(
+      'data-event-count',
+      '1'
+    );
+    expect(DayView.mock.calls.at(-1)[0].tagOptions).toBe(
+      mockTagFilterResult.tagFilter.tagOptions
+    );
 
     rerender(<EventCalendar events={sampleEvents} view="year" />);
-    expect(screen.getByTestId('year-view')).toHaveAttribute('data-event-count', '1');
+    expect(screen.getByTestId('year-view')).toHaveAttribute(
+      'data-event-count',
+      '1'
+    );
+    expect(YearView.mock.calls.at(-1)[0].tagOptions).toBe(
+      mockTagFilterResult.tagFilter.tagOptions
+    );
 
     rerender(<EventCalendar events={sampleEvents} view="agenda" />);
-    expect(screen.getByTestId('agenda-view')).toHaveAttribute('data-event-count', '1');
+    expect(screen.getByTestId('agenda-view')).toHaveAttribute(
+      'data-event-count',
+      '1'
+    );
+    expect(AgendaView.mock.calls.at(-1)[0].tagOptions).toBe(
+      mockTagFilterResult.tagFilter.tagOptions
+    );
   });
 
   it('handles empty server tagOptions cleanly when shop has no tags (#142)', () => {

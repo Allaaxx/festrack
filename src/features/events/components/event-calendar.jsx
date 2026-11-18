@@ -134,6 +134,7 @@ const EventCalendar = ({
                 <MonthView
                   currentDate={currentDate}
                   events={calendarEvents}
+                  tagOptions={tagFilter.tagOptions}
                   onEventSelect={onEventSelect}
                   onEventCreate={onEventCreate}
                 />
@@ -142,6 +143,7 @@ const EventCalendar = ({
                 <WeekView
                   currentDate={currentDate}
                   events={calendarEvents}
+                  tagOptions={tagFilter.tagOptions}
                   dragOverSlot={dragOverSlot}
                   onEventSelect={onEventSelect}
                   onEventCreate={onEventCreate}
@@ -153,6 +155,7 @@ const EventCalendar = ({
                 <DayView
                   currentDate={currentDate}
                   events={calendarEvents}
+                  tagOptions={tagFilter.tagOptions}
                   dragOverSlot={dragOverSlot}
                   onEventSelect={onEventSelect}
                   onEventCreate={onEventCreate}
@@ -173,6 +176,7 @@ const EventCalendar = ({
                 <AgendaView
                   currentDate={currentDate}
                   events={calendarEvents}
+                  tagOptions={tagFilter.tagOptions}
                   onEventSelect={onEventSelect}
                 />
               )}
@@ -193,6 +197,7 @@ const EventCalendar = ({
         activeEvent={activeEvent}
         activeDragWidth={activeDragWidth}
         view={view}
+        tagOptions={tagFilter.tagOptions}
         cellHeight={WeekCellsHeight}
       />
     </DndContext>
