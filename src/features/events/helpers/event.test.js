@@ -1,9 +1,14 @@
+import { format } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatEventDate,
+  formatEventDateRange,
   formatEventDateToApi,
+  getEventStatus,
   mapEventToCalendarItem,
   normalizeEventAuthor,
+  parseEventDate,
 } from './event';
 
 describe('normalizeEventAuthor', () => {
@@ -196,6 +201,34 @@ describe('mapEventToCalendarItem', () => {
     expect(item.tag).toBe('workshop');
     expect(item.color).toBe('workshop');
   });
+
+  it('maps allDay: true events by pure civil dates with 00:00:00 start and 23:59:59 local end (#155)', () => {
+    const item = mapEventToCalendarItem({
+      id: 'ev-all-day',
+      name: 'Feriado Civil',
+      startDate: '2026-11-18T00:00:00.000Z',
+      endDate: '2026-11-18T00:00:00.000Z',
+      allDay: true,
+    });
+
+    expect(item.allDay).toBe(true);
+    expect(item.start).toEqual(new Date(2026, 10, 18, 0, 0, 0));
+    expect(item.end).toEqual(new Date(2026, 10, 18, 23, 59, 59));
+  });
+
+  it('keeps allDay: false for 00:00-23:59 timed events when explicit allDay is false (#155)', () => {
+    const item = mapEventToCalendarItem({
+      id: 'ev-timed-24h',
+      name: 'Plantão 24h',
+      startDate: '2026-11-18T00:00:00',
+      endDate: '2026-11-18T23:59:00',
+      allDay: false,
+    });
+
+    expect(item.allDay).toBe(false);
+    expect(item.start).toEqual(new Date(2026, 10, 18, 0, 0, 0));
+    expect(item.end).toEqual(new Date(2026, 10, 18, 23, 59, 0));
+  });
 });
 
 describe('formatEventDateToApi', () => {
@@ -213,14 +246,23 @@ describe('formatEventDateToApi', () => {
     expect(parsed.getMinutes()).toBe(0);
   });
 
-  it('formats all-day start and end dates with explicit local timezone offset', () => {
+  it('formats all-day start and end dates as UTC civil date bounds (T00:00:00.000Z / T23:59:59.000Z)', () => {
     const start = formatEventDateToApi('2026-10-20', 'start', true);
     const end = formatEventDateToApi('2026-10-20', 'end', true);
 
-    expect(start).not.toContain('.000Z');
-    expect(end).not.toContain('.000Z');
-    expect(start).toMatch(/^2026-10-20T00:00:00([+-]\d{2}:\d{2}|Z)$/);
-    expect(end).toMatch(/^2026-10-20T23:59:59([+-]\d{2}:\d{2}|Z)$/);
+    expect(start).toBe('2026-10-20T00:00:00.000Z');
+    expect(end).toBe('2026-10-20T23:59:59.000Z');
+
+    const localDate = new Date(2026, 10, 18, 0, 0, 0);
+    expect(formatEventDateToApi(localDate, 'start', true)).toBe(
+      '2026-11-18T00:00:00.000Z'
+    );
+    expect(formatEventDateToApi(localDate, 'end', true)).toBe(
+      '2026-11-18T23:59:59.000Z'
+    );
+    expect(formatEventDateToApi('2026-11-18T23:59:59.000Z', 'end', true)).toBe(
+      '2026-11-18T23:59:59.000Z'
+    );
   });
 
   it('extracts hours and minutes from a Date instance when timeStr is omitted', () => {
@@ -235,5 +277,87 @@ describe('formatEventDateToApi', () => {
     expect(formatEventDateToApi(null)).toBe('');
     expect(formatEventDateToApi('')).toBe('');
     expect(formatEventDateToApi('invalid-date')).toBe('');
+  });
+});
+
+describe('parseEventDate', () => {
+  it('parses pure YYYY-MM-DD strings as local civil dates without timezone shift', () => {
+    const parsed = parseEventDate('2026-11-18');
+    expect(parsed).toBeInstanceOf(Date);
+    expect(parsed.getFullYear()).toBe(2026);
+    expect(parsed.getMonth()).toBe(10);
+    expect(parsed.getDate()).toBe(18);
+    expect(parsed.getHours()).toBe(0);
+    expect(parsed.getMinutes()).toBe(0);
+    expect(parsed.getSeconds()).toBe(0);
+  });
+
+  it('extracts pure civil date for allDay: true timestamps ignoring time and UTC offset', () => {
+    const start = parseEventDate('2026-11-18T00:00:00.000Z', { allDay: true });
+    const end = parseEventDate('2026-11-18T23:59:59.000Z', { allDay: true });
+    const shifted = parseEventDate('2026-11-18T02:59:59-03:00', {
+      allDay: true,
+    });
+
+    for (const date of [start, end, shifted]) {
+      expect(date).toBeInstanceOf(Date);
+      expect(date.getFullYear()).toBe(2026);
+      expect(date.getMonth()).toBe(10);
+      expect(date.getDate()).toBe(18);
+      expect(date.getHours()).toBe(0);
+      expect(date.getMinutes()).toBe(0);
+      expect(date.getSeconds()).toBe(0);
+    }
+  });
+
+  it('returns null for invalid or empty values', () => {
+    expect(parseEventDate(null)).toBeNull();
+    expect(parseEventDate('')).toBeNull();
+    expect(parseEventDate('invalid-date')).toBeNull();
+    expect(parseEventDate('2026-02-31', { allDay: true })).toBeNull();
+  });
+});
+
+describe('formatEventDate and formatEventDateRange', () => {
+  it('formats all-day civil dates cleanly when { allDay: true } is forwarded', () => {
+    expect(
+      formatEventDate('2026-11-18T00:00:00.000Z', { allDay: true })
+    ).toBe('18/11/2026');
+    expect(
+      formatEventDateRange(
+        '2026-11-18T00:00:00.000Z',
+        '2026-11-20T23:59:59.000Z',
+        { allDay: true }
+      )
+    ).toBe('18/11/2026 até 20/11/2026');
+  });
+});
+
+describe('getEventStatus', () => {
+  it('evaluates status by civil calendar date for allDay: true events', () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    expect(
+      getEventStatus({
+        startDate: `${todayStr}T00:00:00.000Z`,
+        endDate: `${todayStr}T23:59:59.000Z`,
+        allDay: true,
+      })
+    ).toBe('in_progress');
+
+    expect(
+      getEventStatus({
+        startDate: '2099-12-01T00:00:00.000Z',
+        endDate: '2099-12-02T23:59:59.000Z',
+        allDay: true,
+      })
+    ).toBe('scheduled');
+
+    expect(
+      getEventStatus({
+        startDate: '2020-01-01T00:00:00.000Z',
+        endDate: '2020-01-02T23:59:59.000Z',
+        allDay: true,
+      })
+    ).toBe('completed');
   });
 });

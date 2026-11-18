@@ -97,7 +97,7 @@ export const buildTransactionTypeSeries = (transactions = [], targetType) => {
     }
 
     const amount = Number(transaction?.amount) || 0;
-    const parsedDate = parseEventDate(transaction?.date);
+    const parsedDate = parseEventDate(transaction?.date, { allDay: true });
     const sortKey = parsedDate
       ? format(parsedDate, 'yyyy-MM-dd')
       : '0000-00-00';
@@ -219,9 +219,10 @@ export const buildEventMetricCardsData = (transactions = []) => {
  */
 export const buildEventOperationalStats = (event, transactions = []) => {
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
+  const allDay = Boolean(event?.allDay);
   const today = startOfDay(new Date());
-  const parsedStart = parseEventDate(event?.startDate);
-  const parsedEnd = parseEventDate(event?.endDate);
+  const parsedStart = parseEventDate(event?.startDate, { allDay });
+  const parsedEnd = parseEventDate(event?.endDate, { allDay });
   const start = startOfDay(parsedStart ?? today);
   const end = startOfDay(parsedEnd ?? start);
 
@@ -344,7 +345,7 @@ export const buildEventBalanceOverviewData = (transactions = []) => {
       }
 
       const amount = Number(transaction?.amount) || 0;
-      const parsedDate = parseEventDate(transaction?.date);
+      const parsedDate = parseEventDate(transaction?.date, { allDay: true });
       const sortKey = parsedDate
         ? format(parsedDate, 'yyyy-MM-dd')
         : '0000-00-00';

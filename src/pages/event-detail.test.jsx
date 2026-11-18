@@ -274,6 +274,35 @@ describe('EventDetailPage', () => {
     expect(screen.getByText('Dia único')).toBeInTheDocument();
   });
 
+  it('displays single-day All-Day Event civil date (01/12/2026) without timezone drift or 03:00/02:59', () => {
+    useGetEvent.mockReturnValue({
+      data: {
+        ...mockEvent,
+        startDate: '2026-12-01T00:00:00.000Z',
+        endDate: '2026-12-01T23:59:59.000Z',
+        allDay: true,
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
+      </Routes>
+    );
+
+    const dateBadge = screen.getByTestId('event-header-date-badge');
+    expect(dateBadge).toHaveTextContent('DEZ');
+    expect(dateBadge).toHaveTextContent('01');
+    expect(
+      screen.getByText('01/12/2026 até 01/12/2026')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Dia único')).toBeInTheDocument();
+    expect(screen.queryByText(/30\/11\/2026/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/03:00|02:59/)).not.toBeInTheDocument();
+  });
+
   it('renders "Voltar ao calendário" button and navigates to /events on click', () => {
     useGetEvent.mockReturnValue({
       data: mockEvent,
