@@ -5,10 +5,58 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { addMinutes, differenceInMinutes, startOfDay } from 'date-fns';
+import {
+  addDays,
+  addMinutes,
+  differenceInCalendarDays,
+  differenceInMinutes,
+  startOfDay,
+} from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
 
 import { WeekCellsHeight } from '../constants';
+
+/**
+ * Calcula o novo intervalo (start, end, allDay) ao soltar um evento em uma célula da MonthView.
+ * Eventos all-day preservam a duração exata em dias civis (00:00:00 até 23:59:59 locais);
+ * timed events preservam horário local de início e duração em minutos.
+ */
+function computeMonthDayDropDates(draggedEvent, targetDate) {
+  if (draggedEvent.allDay === true) {
+    const spanDays = Math.max(
+      0,
+      differenceInCalendarDays(
+        startOfDay(draggedEvent.end),
+        startOfDay(draggedEvent.start)
+      )
+    );
+    const start = startOfDay(targetDate);
+    const endDay = addDays(start, spanDays);
+    const end = new Date(
+      endDay.getFullYear(),
+      endDay.getMonth(),
+      endDay.getDate(),
+      23,
+      59,
+      59,
+      0
+    );
+
+    return { start, end, allDay: true };
+  }
+
+  const originalStart = new Date(draggedEvent.start);
+  const durationMinutes = Math.max(
+    15,
+    differenceInMinutes(draggedEvent.end, draggedEvent.start)
+  );
+
+  const start = new Date(targetDate);
+  start.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
+  const end = addMinutes(start, durationMinutes);
+
+  return { start, end, allDay: false };
+}
 
 /**
  * Hook para orquestrar o drag and drop e manipulação otimista de eventos do calendário com @dnd-kit.
@@ -101,7 +149,13 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
     (updatedEvent) => {
       setOverrides((prev) => ({
         ...prev,
-        [updatedEvent.id]: { start: updatedEvent.start, end: updatedEvent.end },
+        [updatedEvent.id]: {
+          start: updatedEvent.start,
+          end: updatedEvent.end,
+          ...(updatedEvent.allDay !== undefined && {
+            allDay: updatedEvent.allDay,
+          }),
+        },
       }));
       onEventUpdate?.(updatedEvent);
     },
@@ -151,6 +205,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          allDay: Boolean(draggedEvent.allDay),
           action: 'move',
         });
         return;
@@ -159,25 +214,16 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
       // Caso 2: Drop em célula de dia da MonthView
       if (overData?.type === 'month-day') {
         const targetDate = new Date(overData.dayTimestamp);
-        const originalStart = new Date(draggedEvent.start);
-        const durationMinutes = Math.max(
-          15,
-          differenceInMinutes(draggedEvent.end, draggedEvent.start)
+        const { start, end, allDay } = computeMonthDayDropDates(
+          draggedEvent,
+          targetDate
         );
-
-        const newStart = new Date(targetDate);
-        newStart.setHours(
-          originalStart.getHours(),
-          originalStart.getMinutes(),
-          0,
-          0
-        );
-        const newEnd = addMinutes(newStart, durationMinutes);
 
         handleEventCommit({
           ...draggedEvent,
-          start: newStart,
-          end: newEnd,
+          start,
+          end,
+          allDay,
           action: 'move',
         });
         return;
@@ -197,6 +243,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          allDay: Boolean(draggedEvent.allDay),
           action: 'move',
         });
       }
