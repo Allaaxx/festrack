@@ -9,6 +9,7 @@ import {
   mapEventToCalendarItem,
   normalizeEventAuthor,
   parseEventDate,
+  parseEventTime,
 } from './event';
 
 describe('normalizeEventAuthor', () => {
@@ -229,6 +230,23 @@ describe('mapEventToCalendarItem', () => {
     expect(item.start).toEqual(new Date(2026, 10, 18, 0, 0, 0));
     expect(item.end).toEqual(new Date(2026, 10, 18, 23, 59, 0));
   });
+
+  it('converts night-time Timed Event UTC bounds (Z) to local day and time (#156)', () => {
+    const startUtc = '2026-11-19T01:00:00.000Z';
+    const endUtc = '2026-11-19T02:30:00.000Z';
+
+    const item = mapEventToCalendarItem({
+      id: 'ev-night-timed',
+      name: 'Jantar Noturno',
+      startDate: startUtc,
+      endDate: endUtc,
+      allDay: false,
+    });
+
+    expect(item.allDay).toBe(false);
+    expect(item.start).toEqual(new Date(startUtc));
+    expect(item.end).toEqual(new Date(endUtc));
+  });
 });
 
 describe('formatEventDateToApi', () => {
@@ -273,6 +291,38 @@ describe('formatEventDateToApi', () => {
     expect(result).toMatch(/^2026-10-20T16:30:00([+-]\d{2}:\d{2}|Z)$/);
   });
 
+  it('preserves converted local date and time for ISO strings with Z or offset when timeStr is omitted', () => {
+    const utcStart = '2026-11-19T01:00:00.000Z';
+    const utcEnd = '2026-11-19T02:30:00.000Z';
+    const utcLocalMidnight = '2026-11-19T03:00:00.000Z';
+
+    const formattedStart = formatEventDateToApi(utcStart, 'start', false);
+    const formattedEnd = formatEventDateToApi(utcEnd, 'end', false);
+    const formattedMidnightEnd = formatEventDateToApi(
+      utcLocalMidnight,
+      'end',
+      false
+    );
+
+    expect(new Date(formattedStart).getTime()).toBe(
+      new Date(utcStart).getTime()
+    );
+    expect(formattedStart).toBe(
+      format(new Date(utcStart), "yyyy-MM-dd'T'HH:mm:00XXX")
+    );
+    expect(new Date(formattedEnd).getTime()).toBe(new Date(utcEnd).getTime());
+    expect(formattedEnd).toBe(
+      format(new Date(utcEnd), "yyyy-MM-dd'T'HH:mm:00XXX")
+    );
+    expect(new Date(formattedMidnightEnd).getTime()).toBe(
+      new Date(utcLocalMidnight).getTime()
+    );
+
+    const expectedDay = format(new Date(utcStart), 'yyyy-MM-dd');
+    const withOverride = formatEventDateToApi(utcStart, 'start', false, '22:15');
+    expect(withOverride.startsWith(`${expectedDay}T22:15:00`)).toBe(true);
+  });
+
   it('returns empty string for empty or invalid date values', () => {
     expect(formatEventDateToApi(null)).toBe('');
     expect(formatEventDateToApi('')).toBe('');
@@ -310,11 +360,74 @@ describe('parseEventDate', () => {
     }
   });
 
+  it('parses Z and explicit offset timestamps into local timezone when allDay is false', () => {
+    const utcNight = '2026-11-19T01:00:00.000Z';
+    const expectedUtcNight = new Date(utcNight);
+    const parsedUtcNight = parseEventDate(utcNight, { allDay: false });
+
+    expect(parsedUtcNight).toBeInstanceOf(Date);
+    expect(parsedUtcNight.getTime()).toBe(expectedUtcNight.getTime());
+    expect(parsedUtcNight.getFullYear()).toBe(expectedUtcNight.getFullYear());
+    expect(parsedUtcNight.getMonth()).toBe(expectedUtcNight.getMonth());
+    expect(parsedUtcNight.getDate()).toBe(expectedUtcNight.getDate());
+    expect(parsedUtcNight.getHours()).toBe(expectedUtcNight.getHours());
+    expect(parsedUtcNight.getMinutes()).toBe(expectedUtcNight.getMinutes());
+
+    const offsetColon = '2026-11-18T22:00:00-03:00';
+    const expectedOffsetColon = new Date(offsetColon);
+    const parsedOffsetColon = parseEventDate(offsetColon);
+    expect(parsedOffsetColon.getTime()).toBe(expectedOffsetColon.getTime());
+
+    const offsetCompact = '2026-11-18T22:30:00+0200';
+    const expectedOffsetCompact = new Date('2026-11-18T22:30:00+02:00');
+    const parsedOffsetCompact = parseEventDate(offsetCompact, { allDay: false });
+    expect(parsedOffsetCompact.getTime()).toBe(expectedOffsetCompact.getTime());
+  });
+
+  it('preserves local wall-clock parsing for naive YYYY-MM-DDTHH:mm[:ss] strings without timezone suffix', () => {
+    const parsedNoSeconds = parseEventDate('2026-11-18T22:00', {
+      allDay: false,
+    });
+    expect(parsedNoSeconds).toEqual(new Date(2026, 10, 18, 22, 0, 0));
+
+    const parsedWithSeconds = parseEventDate('2026-11-18T22:30:45');
+    expect(parsedWithSeconds).toEqual(new Date(2026, 10, 18, 22, 30, 45));
+  });
+
   it('returns null for invalid or empty values', () => {
     expect(parseEventDate(null)).toBeNull();
     expect(parseEventDate('')).toBeNull();
     expect(parseEventDate('invalid-date')).toBeNull();
     expect(parseEventDate('2026-02-31', { allDay: true })).toBeNull();
+  });
+});
+
+describe('parseEventTime', () => {
+  it('converts Z and explicit offset timestamps to local HH:mm when allDay is false', () => {
+    const utcIso = '2026-11-19T01:00:00.000Z';
+    expect(parseEventTime(utcIso)).toBe(format(new Date(utcIso), 'HH:mm'));
+    expect(parseEventTime(utcIso, { allDay: false })).toBe(
+      format(new Date(utcIso), 'HH:mm')
+    );
+
+    const offsetIso = '2026-11-18T22:30:00-03:00';
+    expect(parseEventTime(offsetIso, { allDay: false })).toBe(
+      format(new Date(offsetIso), 'HH:mm')
+    );
+  });
+
+  it('preserves local wall-clock time for naive strings and Date instances', () => {
+    expect(parseEventTime('2026-11-18T22:15')).toBe('22:15');
+    expect(parseEventTime(new Date(2026, 10, 18, 22, 45))).toBe('22:45');
+    expect(parseEventTime('2026-11-18')).toBe('00:00');
+  });
+
+  it('returns 00:00 for allDay: true or invalid/empty inputs', () => {
+    expect(parseEventTime('2026-11-19T01:00:00.000Z', { allDay: true })).toBe(
+      '00:00'
+    );
+    expect(parseEventTime(null)).toBe('00:00');
+    expect(parseEventTime('invalid-date')).toBe('00:00');
   });
 });
 
@@ -330,6 +443,18 @@ describe('formatEventDate and formatEventDateRange', () => {
         { allDay: true }
       )
     ).toBe('18/11/2026 até 20/11/2026');
+  });
+
+  it('formats Z and explicit offset Timed Events using converted local calendar date (#156)', () => {
+    const startUtc = '2026-11-19T01:00:00.000Z';
+    const endUtc = '2026-11-19T02:30:00.000Z';
+
+    expect(formatEventDate(startUtc, { allDay: false })).toBe(
+      format(new Date(startUtc), 'dd/MM/yyyy')
+    );
+    expect(formatEventDateRange(startUtc, endUtc, { allDay: false })).toBe(
+      `${format(new Date(startUtc), 'dd/MM/yyyy')} até ${format(new Date(endUtc), 'dd/MM/yyyy')}`
+    );
   });
 });
 
@@ -359,5 +484,33 @@ describe('getEventStatus', () => {
         allDay: true,
       })
     ).toBe('completed');
+  });
+
+  it('evaluates status using converted local day for night-time Timed Events (#156)', () => {
+    const now = new Date();
+    const todayNightStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      22,
+      0,
+      0
+    );
+    const todayNightEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      30,
+      0
+    );
+
+    expect(
+      getEventStatus({
+        startDate: todayNightStart.toISOString(),
+        endDate: todayNightEnd.toISOString(),
+        allDay: false,
+      })
+    ).toBe('in_progress');
   });
 });

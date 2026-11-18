@@ -25,7 +25,10 @@ const buildLocalCivilDate = (
     !isValid(localDate) ||
     localDate.getFullYear() !== year ||
     localDate.getMonth() !== month - 1 ||
-    localDate.getDate() !== day
+    localDate.getDate() !== day ||
+    localDate.getHours() !== hours ||
+    localDate.getMinutes() !== minutes ||
+    localDate.getSeconds() !== seconds
   ) {
     return null;
   }
@@ -35,10 +38,13 @@ const buildLocalCivilDate = (
 
 /**
  * Faz o parse seguro de uma data vinda da API ou do form,
- * sem causar deslocamento de timezone.
+ * sem causar deslocamento de timezone para datas civis puras.
  *
  * Para datas civis puras (`YYYY-MM-DD`) ou eventos `allDay: true`, extrai
  * estritamente a data civil `YYYY-MM-DD` sem considerar horário ou offset UTC.
+ * Para Timed Events (`allDay: false`) com sufixo `Z` ou offset explícito,
+ * converte o instante UTC/offset para o fuso horário local do navegador.
+ * Strings com horário sem sufixo de fuso preservam a leitura local.
  *
  * @param {Date | string | null | undefined} dateValue
  * @param {{ allDay?: boolean }} [options]
@@ -50,6 +56,7 @@ export const parseEventDate = (dateValue, { allDay = false } = {}) => {
     return isValid(dateValue) ? dateValue : null;
   }
   const str = String(dateValue).trim();
+  if (!str) return null;
 
   if (allDay || /^\d{4}-\d{2}-\d{2}$/.test(str)) {
     const matchCivil = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -58,11 +65,27 @@ export const parseEventDate = (dateValue, { allDay = false } = {}) => {
     }
   }
 
-  // Try to match YYYY-MM-DDTHH:mm
-  const matchTime = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  const hasTimezoneSuffix = /(?:T|\s).*(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(str);
+  if (hasTimezoneSuffix) {
+    const normalized = str.replace(/z$/i, 'Z');
+    const parsed = parseISO(normalized);
+    return isValid(parsed) ? parsed : null;
+  }
+
+  // Try to match naive YYYY-MM-DDTHH:mm[:ss] without timezone suffix
+  const matchTime = str.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:T|\s)(\d{2}):(\d{2})(?::(\d{2}))?/
+  );
   if (matchTime) {
-    const [, year, month, day, hour, minute] = matchTime;
-    return buildLocalCivilDate(year, month, day, Number(hour), Number(minute));
+    const [, year, month, day, hour, minute, second = '0'] = matchTime;
+    return buildLocalCivilDate(
+      year,
+      month,
+      day,
+      Number(hour),
+      Number(minute),
+      Number(second)
+    );
   }
 
   // Fallback for just date YYYY-MM-DD
@@ -77,20 +100,18 @@ export const parseEventDate = (dateValue, { allDay = false } = {}) => {
 };
 
 /**
- * Extrai a string de hora (HH:mm) de uma data ISO.
- * Retorna '00:00' se não houver ou se não for possível fazer o parse.
+ * Extrai a string de hora (HH:mm) no fuso local a partir de uma data/instante.
+ * Retorna '00:00' para eventos `allDay: true`, ausentes ou inválidos.
  *
  * @param {Date | string | null | undefined} dateValue
+ * @param {{ allDay?: boolean }} [options]
  * @returns {string}
  */
-export const parseEventTime = (dateValue) => {
-  if (!dateValue) return '00:00';
-  const str = String(dateValue).trim();
-  const match = str.match(/T(\d{2}):(\d{2})/);
-  if (match) {
-    return `${match[1]}:${match[2]}`;
-  }
-  return '00:00';
+export const parseEventTime = (dateValue, { allDay = false } = {}) => {
+  if (!dateValue || allDay) return '00:00';
+  const parsed = parseEventDate(dateValue, { allDay: false });
+  if (!parsed) return '00:00';
+  return format(parsed, 'HH:mm');
 };
 
 /**
@@ -128,12 +149,16 @@ export const formatEventDateToApi = (
   let minutes = type === 'start' ? 0 : 59;
   const seconds = 0;
 
+  const hasTimeInString =
+    typeof dateValue === 'string' &&
+    /(?:T|\s)\d{2}:\d{2}/.test(dateValue.trim());
+
   let finalTime = timeStr;
-  if (!finalTime && dateValue instanceof Date) {
-    const dateHours = dateValue.getHours();
-    const dateMinutes = dateValue.getMinutes();
-    if (dateHours !== 0 || dateMinutes !== 0) {
-      finalTime = format(dateValue, 'HH:mm');
+  if (!finalTime && (dateValue instanceof Date || hasTimeInString)) {
+    const dateHours = date.getHours();
+    const dateMinutes = date.getMinutes();
+    if (dateHours !== 0 || dateMinutes !== 0 || hasTimeInString) {
+      finalTime = format(date, 'HH:mm');
     }
   }
   if (finalTime) {

@@ -397,6 +397,39 @@ describe('buildEventOperationalStats', () => {
       '3 dias'
     );
   });
+
+  it('computes status and 1-day duration on converted local day for night-time Timed Events (#156)', () => {
+    const now = new Date();
+    const nightStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      22,
+      0,
+      0
+    );
+    const nightEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      30,
+      0
+    );
+
+    const nightTimedEvent = {
+      id: 'ev-night-timed',
+      name: 'Show Noturno',
+      startDate: nightStart.toISOString(),
+      endDate: nightEnd.toISOString(),
+      allDay: false,
+    };
+
+    const [statusCard] = buildEventOperationalStats(nightTimedEvent, []);
+    expect(statusCard.value).toBe('Em andamento');
+    expect(statusCard.badge).toBe('Em curso');
+    expect(statusCard.trend).toBe('1 dia');
+  });
 });
 
 describe('buildEventBalanceOverviewData', () => {
