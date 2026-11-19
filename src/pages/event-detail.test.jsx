@@ -7,6 +7,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { format } from 'date-fns';
 import React from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -271,6 +272,68 @@ describe('EventDetailPage', () => {
       </Routes>
     );
 
+    expect(screen.getByText('Dia único')).toBeInTheDocument();
+  });
+
+  it('displays single-day All-Day Event civil date (01/12/2026) without timezone drift or 03:00/02:59', () => {
+    useGetEvent.mockReturnValue({
+      data: {
+        ...mockEvent,
+        startDate: '2026-12-01T00:00:00.000Z',
+        endDate: '2026-12-01T23:59:59.000Z',
+        allDay: true,
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
+      </Routes>
+    );
+
+    const dateBadge = screen.getByTestId('event-header-date-badge');
+    expect(dateBadge).toHaveTextContent('DEZ');
+    expect(dateBadge).toHaveTextContent('01');
+    expect(
+      screen.getByText('01/12/2026 até 01/12/2026')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Dia único')).toBeInTheDocument();
+    expect(screen.queryByText(/30\/11\/2026/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/03:00|02:59/)).not.toBeInTheDocument();
+  });
+
+  it('displays night-time Timed Event converted to local calendar date without shifting to next day (#156)', () => {
+    const startUtc = '2026-11-19T01:00:00.000Z';
+    const endUtc = '2026-11-19T02:30:00.000Z';
+    const expectedDate = new Date(startUtc);
+    const expectedFormattedDate = format(expectedDate, 'dd/MM/yyyy');
+    const expectedDay = String(expectedDate.getDate()).padStart(2, '0');
+
+    useGetEvent.mockReturnValue({
+      data: {
+        ...mockEvent,
+        startDate: startUtc,
+        endDate: endUtc,
+        allDay: false,
+      },
+      isLoading: false,
+      isError: false,
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
+      </Routes>
+    );
+
+    const dateBadge = screen.getByTestId('event-header-date-badge');
+    expect(dateBadge).toHaveTextContent('NOV');
+    expect(dateBadge).toHaveTextContent(expectedDay);
+    expect(
+      screen.getByText(`${expectedFormattedDate} até ${expectedFormattedDate}`)
+    ).toBeInTheDocument();
     expect(screen.getByText('Dia único')).toBeInTheDocument();
   });
 

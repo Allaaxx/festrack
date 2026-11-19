@@ -85,9 +85,11 @@ The aggregate financial management domain encompassing overall balance metrics, 
 
 A scheduled occasion or budget bucket (e.g., travel, wedding, party) with start and end dates used to group related financial transactions.
 
+- **Temporal Modes:** Explicitly classified via `allDay` (`all_day`) as either an **All-Day Event** (`allDay = true`, representing pure civil calendar dates `YYYY-MM-DD` independent of timezone offsets, inclusive end) or a **Timed Event** (`allDay = false`, anchored to clock-time instants converted to the viewer's local timezone).
 - **Authorship:** Every event is attributed to the Shop Member (Author) who created it, preserving visibility across collaborative shops.
 - **External Calendar Sync:** Calendar synchronization for a Shop is centralized on the Shop `OWNER`'s connected Google Calendar account, regardless of which Shop Member creates, updates, or removes the event.
 - **Financial Scope:** Acts as an aggregate financial container. Transactions linked to an event are grouped by event identity rather than restricted to its active calendar timeframe.
+- **Avoid:** Full-day event (for All-Day Event), 00:00–23:59 inference.
 
 ---
 

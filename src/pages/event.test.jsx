@@ -70,8 +70,9 @@ const shop1RawEvents = [
     created_by_user_id: 'user-1',
     name: 'Casamento Imperial',
     description: 'Recepção na Matriz',
-    start_date: `${todayStr}T00:00:00`,
-    end_date: `${todayStr}T23:59:00`,
+    start_date: `${todayStr}T00:00:00.000Z`,
+    end_date: `${todayStr}T23:59:59.000Z`,
+    all_day: true,
     google_event_id: null,
     sync_error: false,
   },
@@ -84,8 +85,9 @@ const shop2RawEvents = [
     created_by_user_id: 'user-2',
     name: 'Formatura Medicina',
     description: 'Baile na Filial',
-    start_date: `${todayStr}T00:00:00`,
-    end_date: `${todayStr}T23:59:00`,
+    start_date: `${todayStr}T00:00:00.000Z`,
+    end_date: `${todayStr}T23:59:59.000Z`,
+    all_day: true,
     google_event_id: null,
     sync_error: false,
   },
@@ -252,5 +254,158 @@ describe('EventPage - Shop-Scoped Events & ShopSwitcher Integration (#83)', () =
       'lg:flex-row',
       'lg:overflow-hidden'
     );
+  });
+
+  it('creates an All-Day Event sending all_day: true with UTC civil boundaries and renders it only on its civil day (#155)', async () => {
+    const user = userEvent.setup();
+    renderEventPageWithShopSwitcher();
+
+    await screen.findAllByText('Casamento Imperial');
+
+    protectedApi.post.mockResolvedValue({
+      data: {
+        id: 'ev-all-day-new',
+        shop_id: 'shop-1',
+        created_by_user_id: 'user-1',
+        name: 'Feriado Civil',
+        description: null,
+        start_date: `${todayStr}T00:00:00.000Z`,
+        end_date: `${todayStr}T23:59:59.000Z`,
+        all_day: true,
+        google_event_id: null,
+        sync_error: false,
+      },
+    });
+
+    const newEventButtons = await screen.findAllByRole('button', {
+      name: /novo evento/i,
+    });
+    await user.click(newEventButtons[0]);
+
+    const nameInput = await screen.findByLabelText(/nome do evento/i);
+    await user.type(nameInput, 'Feriado Civil');
+
+    const allDayCheckbox = screen.getByRole('checkbox', {
+      name: /dia inteiro/i,
+    });
+    await user.click(allDayCheckbox);
+
+    expect(screen.queryByLabelText(/hora inicial/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/hora final/i)).not.toBeInTheDocument();
+
+    const saveButton = screen.getByRole('button', { name: /criar evento/i });
+    await user.click(saveButton);
+
+    await waitFor(() => {
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-1/events',
+        expect.objectContaining({
+          name: 'Feriado Civil',
+          all_day: true,
+          start_date: `${todayStr}T00:00:00.000Z`,
+          end_date: `${todayStr}T23:59:59.000Z`,
+        })
+      );
+    });
+
+    expect(screen.getAllByText('Casamento Imperial').length).toBeGreaterThan(0);
+    const eventButtons = document.querySelectorAll('button[data-calendar-event]');
+    expect(eventButtons.length).toBeGreaterThan(0);
+    for (const btn of eventButtons) {
+      expect(btn.textContent).not.toMatch(/03:00|02:59/);
+    }
+  });
+
+  it('renders night-time Timed Event (22:00 - 23:30 local) returned in UTC on its local day and time across calendar views and sidebar (#156)', async () => {
+    const user = userEvent.setup();
+    const now = new Date();
+    const nightStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      22,
+      0,
+      0
+    );
+    const nightEnd = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      30,
+      0
+    );
+
+    const nightTimedRawEvent = {
+      id: 'ev-night-156',
+      shop_id: 'shop-1',
+      created_by_user_id: 'user-1',
+      name: 'Show Noturno',
+      description: 'Atração principal',
+      start_date: nightStart.toISOString(),
+      end_date: nightEnd.toISOString(),
+      all_day: false,
+      google_event_id: null,
+      sync_error: false,
+    };
+
+    protectedApi.get.mockImplementation((url) => {
+      if (url === '/shops/shop-1/events') {
+        return Promise.resolve({ data: [nightTimedRawEvent] });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    const assertNoShiftedTimesOnEventButtons = () => {
+      const eventButtons = document.querySelectorAll(
+        'button[data-calendar-event]'
+      );
+      expect(eventButtons.length).toBeGreaterThan(0);
+      for (const btn of eventButtons) {
+        expect(btn.textContent).not.toMatch(/01:00|02:30/);
+      }
+    };
+
+    renderEventPageWithShopSwitcher();
+
+    expect(
+      (await screen.findAllByText('Show Noturno')).length
+    ).toBeGreaterThan(0);
+    // Month view renders on today's cell with local start time; Sidebar shows full range
+    const todayMonthCell = document.querySelector(
+      '[data-slot="month-day-cell"][data-today="true"]'
+    );
+    expect(todayMonthCell).toBeInTheDocument();
+    expect(todayMonthCell.textContent).toContain('Show Noturno');
+    expect(todayMonthCell.textContent).toContain('22:00');
+    expect(screen.getByText('22:00 - 23:30')).toBeInTheDocument();
+    assertNoShiftedTimesOnEventButtons();
+
+    // Switch to Week view
+    await user.click(screen.getByRole('button', { name: /mês/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /semana/i }));
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="week-view"]')).toBeInTheDocument();
+    });
+    expect(screen.getAllByText('22:00 - 23:30').length).toBeGreaterThanOrEqual(2);
+    assertNoShiftedTimesOnEventButtons();
+
+    // Switch to Day view
+    await user.click(screen.getByRole('button', { name: /semana/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /dia/i }));
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="day-view"]')).toBeInTheDocument();
+    });
+    expect(screen.getAllByText('22:00 - 23:30').length).toBeGreaterThanOrEqual(2);
+    assertNoShiftedTimesOnEventButtons();
+
+    // Switch to Agenda view
+    await user.click(screen.getByRole('button', { name: /dia/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /agenda/i }));
+    await waitFor(() => {
+      expect(document.querySelector('[data-slot="agenda-view"]')).toBeInTheDocument();
+    });
+    expect(screen.getAllByText('22:00 - 23:30').length).toBeGreaterThanOrEqual(2);
+    assertNoShiftedTimesOnEventButtons();
   });
 });

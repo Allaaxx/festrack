@@ -47,10 +47,11 @@ const MONTH_NAMES = [
  * Extrai dia e mês abreviado em maiúsculas a partir da data de início do evento.
  *
  * @param {string | Date | null | undefined} dateValue
+ * @param {{ allDay?: boolean }} [options]
  * @returns {{ day: string, month: string }}
  */
-const getDayAndMonth = (dateValue) => {
-  const parsed = parseEventDate(dateValue);
+const getDayAndMonth = (dateValue, options = {}) => {
+  const parsed = parseEventDate(dateValue, options);
   if (parsed) {
     const day = String(parsed.getDate()).padStart(2, '0');
     const month = MONTH_NAMES[parsed.getMonth()] ?? 'OUT';
@@ -96,15 +97,19 @@ const EventDetailHeader = ({
   className,
 }) => {
   const eventName = event?.name ?? event?.title ?? '';
+  const allDay = Boolean(event?.allDay);
   const { day, month } = useMemo(
-    () => getDayAndMonth(event?.startDate),
-    [event?.startDate]
+    () => getDayAndMonth(event?.startDate, { allDay }),
+    [event?.startDate, allDay]
   );
 
   const isSameDay = useMemo(() => {
     if (!event?.startDate || !event?.endDate) return true;
-    return formatEventDate(event.startDate) === formatEventDate(event.endDate);
-  }, [event?.startDate, event?.endDate]);
+    return (
+      formatEventDate(event.startDate, { allDay }) ===
+      formatEventDate(event.endDate, { allDay })
+    );
+  }, [event?.startDate, event?.endDate, allDay]);
 
   if (!event) return null;
 
@@ -161,7 +166,9 @@ const EventDetailHeader = ({
                   <div className="bg-muted/50 text-muted-foreground flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium">
                     <CalendarDaysIcon className="text-primary size-3.5" />
                     <span>
-                      {formatEventDateRange(event.startDate, event.endDate)}
+                      {formatEventDateRange(event.startDate, event.endDate, {
+                        allDay,
+                      })}
                     </span>
                   </div>
 

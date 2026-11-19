@@ -44,8 +44,8 @@ export const useCreateEventForm = ({ onSuccess, onError }) => {
 
 const getEditEventFormDefaultValues = (event) => {
   const isAllDay = event?.allDay ?? false;
-  const parsedStart = parseEventDate(event?.startDate);
-  const parsedEnd = parseEventDate(event?.endDate);
+  const parsedStart = parseEventDate(event?.startDate, { allDay: isAllDay });
+  const parsedEnd = parseEventDate(event?.endDate, { allDay: isAllDay });
 
   return {
     id: event?.id ?? '',
@@ -55,9 +55,13 @@ const getEditEventFormDefaultValues = (event) => {
     endDate: parsedEnd ? startOfDay(parsedEnd) : startOfDay(new Date()),
     allDay: isAllDay,
     startTime:
-      !isAllDay && event?.startDate ? parseEventTime(event.startDate) : '09:00',
+      !isAllDay && event?.startDate
+        ? parseEventTime(event.startDate, { allDay: isAllDay })
+        : '09:00',
     endTime:
-      !isAllDay && event?.endDate ? parseEventTime(event.endDate) : '10:00',
+      !isAllDay && event?.endDate
+        ? parseEventTime(event.endDate, { allDay: isAllDay })
+        : '10:00',
     tag: event?.tag ?? null,
   };
 };

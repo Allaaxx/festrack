@@ -32,6 +32,7 @@ describe('EventService', () => {
           description: 'Férias',
           start_date: '2026-11-01T00:00:00.000Z',
           end_date: '2026-11-05T23:59:00.000Z',
+          all_day: true,
           google_event_id: 'g-event-123',
         },
       ];
@@ -57,6 +58,34 @@ describe('EventService', () => {
           syncError: false,
         },
       ]);
+    });
+
+    it('trusts explicit all_day from API instead of inferring from 00:00-23:59', async () => {
+      protectedApi.get.mockResolvedValue({
+        data: [
+          {
+            id: 'ev-timed-24h',
+            shop_id: 'shop-10',
+            name: 'Plantão 24h',
+            start_date: '2026-11-01T00:00:00.000Z',
+            end_date: '2026-11-01T23:59:00.000Z',
+            all_day: false,
+          },
+          {
+            id: 'ev-all-day-explicit',
+            shop_id: 'shop-10',
+            name: 'Feriado',
+            start_date: '2026-11-02T03:00:00.000Z',
+            end_date: '2026-11-03T02:59:00.000Z',
+            all_day: true,
+          },
+        ],
+      });
+
+      const result = await EventService.getAll({ shopId: 'shop-10' });
+
+      expect(result[0].allDay).toBe(false);
+      expect(result[1].allDay).toBe(true);
     });
   });
 
@@ -188,6 +217,68 @@ describe('EventService', () => {
         })
       );
     });
+
+    it('sends all_day: true with UTC civil boundaries when creating an All-Day Event', async () => {
+      protectedApi.post.mockResolvedValue({
+        data: {
+          id: 'ev-all-day-1',
+          shop_id: 'shop-10',
+          name: 'Feriado',
+          start_date: '2026-11-18T00:00:00.000Z',
+          end_date: '2026-11-19T23:59:59.000Z',
+          all_day: true,
+        },
+      });
+
+      const result = await EventService.create({
+        shopId: 'shop-10',
+        name: 'Feriado',
+        startDate: new Date(2026, 10, 18),
+        endDate: new Date(2026, 10, 19),
+        allDay: true,
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-10/events',
+        expect.objectContaining({
+          name: 'Feriado',
+          all_day: true,
+          start_date: '2026-11-18T00:00:00.000Z',
+          end_date: '2026-11-19T23:59:59.000Z',
+        })
+      );
+      expect(result.allDay).toBe(true);
+    });
+
+    it('sends all_day: false when creating a Timed Event', async () => {
+      protectedApi.post.mockResolvedValue({
+        data: {
+          id: 'ev-timed-1',
+          shop_id: 'shop-10',
+          name: 'Reunião',
+          start_date: '2026-11-18T09:00:00.000Z',
+          end_date: '2026-11-18T10:00:00.000Z',
+          all_day: false,
+        },
+      });
+
+      await EventService.create({
+        shopId: 'shop-10',
+        name: 'Reunião',
+        startDate: '2026-11-18',
+        endDate: '2026-11-18',
+        allDay: false,
+        startTime: '09:00',
+        endTime: '10:00',
+      });
+
+      expect(protectedApi.post).toHaveBeenCalledWith(
+        '/shops/shop-10/events',
+        expect.objectContaining({
+          all_day: false,
+        })
+      );
+    });
   });
 
   describe('update', () => {
@@ -200,6 +291,7 @@ describe('EventService', () => {
         description: null,
         start_date: '2026-12-11T14:00:00.000Z',
         end_date: '2026-12-11T18:00:00.000Z',
+        all_day: false,
         google_event_id: 'g-event-999',
       };
 
@@ -218,10 +310,44 @@ describe('EventService', () => {
 
       expect(protectedApi.patch).toHaveBeenCalledWith(
         '/shops/shop-10/events/ev-2',
-        expect.any(Object)
+        expect.objectContaining({
+          all_day: false,
+        })
       );
       expect(result.shopId).toBe('shop-10');
       expect(result.googleEventId).toBe('g-event-999');
+    });
+
+    it('sends all_day: true with UTC civil boundaries when updating an All-Day Event', async () => {
+      protectedApi.patch.mockResolvedValue({
+        data: {
+          id: 'ev-2',
+          shop_id: 'shop-10',
+          name: 'Feriado Atualizado',
+          start_date: '2026-12-11T00:00:00.000Z',
+          end_date: '2026-12-12T23:59:59.000Z',
+          all_day: true,
+        },
+      });
+
+      const result = await EventService.update({
+        shopId: 'shop-10',
+        id: 'ev-2',
+        name: 'Feriado Atualizado',
+        startDate: new Date(2026, 11, 11),
+        endDate: new Date(2026, 11, 12),
+        allDay: true,
+      });
+
+      expect(protectedApi.patch).toHaveBeenCalledWith(
+        '/shops/shop-10/events/ev-2',
+        expect.objectContaining({
+          all_day: true,
+          start_date: '2026-12-11T00:00:00.000Z',
+          end_date: '2026-12-12T23:59:59.000Z',
+        })
+      );
+      expect(result.allDay).toBe(true);
     });
   });
 
@@ -270,6 +396,7 @@ describe('EventService', () => {
         description: null,
         start_date: '2026-12-31T00:00:00.000Z',
         end_date: '2026-12-31T23:59:00.000Z',
+        all_day: true,
         google_event_id: null,
         sync_error: true,
       };

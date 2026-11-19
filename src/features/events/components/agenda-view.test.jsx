@@ -207,4 +207,41 @@ describe('AgendaView (#131)', () => {
     rerender(<EventItem event={calendarItem} view="day" />);
     expect(screen.queryByText('Carlos Drummond')).not.toBeInTheDocument();
   });
+
+  it('renders multi-day All-Day Event from UTC bounds strictly on its civil days with "Dia todo" (#155)', () => {
+    const baseDate = new Date(2026, 10, 18);
+    const allDayEvent = mapEventToCalendarItem({
+      id: 'ev-all-day-agenda',
+      name: 'Congresso Civil',
+      startDate: '2026-11-18T00:00:00.000Z',
+      endDate: '2026-11-19T23:59:59.000Z',
+      allDay: true,
+    });
+
+    render(<AgendaView currentDate={baseDate} events={[allDayEvent]} />);
+
+    expect(screen.getAllByText('Congresso Civil')).toHaveLength(2);
+    expect(screen.getAllByText('Dia todo')).toHaveLength(2);
+    expect(screen.queryByText(/03:00|02:59/)).not.toBeInTheDocument();
+  });
+
+  it('renders night-time Timed Event from UTC bounds on its local day and time (#156)', () => {
+    const baseDate = new Date(2026, 10, 18);
+    const nightStart = new Date(2026, 10, 18, 22, 0, 0);
+    const nightEnd = new Date(2026, 10, 18, 23, 30, 0);
+
+    const nightTimedEvent = mapEventToCalendarItem({
+      id: 'ev-night-agenda',
+      name: 'Jantar Noturno',
+      startDate: nightStart.toISOString(),
+      endDate: nightEnd.toISOString(),
+      allDay: false,
+    });
+
+    render(<AgendaView currentDate={baseDate} events={[nightTimedEvent]} />);
+
+    expect(screen.getByText('Jantar Noturno')).toBeInTheDocument();
+    expect(screen.getByText('22:00 - 23:30')).toBeInTheDocument();
+    expect(screen.queryByText(/01:00|02:30/)).not.toBeInTheDocument();
+  });
 });

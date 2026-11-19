@@ -8,48 +8,132 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+const buildLocalCivilDate = (
+  yearStr,
+  monthStr,
+  dayStr,
+  hours = 0,
+  minutes = 0,
+  seconds = 0
+) => {
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+  const localDate = new Date(year, month - 1, day, hours, minutes, seconds);
+
+  if (
+    !isValid(localDate) ||
+    localDate.getFullYear() !== year ||
+    localDate.getMonth() !== month - 1 ||
+    localDate.getDate() !== day ||
+    localDate.getHours() !== hours ||
+    localDate.getMinutes() !== minutes ||
+    localDate.getSeconds() !== seconds
+  ) {
+    return null;
+  }
+
+  return localDate;
+};
+
 /**
- * Faz o parse seguro de uma data vinda da API ou do form,
- * sem causar deslocamento de timezone.
+ * Faz o parse estrito de uma data civil (`YYYY-MM-DD`, timestamp ISO ou `Date`),
+ * retornando o início do dia (`00:00:00.000`) no fuso local sem deslocamento de timezone.
  *
  * @param {Date | string | null | undefined} dateValue
  * @returns {Date | null}
  */
-export const parseEventDate = (dateValue) => {
+export const parseCivilDate = (dateValue) => {
   if (!dateValue) return null;
+  if (dateValue instanceof Date) {
+    return isValid(dateValue) ? startOfDay(dateValue) : null;
+  }
+  const str = String(dateValue).trim();
+  if (!str) return null;
+
+  const matchCivil = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matchCivil) {
+    return buildLocalCivilDate(matchCivil[1], matchCivil[2], matchCivil[3]);
+  }
+
+  const parsed = parseISO(str);
+  return isValid(parsed) ? startOfDay(parsed) : null;
+};
+
+/**
+ * Constrói o instante local de término de um dia civil (`23:59:59.000`).
+ *
+ * @param {Date} date
+ * @returns {Date}
+ */
+export const endOfCivilDay = (date) =>
+  new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    23,
+    59,
+    59,
+    0
+  );
+
+/**
+ * Faz o parse seguro de uma data vinda da API ou do form,
+ * sem causar deslocamento de timezone para datas civis puras.
+ *
+ * Para datas civis puras (`YYYY-MM-DD`) ou eventos `allDay: true`, extrai
+ * estritamente a data civil `YYYY-MM-DD` sem considerar horário ou offset UTC.
+ * Para Timed Events (`allDay: false`) com sufixo `Z` ou offset explícito,
+ * converte o instante UTC/offset para o fuso horário local do navegador.
+ * Strings com horário sem sufixo de fuso preservam a leitura local.
+ *
+ * @param {Date | string | null | undefined} dateValue
+ * @param {{ allDay?: boolean }} [options]
+ * @returns {Date | null}
+ */
+export const parseEventDate = (dateValue, { allDay = false } = {}) => {
+  if (!dateValue) return null;
+  if (allDay) {
+    return parseCivilDate(dateValue);
+  }
   if (dateValue instanceof Date) {
     return isValid(dateValue) ? dateValue : null;
   }
   const str = String(dateValue).trim();
+  if (!str) return null;
 
-  // Try to match YYYY-MM-DDTHH:mm
-  const matchTime = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return parseCivilDate(str);
+  }
+
+  const hasTimezoneSuffix = /(?:T|\s).*(?:Z|[+-]\d{2}(?::?\d{2})?)$/i.test(str);
+  if (hasTimezoneSuffix) {
+    const normalized = str.replace(/z$/i, 'Z');
+    const parsed = parseISO(normalized);
+    return isValid(parsed) ? parsed : null;
+  }
+
+  // Try to match naive YYYY-MM-DDTHH:mm[:ss] without timezone suffix
+  const matchTime = str.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:T|\s)(\d{2}):(\d{2})(?::(\d{2}))?/
+  );
   if (matchTime) {
-    const [, year, month, day, hour, minute] = matchTime;
-    const localDate = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
+    const [, year, month, day, hour, minute, second = '0'] = matchTime;
+    return buildLocalCivilDate(
+      year,
+      month,
+      day,
       Number(hour),
       Number(minute),
-      0
+      Number(second)
     );
-    return isValid(localDate) ? localDate : null;
   }
 
   // Fallback for just date YYYY-MM-DD
   const matchDate = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (matchDate) {
     const [, year, month, day] = matchDate;
-    const localDate = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      0,
-      0,
-      0
-    );
-    return isValid(localDate) ? localDate : null;
+    return buildLocalCivilDate(year, month, day);
   }
 
   const parsed = parseISO(str);
@@ -57,20 +141,18 @@ export const parseEventDate = (dateValue) => {
 };
 
 /**
- * Extrai a string de hora (HH:mm) de uma data ISO.
- * Retorna '00:00' se não houver ou se não for possível fazer o parse.
+ * Extrai a string de hora (HH:mm) no fuso local a partir de uma data/instante.
+ * Retorna '00:00' para eventos `allDay: true`, ausentes ou inválidos.
  *
  * @param {Date | string | null | undefined} dateValue
+ * @param {{ allDay?: boolean }} [options]
  * @returns {string}
  */
-export const parseEventTime = (dateValue) => {
-  if (!dateValue) return '00:00';
-  const str = String(dateValue).trim();
-  const match = str.match(/T(\d{2}):(\d{2})/);
-  if (match) {
-    return `${match[1]}:${match[2]}`;
-  }
-  return '00:00';
+export const parseEventTime = (dateValue, { allDay = false } = {}) => {
+  if (!dateValue || allDay) return '00:00';
+  const parsed = parseEventDate(dateValue, { allDay: false });
+  if (!parsed) return '00:00';
+  return format(parsed, 'HH:mm');
 };
 
 /**
@@ -92,28 +174,39 @@ export const formatEventDateToApi = (
 ) => {
   if (!dateValue) return '';
   const date =
-    dateValue instanceof Date ? dateValue : parseEventDate(dateValue);
+    dateValue instanceof Date
+      ? dateValue
+      : parseEventDate(dateValue, { allDay: Boolean(allDay) });
   if (!date || !isValid(date)) return '';
+
+  if (allDay) {
+    const civilDate = format(date, 'yyyy-MM-dd');
+    return type === 'start'
+      ? `${civilDate}T00:00:00.000Z`
+      : `${civilDate}T23:59:59.000Z`;
+  }
 
   let hours = type === 'start' ? 0 : 23;
   let minutes = type === 'start' ? 0 : 59;
-  const seconds = allDay && type === 'end' ? 59 : 0;
+  const seconds = 0;
 
-  if (!allDay) {
-    let finalTime = timeStr;
-    if (!finalTime && dateValue instanceof Date) {
-      const dateHours = dateValue.getHours();
-      const dateMinutes = dateValue.getMinutes();
-      if (dateHours !== 0 || dateMinutes !== 0) {
-        finalTime = format(dateValue, 'HH:mm');
-      }
+  const hasTimeInString =
+    typeof dateValue === 'string' &&
+    /(?:T|\s)\d{2}:\d{2}/.test(dateValue.trim());
+
+  let finalTime = timeStr;
+  if (!finalTime && (dateValue instanceof Date || hasTimeInString)) {
+    const dateHours = date.getHours();
+    const dateMinutes = date.getMinutes();
+    if (dateHours !== 0 || dateMinutes !== 0 || hasTimeInString) {
+      finalTime = format(date, 'HH:mm');
     }
-    if (finalTime) {
-      const [parsedHours, parsedMinutes] = finalTime.split(':').map(Number);
-      if (!Number.isNaN(parsedHours) && !Number.isNaN(parsedMinutes)) {
-        hours = parsedHours;
-        minutes = parsedMinutes;
-      }
+  }
+  if (finalTime) {
+    const [parsedHours, parsedMinutes] = finalTime.split(':').map(Number);
+    if (!Number.isNaN(parsedHours) && !Number.isNaN(parsedMinutes)) {
+      hours = parsedHours;
+      minutes = parsedMinutes;
     }
   }
 
@@ -133,10 +226,11 @@ export const formatEventDateToApi = (
  * Formata uma data para exibição no padrão dd/MM/yyyy.
  *
  * @param {Date | string | null | undefined} dateValue
+ * @param {{ allDay?: boolean }} [options]
  * @returns {string}
  */
-export const formatEventDate = (dateValue) => {
-  const date = parseEventDate(dateValue);
+export const formatEventDate = (dateValue, options = {}) => {
+  const date = parseEventDate(dateValue, options);
   if (!date) return '—';
   return format(date, 'dd/MM/yyyy', { locale: ptBR });
 };
@@ -147,22 +241,28 @@ export const formatEventDate = (dateValue) => {
  *
  * @param {Date | string | null | undefined} startDate
  * @param {Date | string | null | undefined} endDate
+ * @param {{ allDay?: boolean }} [options]
  * @returns {string}
  */
-export const formatEventDateRange = (startDate, endDate) => {
-  return `${formatEventDate(startDate)} até ${formatEventDate(endDate)}`;
+export const formatEventDateRange = (startDate, endDate, options = {}) => {
+  return `${formatEventDate(startDate, options)} até ${formatEventDate(endDate, options)}`;
 };
 
 /**
  * Calcula o status temporal de um evento em relação à data atual.
  *
- * @param {{ startDate: Date | string, endDate: Date | string }} event
+ * @param {{ startDate: Date | string, endDate: Date | string, allDay?: boolean }} event
  * @returns {'scheduled' | 'in_progress' | 'completed'}
  */
 export const getEventStatus = (event) => {
+  const allDay = Boolean(event?.allDay);
   const today = startOfDay(new Date());
-  const start = startOfDay(parseEventDate(event.startDate) ?? new Date(0));
-  const end = startOfDay(parseEventDate(event.endDate) ?? new Date(0));
+  const start = startOfDay(
+    parseEventDate(event?.startDate, { allDay }) ?? new Date(0)
+  );
+  const end = startOfDay(
+    parseEventDate(event?.endDate, { allDay }) ?? new Date(0)
+  );
 
   if (isBefore(today, start)) return 'scheduled';
   if (isAfter(today, end)) return 'completed';
@@ -327,8 +427,10 @@ export const normalizeEventAuthor = (event, fallbackUser = null) => {
  * @returns {{ id: string, title: string, description: string | null, start: Date, end: Date, allDay: boolean, color: string, rawEvent: any }}
  */
 export const mapEventToCalendarItem = (event) => {
-  const start = parseEventDate(event.startDate) ?? new Date();
-  const end = parseEventDate(event.endDate) ?? start;
+  const allDay = Boolean(event?.allDay);
+  const start = parseEventDate(event.startDate, { allDay }) ?? new Date();
+  const parsedEnd = parseEventDate(event.endDate, { allDay }) ?? start;
+  const end = allDay ? endOfCivilDay(parsedEnd) : parsedEnd;
   const status = getEventStatus(event);
   const tag = event.tag ?? event.rawEvent?.tag ?? null;
 
@@ -348,7 +450,7 @@ export const mapEventToCalendarItem = (event) => {
     tag,
     start,
     end,
-    allDay: event.allDay ?? false,
+    allDay,
     status,
     color: tag ?? event.color ?? null,
     rawEvent: event,

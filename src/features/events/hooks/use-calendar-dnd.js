@@ -5,10 +5,52 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { addMinutes, differenceInMinutes, startOfDay } from 'date-fns';
+import {
+  addDays,
+  addMinutes,
+  differenceInCalendarDays,
+  differenceInMinutes,
+  startOfDay,
+} from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
 
 import { WeekCellsHeight } from '../constants';
+import { endOfCivilDay } from '../helpers/event';
+
+/**
+ * Calcula o novo intervalo (start, end, allDay) ao soltar um evento em uma célula da MonthView.
+ * Eventos all-day preservam a duração exata em dias civis (00:00:00 até 23:59:59 locais);
+ * timed events preservam horário local de início e duração em minutos.
+ */
+function computeMonthDayDropDates(draggedEvent, targetDate) {
+  const isAllDay = Boolean(draggedEvent.allDay);
+  if (isAllDay) {
+    const spanDays = Math.max(
+      0,
+      differenceInCalendarDays(
+        startOfDay(draggedEvent.end),
+        startOfDay(draggedEvent.start)
+      )
+    );
+    const start = startOfDay(targetDate);
+    const endDay = addDays(start, spanDays);
+    const end = endOfCivilDay(endDay);
+
+    return { start, end, allDay: true };
+  }
+
+  const originalStart = new Date(draggedEvent.start);
+  const durationMinutes = Math.max(
+    15,
+    differenceInMinutes(draggedEvent.end, draggedEvent.start)
+  );
+
+  const start = new Date(targetDate);
+  start.setHours(originalStart.getHours(), originalStart.getMinutes(), 0, 0);
+  const end = addMinutes(start, durationMinutes);
+
+  return { start, end, allDay: false };
+}
 
 /**
  * Hook para orquestrar o drag and drop e manipulação otimista de eventos do calendário com @dnd-kit.
@@ -99,11 +141,20 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
 
   const handleEventCommit = useCallback(
     (updatedEvent) => {
+      const normalizedEvent = {
+        ...updatedEvent,
+        allDay: Boolean(updatedEvent.allDay),
+      };
+
       setOverrides((prev) => ({
         ...prev,
-        [updatedEvent.id]: { start: updatedEvent.start, end: updatedEvent.end },
+        [normalizedEvent.id]: {
+          start: normalizedEvent.start,
+          end: normalizedEvent.end,
+          allDay: normalizedEvent.allDay,
+        },
       }));
-      onEventUpdate?.(updatedEvent);
+      onEventUpdate?.(normalizedEvent);
     },
     [onEventUpdate]
   );
@@ -120,6 +171,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
       }
 
       const draggedEvent = active.data.current.event;
+      const isAllDay = Boolean(draggedEvent.allDay);
       const overData = over.data?.current;
 
       // Caso 1: Drop em coluna horária (DayView ou WeekView)
@@ -151,6 +203,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          allDay: isAllDay,
           action: 'move',
         });
         return;
@@ -159,25 +212,16 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
       // Caso 2: Drop em célula de dia da MonthView
       if (overData?.type === 'month-day') {
         const targetDate = new Date(overData.dayTimestamp);
-        const originalStart = new Date(draggedEvent.start);
-        const durationMinutes = Math.max(
-          15,
-          differenceInMinutes(draggedEvent.end, draggedEvent.start)
+        const { start, end, allDay } = computeMonthDayDropDates(
+          draggedEvent,
+          targetDate
         );
-
-        const newStart = new Date(targetDate);
-        newStart.setHours(
-          originalStart.getHours(),
-          originalStart.getMinutes(),
-          0,
-          0
-        );
-        const newEnd = addMinutes(newStart, durationMinutes);
 
         handleEventCommit({
           ...draggedEvent,
-          start: newStart,
-          end: newEnd,
+          start,
+          end,
+          allDay,
           action: 'move',
         });
         return;
@@ -197,6 +241,7 @@ export function useCalendarDnd({ events = [], onEventUpdate }) {
           ...draggedEvent,
           start: newStart,
           end: newEnd,
+          allDay: isAllDay,
           action: 'move',
         });
       }

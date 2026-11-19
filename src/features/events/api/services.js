@@ -1,15 +1,8 @@
-import {
-  formatEventDateToApi,
-  parseEventTime,
-} from '@/features/events/helpers/event';
+import { formatEventDateToApi } from '@/features/events/helpers/event';
 import protectedApi from '@/lib/axios';
 
 const mapEventFromApi = (event) => {
-  const startTime = parseEventTime(event.start_date);
-  const endTime = parseEventTime(event.end_date);
-
-  // Se a hora for exata meia-noite e fim do dia (23:59), consideramos o dia todo.
-  const allDay = startTime === '00:00' && endTime === '23:59';
+  const allDay = Boolean(event.all_day ?? event.allDay);
   const googleEventId = event.google_event_id ?? event.googleEventId ?? null;
   const syncError = Boolean(event.sync_error ?? event.syncError);
   const shopId = event.shop_id ?? event.shopId ?? null;
@@ -52,6 +45,29 @@ const resolveShopEventParams = (idOrParams, maybeId) => {
   };
 };
 
+const buildEventPayload = (input) => {
+  const allDay = Boolean(input.allDay);
+  const payload = {
+    name: input.name,
+    description: input.description || null,
+    all_day: allDay,
+    start_date: formatEventDateToApi(
+      input.startDate,
+      'start',
+      allDay,
+      input.startTime
+    ),
+    end_date: formatEventDateToApi(
+      input.endDate,
+      'end',
+      allDay,
+      input.endTime
+    ),
+  };
+  if (input.tag !== undefined) payload.tag = input.tag;
+  return payload;
+};
+
 const EventService = {
   /**
    * Busca todos os eventos da loja ativa.
@@ -89,23 +105,7 @@ const EventService = {
    * }} input
    */
   create: async ({ shopId, ...input }) => {
-    const payload = {
-      name: input.name,
-      description: input.description || null,
-      start_date: formatEventDateToApi(
-        input.startDate,
-        'start',
-        input.allDay,
-        input.startTime
-      ),
-      end_date: formatEventDateToApi(
-        input.endDate,
-        'end',
-        input.allDay,
-        input.endTime
-      ),
-    };
-    if (input.tag !== undefined) payload.tag = input.tag;
+    const payload = buildEventPayload(input);
 
     const response = await protectedApi.post(
       `/shops/${shopId}/events`,
@@ -131,23 +131,7 @@ const EventService = {
    * }} input
    */
   update: async ({ shopId, id, ...input }) => {
-    const payload = {
-      name: input.name,
-      description: input.description || null,
-      start_date: formatEventDateToApi(
-        input.startDate,
-        'start',
-        input.allDay,
-        input.startTime
-      ),
-      end_date: formatEventDateToApi(
-        input.endDate,
-        'end',
-        input.allDay,
-        input.endTime
-      ),
-    };
-    if (input.tag !== undefined) payload.tag = input.tag;
+    const payload = buildEventPayload(input);
 
     const response = await protectedApi.patch(
       `/shops/${shopId}/events/${id}`,
